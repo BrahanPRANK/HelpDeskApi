@@ -1,0 +1,41 @@
+using Microsoft.Extensions.Logging;
+using HelpDesk.Application.Common;
+using HelpDesk.Application.Security;
+using HelpDesk.Application.UseCases.Comentarios.Dtos;
+using HelpDesk.Domain.Exceptions;
+using HelpDesk.Domain.Models;
+using HelpDesk.Domain.Ports;
+using MediatR;
+namespace HelpDesk.Application.UseCases.Comentarios;
+
+public record ObtenerComentariosQuery(object[] Keys) : IRequest<ResponseDto<ComentariosResponseDto>>;
+
+internal sealed class ObtenerComentariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerComentariosQueryHandler> _logger) : IRequestHandler<ObtenerComentariosQuery, ResponseDto<ComentariosResponseDto>>
+{
+    public async Task<ResponseDto<ComentariosResponseDto>> Handle(ObtenerComentariosQuery request, CancellationToken ct)
+    {
+        try
+        {
+            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Comentarios>().FindAsync(request.Keys, ct)
+            ?? throw new BusinessException(404,"Registro no encontrado.");
+            access.EnsureRead(entity);
+            return new(200,new ComentariosResponseDto { IdComentario = entity.IdComentario, IdTicket = entity.IdTicket, IdAutor = entity.IdAutor, Mensaje = entity.Mensaje, EsInterno = entity.EsInterno, Fecha = entity.Fecha });
+        }
+        catch (BusinessException ex)
+        {
+            if (ex.Status >= 500)
+                _logger.LogError(ex, "Error controlado en ObtenerComentariosQueryHandler.");
+            return new(ex.Status, default, ex.Message);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al ejecutar ObtenerComentariosQueryHandler.");
+            return new(500, default, "No se pudo completar la operacion.");
+        }
+    }
+
+}

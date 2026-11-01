@@ -1,0 +1,41 @@
+# Compilacion .NET
+**/bin/
+**/obj/
+**/.artifacts/
+**/TestResults/
+**/coverage/
+*.coverage
+*.coveragexml
+
+# IDE y preferencias locales
+**/.idea/
+**/.vs/
+**/.vscode/
+*.user
+*.suo
+*.sln.docstates
+*.DotSettings.user
+
+# Credenciales y configuracion privada
+.env
+.env.*
+!.env.example
+**/secrets.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
+*.pfx
+*.p12
+*.pem
+*.key
+
+# Logs, temporales y copias locales de bases
+*.log
+*.tmp
+*.bak
+*.dump
+*.backup
+Thumbs.db
+.DS_Store
+
+# Archivos cargados durante la ejecucion
+**/uploads/
