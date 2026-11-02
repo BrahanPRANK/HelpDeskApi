@@ -4,7 +4,7 @@ Proyecto académico de soporte TI desarrollado con .NET 10, PostgreSQL y Entity 
 
 ## Empezar
 
-**Leer primero [la guía de instalación y el reparto del equipo](HelpDeskBackend/DISTRIBUCION_EQUIPO.md).** Explica PostgreSQL, creación de la base, User Secrets, scaffolding, administrador inicial, Swagger y responsabilidades de los ocho integrantes.
+**Leer primero [la guía de instalación y el reparto del equipo](HelpDeskBackend/DISTRIBUCION_EQUIPO.md).** Explica PostgreSQL, creación de la base, User Secrets, scaffolding, administrador inicial, Swagger y responsabilidades de los seis integrantes.
 
 Requisitos: .NET SDK 10.0, PostgreSQL 16 o superior y una herramienta como pgAdmin. Para regenerar modelos se utiliza `dotnet-ef` 10.0.13.
 

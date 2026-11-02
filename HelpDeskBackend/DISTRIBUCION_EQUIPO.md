@@ -1,8 +1,12 @@
-# Distribución del proyecto HelpDesk entre los ocho integrantes
+# Distribución del proyecto HelpDesk entre seis integrantes
 
-**Fecha:** 1 de noviembre de 2026. **Ubicación:** `HelpDeskBackend`. **Alcance:** 36 tablas, 2 vistas y sus casos de uso.
+**Actualización:** 2 de noviembre de 2026. **Alcance:** 36 tablas, 2 vistas, autenticación y reportes.
 
-Esta asignación propone responsables por grupos relacionados. Cada integrante revisa, comprende, completa y sube el código de su grupo. No se distribuyen tablas al azar ni se promete la misma carga por número de entidades: autenticación y tickets requieren más coordinación.
+Este es el reparto vigente. Sustituye al de ocho integrantes. El equipo actual es Diego Medina, Gianfranco Paolo, Fernando Aquima, Stiven Yerai, Ederson Vilca y Brahan Quispe. Las responsabilidades que quedaron libres se redistribuyen a continuación.
+
+**Aclaración sobre servicios:** Brahan se encarga de los servicios técnicos de `HelpDesk.Infrastructure/Services` y sus interfaces de Domain. La entidad de negocio `Servicios` (catálogo de atenciones) corresponde a Ederson. Son responsabilidades distintas.
+
+**Repositorio de este documento:** plantilla completa `BrahanPRANK/HelpDeskApi`. El repositorio de trabajo del equipo es `brahanquispedev/HelpDeskApi`; esta actualización documental se publica únicamente en la plantilla.
 
 ## Guía inicial: instalar y ejecutar el proyecto en otra computadora
 
@@ -277,248 +281,192 @@ Referencias oficiales para ampliar: [herramientas y scaffolding de EF Core](http
 
 ## Resumen de responsables
 
-| Integrante | Grupo | Entidades o recursos asignados |
+| Integrante | Grupo | Entidades / recursos |
 |---|---|---|
-| Diego Medina | Seguridad y cuentas | `Usuarios`, `Roles`, `UsuariosRoles`, `Permisos`, `RolesPermisos`, `RecuperacionesClave` |
-| Gianfranco Paolo | Cambios y autorizaciones | `Cambios`, `CambiosTickets`, `TareasCambios`, `Aprobaciones` |
-| Fernando Aquima | Inventario tecnológico | `Activos`, `TiposActivos`, `AsignacionesActivos`, `TicketsActivos` |
-| Leticia Maldonado | Conocimiento y problemas recurrentes | `ArticulosConocimiento`, `CategoriasConocimiento`, `TicketsArticulos`, `Problemas`, `ProblemasTickets` |
-| Frank Oviedo | Comunicación y notificaciones | `Comentarios`, `Adjuntos`, `Notificaciones`, `PreferenciasNotificaciones`, `EnviosNotificaciones` |
-| Stiven Yerai | Organización y equipos de soporte | `Sedes`, `Areas`, `EquiposSoporte`, `IntegrantesEquipo` |
-| Ederson Vilca | Servicios y calidad de atención | `Servicios`, `CategoriasServicios`, `PoliticasAtencion`, `Encuestas` |
-| Brahan Quispe | Atención, seguimiento e integración | `Tickets`, `AsignacionesTickets`, `HistorialTickets`, `CargaTecnicos`, `ResumenTickets`, `Auditoria` |
+| Diego Medina | Autenticación, usuarios y acceso | `Usuarios`, `Roles`, `UsuariosRoles`, `Permisos`, `RolesPermisos`, `RecuperacionesClave` |
+| Gianfranco Paolo | Cambios, aprobaciones y problemas recurrentes | `Cambios`, `CambiosTickets`, `TareasCambios`, `Aprobaciones`, `Problemas`, `ProblemasTickets` |
+| Fernando Aquima | Inventario y evidencias de atención | `Activos`, `TiposActivos`, `AsignacionesActivos`, `TicketsActivos`, `Comentarios`, `Adjuntos` |
+| Stiven Yerai | Organización, equipos y notificaciones | `Sedes`, `Areas`, `EquiposSoporte`, `IntegrantesEquipo`, `Notificaciones`, `PreferenciasNotificaciones`, `EnviosNotificaciones` |
+| Ederson Vilca | Servicios, calidad y conocimiento | `Servicios`, `CategoriasServicios`, `PoliticasAtencion`, `Encuestas`, `ArticulosConocimiento`, `CategoriasConocimiento`, `TicketsArticulos` |
+| Brahan Quispe | Tickets, servicios técnicos, persistencia e integración | `Tickets`, `AsignacionesTickets`, `HistorialTickets`, `CargaTecnicos`, `ResumenTickets`, `Auditoria` |
 
-`CargaTecnicos` y `ResumenTickets` son vistas de consulta, no tablas con CRUD. `Autenticacion` pertenece a Diego; `Reportes` pertenece a Brahan.
+Cada tabla o vista tiene un solo responsable funcional. `CargaTecnicos` y `ResumenTickets` se consultan; no tienen CRUD. `Autenticacion` corresponde a Diego y `Reportes` a Brahan.
 
-## Qué sube cada responsable por entidad
+## Qué archivos debe subir cada integrante
 
-Para cada entidad asignada, el paquete funcional comprende:
+Por cada entidad asignada, el responsable incorpora al repositorio de trabajo:
 
-1. Su carpeta `HekDesk.Application/UseCases/{Entidad}/`: comandos, consultas, handlers y DTOs.
-2. `HelpDesk.Api/Controllers/{Entidad}Controller.cs` y, si existe, `{Entidad}AccionesController.cs`.
-3. Revisión y cambios necesarios de `HelpDesk.Domain/Models/{Entidad}.cs`, respetando que es código generado por scaffolding.
-4. Pruebas y ejemplos de solicitudes de su grupo; documentación de lo que funciona y de sus límites.
+1. `Application/UseCases/{Entidad}/`: comandos, consultas, handlers y DTOs de su entidad.
+2. Los controladores CRUD y de acciones correspondientes en el proyecto API.
+3. Pruebas y ejemplos de peticiones que demuestren su parte.
+4. Ajustes de modelo necesarios, coordinados con Brahan; los modelos generados ya pertenecen a la base común.
 
-Las tablas de relación `RolesPermisos`, `TicketsActivos`, `ProblemasTickets` y `CambiosTickets` no tienen archivo de modelo independiente: EF las representa dentro del contexto. Sus carpetas de casos de uso y controladores sí existen.
+En esta plantilla Application se llama `HekDesk.Application` y la API `HelpDesk.Api`. En la estructura del equipo del Escritorio se llaman `HelpDesk.Application` y `HelpDeskApi`. Adaptar las rutas, namespaces y referencias al proyecto destino; no reemplazar su solución completa con la de la plantilla.
+
+Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y coordina Brahan. Los otros integrantes los consumen mediante interfaces; no crean copias de Unit of Work por entidad.
 
 ## Detalle por integrante
 
-### 1. Diego Medina — Seguridad y cuentas
+### 1. Diego Medina — Autenticación, usuarios y acceso
 
 **Rama sugerida:** `feature/diego-seguridad`.
 
 **Responsabilidad funcional:**
 
-- Inicio de sesión, registro, hash de contraseñas y recuperación de acceso.
-- Asignación de roles y permisos; activación y desactivación de cuentas.
-- Revisar que las respuestas nunca expongan hashes o tokens almacenados.
+- Registro e inicio de sesión, cambio y restablecimiento de contraseña.
+- Administración de cuentas, roles y permisos; conservar un administrador activo.
+- Consumir las interfaces de contraseña y JWT; coordinar con Brahan sus implementaciones de Infrastructure.
 
-**Archivos y carpetas de su grupo:**
+**Carpetas y controladores en la plantilla:**
 
-| Entidad | Casos de uso completos | Controladores | Modelo |
-|---|---|---|---|
+| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+|---|---|---|
 | `Usuarios` | `HekDesk.Application/UseCases/Usuarios/` | `UsuariosController.cs`, `UsuariosAccionesController.cs` | `Usuarios.cs` |
 | `Roles` | `HekDesk.Application/UseCases/Roles/` | `RolesController.cs` | `Roles.cs` |
 | `UsuariosRoles` | `HekDesk.Application/UseCases/UsuariosRoles/` | `UsuariosRolesController.cs` | `UsuariosRoles.cs` |
 | `Permisos` | `HekDesk.Application/UseCases/Permisos/` | `PermisosController.cs` | `Permisos.cs` |
-| `RolesPermisos` | `HekDesk.Application/UseCases/RolesPermisos/` | `RolesPermisosController.cs` | Relación mapeada en el contexto; sin clase propia |
+| `RolesPermisos` | `HekDesk.Application/UseCases/RolesPermisos/` | `RolesPermisosController.cs` | Relación dentro del contexto; sin clase propia |
 | `RecuperacionesClave` | `HekDesk.Application/UseCases/RecuperacionesClave/` | `RecuperacionesClaveController.cs` | `RecuperacionesClave.cs` |
 
-**Además:**
+**Además sube:**
 
-- Carpeta completa `HekDesk.Application/UseCases/Autenticacion/`.
-- `HelpDesk.Api/Controllers/AuthController.cs`.
-- `HekDesk.Application/Security/AutenticacionDtos.cs` y `AuthService.cs` para el alta inicial por consola.
-- `HelpDesk.Infrastructure/Services/PasswordService.cs` y `JwtService.cs`.
-- `HelpDesk.Api/Security/CurrentUser.cs` y `scripts/Crear-Administrador.ps1`.
-- Coordinar cambios de JWT y autorización compartida con Brahan; no subir claves ni secretos.
+- `HekDesk.Application/UseCases/Autenticacion/Commands/`.
+- `HekDesk.Application/Security/AutenticacionDtos.cs` y `AuthService.cs` (alta inicial por consola).
+- `HelpDesk.Api/Controllers/AuthController.cs` y `HelpDesk.Api/Security/CurrentUser.cs`.
+- `HekDesk.Application/Security/AccessRules.cs` y `scripts/Crear-Administrador.ps1`, coordinando su integración.
+- Diego define y prueba el flujo de acceso. Brahan sube las implementaciones técnicas `PasswordService`, `JwtService` y sus interfaces; no se duplican esos archivos.
 
-**Qué debe demostrar antes de integrar:**
+**Debe demostrar:**
 
-- Registrar un empleado y comprobar su rol inicial.
-- Iniciar sesión, cambiar/restablecer clave y verificar que el token anterior deja de servir.
-- Rechazar asignación de roles por un empleado y conservar un administrador activo.
+- Registro solo como empleado, login correcto e incorrecto.
+- Denegar cambios de roles por un empleado y comprobar cuenta inactiva.
+- Restablecer contraseña una sola vez e invalidar el token de sesión anterior.
 
-**Ejemplo de mensaje de commit:** `feat: completar seguridad y cuentas`.
-
-### 2. Gianfranco Paolo — Cambios y autorizaciones
+### 2. Gianfranco Paolo — Cambios, aprobaciones y problemas recurrentes
 
 **Rama sugerida:** `feature/gianfranco-cambios`.
 
 **Responsabilidad funcional:**
 
-- Planificación, programación, ejecución y finalización de cambios.
-- Tareas de cada cambio y relación con los tickets que lo justifican.
-- Aprobaciones por pasos: orden, responsable y decisión.
+- Planificar, programar, ejecutar y finalizar cambios con sus tareas.
+- Decidir aprobaciones en orden y por el aprobador asignado.
+- Investigar fallas recurrentes, documentar causa raíz y relacionar incidentes con problemas.
 
-**Archivos y carpetas de su grupo:**
+**Carpetas y controladores en la plantilla:**
 
-| Entidad | Casos de uso completos | Controladores | Modelo |
-|---|---|---|---|
+| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+|---|---|---|
 | `Cambios` | `HekDesk.Application/UseCases/Cambios/` | `CambiosController.cs`, `CambiosAccionesController.cs` | `Cambios.cs` |
-| `CambiosTickets` | `HekDesk.Application/UseCases/CambiosTickets/` | `CambiosTicketsController.cs` | Relación mapeada en el contexto; sin clase propia |
+| `CambiosTickets` | `HekDesk.Application/UseCases/CambiosTickets/` | `CambiosTicketsController.cs` | Relación dentro del contexto; sin clase propia |
 | `TareasCambios` | `HekDesk.Application/UseCases/TareasCambios/` | `TareasCambiosController.cs` | `TareasCambios.cs` |
 | `Aprobaciones` | `HekDesk.Application/UseCases/Aprobaciones/` | `AprobacionesController.cs`, `AprobacionesAccionesController.cs` | `Aprobaciones.cs` |
+| `Problemas` | `HekDesk.Application/UseCases/Problemas/` | `ProblemasController.cs` | `Problemas.cs` |
+| `ProblemasTickets` | `HekDesk.Application/UseCases/ProblemasTickets/` | `ProblemasTicketsController.cs` | Relación dentro del contexto; sin clase propia |
 
-**Qué debe demostrar antes de integrar:**
+**Debe demostrar:**
 
-- Crear un cambio con sus tareas.
-- Impedir programación sin las aprobaciones requeridas.
-- Aprobar en orden y finalizar solo cuando las tareas estén completadas o canceladas.
+- Impedir ejecución sin aprobación o finalización con tareas pendientes.
+- Rechazar una segunda decisión sobre una aprobación resuelta.
+- Exigir causa y solución al resolver un problema.
 
-**Ejemplo de mensaje de commit:** `feat: completar cambios y autorizaciones`.
+### 3. Fernando Aquima — Inventario y evidencias de atención
 
-### 3. Fernando Aquima — Inventario tecnológico
-
-**Rama sugerida:** `feature/fernando-activos`.
+**Rama sugerida:** `feature/fernando-activos-evidencias`.
 
 **Responsabilidad funcional:**
 
-- Registro y clasificación de computadoras, impresoras y otros activos.
-- Asignación, devolución y conservación de responsables anteriores.
-- Relación de los activos con sus incidentes y solicitudes.
+- Registrar y clasificar bienes tecnológicos, asignarlos y recibir devoluciones.
+- Relacionar activos con tickets.
+- Gestionar mensajes y metadatos de evidencias asociadas; aplicar visibilidad pública o interna.
 
-**Archivos y carpetas de su grupo:**
+**Carpetas y controladores en la plantilla:**
 
-| Entidad | Casos de uso completos | Controladores | Modelo |
-|---|---|---|---|
+| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+|---|---|---|
 | `Activos` | `HekDesk.Application/UseCases/Activos/` | `ActivosController.cs` | `Activos.cs` |
 | `TiposActivos` | `HekDesk.Application/UseCases/TiposActivos/` | `TiposActivosController.cs` | `TiposActivos.cs` |
 | `AsignacionesActivos` | `HekDesk.Application/UseCases/AsignacionesActivos/` | `AsignacionesActivosController.cs`, `AsignacionesActivosAccionesController.cs` | `AsignacionesActivos.cs` |
-| `TicketsActivos` | `HekDesk.Application/UseCases/TicketsActivos/` | `TicketsActivosController.cs` | Relación mapeada en el contexto; sin clase propia |
-
-**Qué debe demostrar antes de integrar:**
-
-- Crear un activo de un tipo y sede válidos.
-- Asignarlo, devolverlo y asignarlo nuevamente sin perder historial.
-- Vincular el activo a un ticket y rechazar dos asignaciones vigentes.
-
-**Ejemplo de mensaje de commit:** `feat: completar inventario tecnológico`.
-
-### 4. Leticia Maldonado — Conocimiento y problemas recurrentes
-
-**Rama sugerida:** `feature/leticia-conocimiento`.
-
-**Responsabilidad funcional:**
-
-- Borradores, publicación, archivo y clasificación de soluciones documentadas.
-- Vincular artículos de solución con tickets.
-- Agrupar fallas recurrentes e investigar su causa y solución.
-
-**Archivos y carpetas de su grupo:**
-
-| Entidad | Casos de uso completos | Controladores | Modelo |
-|---|---|---|---|
-| `ArticulosConocimiento` | `HekDesk.Application/UseCases/ArticulosConocimiento/` | `ArticulosConocimientoController.cs`, `ArticulosConocimientoAccionesController.cs` | `ArticulosConocimiento.cs` |
-| `CategoriasConocimiento` | `HekDesk.Application/UseCases/CategoriasConocimiento/` | `CategoriasConocimientoController.cs` | `CategoriasConocimiento.cs` |
-| `TicketsArticulos` | `HekDesk.Application/UseCases/TicketsArticulos/` | `TicketsArticulosController.cs` | `TicketsArticulos.cs` |
-| `Problemas` | `HekDesk.Application/UseCases/Problemas/` | `ProblemasController.cs` | `Problemas.cs` |
-| `ProblemasTickets` | `HekDesk.Application/UseCases/ProblemasTickets/` | `ProblemasTicketsController.cs` | Relación mapeada en el contexto; sin clase propia |
-
-**Qué debe demostrar antes de integrar:**
-
-- Crear y publicar un artículo y comprobar su visibilidad.
-- Relacionar una solución con un ticket.
-- Agrupar tickets en un problema y exigir causa y solución al resolverlo.
-
-**Ejemplo de mensaje de commit:** `feat: completar conocimiento y problemas recurrentes`.
-
-### 5. Frank Oviedo — Comunicación y notificaciones
-
-**Rama sugerida:** `feature/frank-comunicacion`.
-
-**Responsabilidad funcional:**
-
-- Respuestas públicas, notas internas y metadatos de archivos asociados.
-- Avisos para destinatarios, preferencias y lectura de notificaciones.
-- Seguimiento y reintento de correos; no confundirlo con un proveedor de envío ya implementado.
-
-**Archivos y carpetas de su grupo:**
-
-| Entidad | Casos de uso completos | Controladores | Modelo |
-|---|---|---|---|
+| `TicketsActivos` | `HekDesk.Application/UseCases/TicketsActivos/` | `TicketsActivosController.cs` | Relación dentro del contexto; sin clase propia |
 | `Comentarios` | `HekDesk.Application/UseCases/Comentarios/` | `ComentariosController.cs` | `Comentarios.cs` |
 | `Adjuntos` | `HekDesk.Application/UseCases/Adjuntos/` | `AdjuntosController.cs` | `Adjuntos.cs` |
-| `Notificaciones` | `HekDesk.Application/UseCases/Notificaciones/` | `NotificacionesController.cs`, `NotificacionesAccionesController.cs` | `Notificaciones.cs` |
-| `PreferenciasNotificaciones` | `HekDesk.Application/UseCases/PreferenciasNotificaciones/` | `PreferenciasNotificacionesController.cs` | `PreferenciasNotificaciones.cs` |
-| `EnviosNotificaciones` | `HekDesk.Application/UseCases/EnviosNotificaciones/` | `EnviosNotificacionesController.cs`, `EnviosNotificacionesAccionesController.cs` | `EnviosNotificaciones.cs` |
 
-**Qué debe demostrar antes de integrar:**
+**Debe demostrar:**
 
-- Comprobar que el empleado no vea notas ni adjuntos internos.
-- Consultar avisos propios y marcarlos como leídos.
-- Reintentar solo correos fallidos que no superaron el límite.
+- Asignar, devolver y volver a asignar un activo conservando el historial.
+- Rechazar dos asignaciones vigentes de un activo.
+- Impedir que el solicitante consulte comentarios o adjuntos internos.
 
-**Ejemplo de mensaje de commit:** `feat: completar comunicación y notificaciones`.
+### 4. Stiven Yerai — Organización, equipos y notificaciones
 
-### 6. Stiven Yerai — Organización y equipos de soporte
-
-**Rama sugerida:** `feature/stiven-organizacion`.
+**Rama sugerida:** `feature/stiven-organizacion-avisos`.
 
 **Responsabilidad funcional:**
 
-- Locales y departamentos de la empresa.
-- Grupos de soporte y sus integrantes, coordinadores y disponibilidad.
-- Validar las relaciones que necesitan usuarios, servicios y asignación de tickets.
+- Configurar locales, departamentos, grupos de soporte e integrantes.
+- Gestionar avisos destinados a usuarios, lectura y preferencias.
+- Gestionar seguimiento y reintento de correos; el proveedor de envío real sigue fuera de la primera versión.
 
-**Archivos y carpetas de su grupo:**
+**Carpetas y controladores en la plantilla:**
 
-| Entidad | Casos de uso completos | Controladores | Modelo |
-|---|---|---|---|
+| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+|---|---|---|
 | `Sedes` | `HekDesk.Application/UseCases/Sedes/` | `SedesController.cs` | `Sedes.cs` |
 | `Areas` | `HekDesk.Application/UseCases/Areas/` | `AreasController.cs` | `Areas.cs` |
 | `EquiposSoporte` | `HekDesk.Application/UseCases/EquiposSoporte/` | `EquiposSoporteController.cs` | `EquiposSoporte.cs` |
 | `IntegrantesEquipo` | `HekDesk.Application/UseCases/IntegrantesEquipo/` | `IntegrantesEquipoController.cs` | `IntegrantesEquipo.cs` |
+| `Notificaciones` | `HekDesk.Application/UseCases/Notificaciones/` | `NotificacionesController.cs`, `NotificacionesAccionesController.cs` | `Notificaciones.cs` |
+| `PreferenciasNotificaciones` | `HekDesk.Application/UseCases/PreferenciasNotificaciones/` | `PreferenciasNotificacionesController.cs` | `PreferenciasNotificaciones.cs` |
+| `EnviosNotificaciones` | `HekDesk.Application/UseCases/EnviosNotificaciones/` | `EnviosNotificacionesController.cs`, `EnviosNotificacionesAccionesController.cs` | `EnviosNotificaciones.cs` |
 
-**Qué debe demostrar antes de integrar:**
+**Debe demostrar:**
 
-- Crear sede, área y equipo.
-- Agregar un integrante y actualizar su disponibilidad.
-- Comprobar que la pertenencia al equipo sea válida para asignar un técnico.
+- Crear sede, área y equipo; revisar pertenencia y disponibilidad de técnicos.
+- Mostrar y marcar como leídos solo los avisos del destinatario.
+- Reintentar únicamente envíos fallidos dentro de su límite.
 
-**Ejemplo de mensaje de commit:** `feat: completar organización y equipos de soporte`.
+### 5. Ederson Vilca — Servicios, calidad y conocimiento
 
-### 7. Ederson Vilca — Servicios y calidad de atención
-
-**Rama sugerida:** `feature/ederson-servicios`.
+**Rama sugerida:** `feature/ederson-servicios-conocimiento`.
 
 **Responsabilidad funcional:**
 
-- Catálogo de atenciones disponibles y sus categorías.
-- Plazos de primera respuesta y resolución por prioridad, en tiempo corrido.
-- Evaluación de la atención: solo solicitante, ticket cerrado y una respuesta por ticket.
+- Administrar el catálogo de servicios y los compromisos de respuesta y resolución.
+- Evaluar la atención con encuestas y controlar quién puede responderlas.
+- Documentar soluciones, clasificarlas, publicarlas y relacionarlas con tickets.
 
-**Archivos y carpetas de su grupo:**
+**Carpetas y controladores en la plantilla:**
 
-| Entidad | Casos de uso completos | Controladores | Modelo |
-|---|---|---|---|
+| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+|---|---|---|
 | `Servicios` | `HekDesk.Application/UseCases/Servicios/` | `ServiciosController.cs` | `Servicios.cs` |
 | `CategoriasServicios` | `HekDesk.Application/UseCases/CategoriasServicios/` | `CategoriasServiciosController.cs` | `CategoriasServicios.cs` |
 | `PoliticasAtencion` | `HekDesk.Application/UseCases/PoliticasAtencion/` | `PoliticasAtencionController.cs` | `PoliticasAtencion.cs` |
 | `Encuestas` | `HekDesk.Application/UseCases/Encuestas/` | `EncuestasController.cs` | `Encuestas.cs` |
+| `ArticulosConocimiento` | `HekDesk.Application/UseCases/ArticulosConocimiento/` | `ArticulosConocimientoController.cs`, `ArticulosConocimientoAccionesController.cs` | `ArticulosConocimiento.cs` |
+| `CategoriasConocimiento` | `HekDesk.Application/UseCases/CategoriasConocimiento/` | `CategoriasConocimientoController.cs` | `CategoriasConocimiento.cs` |
+| `TicketsArticulos` | `HekDesk.Application/UseCases/TicketsArticulos/` | `TicketsArticulosController.cs` | `TicketsArticulos.cs` |
 
-**Qué debe demostrar antes de integrar:**
+**Debe demostrar:**
 
-- Crear categoría y servicio vinculado a un equipo.
-- Configurar los plazos de una prioridad y comprobar que el ticket los copie.
-- Aceptar una encuesta del solicitante al cierre y rechazar duplicados.
+- Crear un servicio de un equipo válido y una política por prioridad.
+- Aceptar una encuesta propia al cierre y rechazar duplicados.
+- Publicar un artículo y comprobar su visibilidad y asociación a un ticket.
 
-**Ejemplo de mensaje de commit:** `feat: completar servicios y calidad de atención`.
+### 6. Brahan Quispe — Tickets, servicios técnicos, persistencia e integración
 
-### 8. Brahan Quispe — Atención, seguimiento e integración
-
-**Rama sugerida:** `feature/brahan-tickets`.
+**Rama sugerida:** `feature/brahan-tickets-infraestructura`.
 
 **Responsabilidad funcional:**
 
-- Creación, asignación, atención, espera, resolución, cierre, reapertura y cancelación de tickets.
-- Historial, versiones de concurrencia y cambios de responsables.
-- Consultas de carga, resumen e indicadores y coordinación de la integración técnica.
+- Implementar el ciclo de atención, asignaciones, historial y control de versión de tickets.
+- Gestionar reportes operativos y auditoría.
+- Implementar y subir servicios técnicos de Infrastructure, repositorios, Unit of Work y sus contratos en Domain.
+- Coordinar configuración, registro de dependencias, middleware, scaffolding e integración general.
 
-**Archivos y carpetas de su grupo:**
+**Carpetas y controladores en la plantilla:**
 
-| Entidad | Casos de uso completos | Controladores | Modelo |
-|---|---|---|---|
+| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+|---|---|---|
 | `Tickets` | `HekDesk.Application/UseCases/Tickets/` | `TicketsController.cs`, `TicketsAccionesController.cs` | `Tickets.cs` |
 | `AsignacionesTickets` | `HekDesk.Application/UseCases/AsignacionesTickets/` | `AsignacionesTicketsController.cs` | `AsignacionesTickets.cs` |
 | `HistorialTickets` | `HekDesk.Application/UseCases/HistorialTickets/` | `HistorialTicketsController.cs` | `HistorialTickets.cs` |
@@ -526,90 +474,90 @@ Las tablas de relación `RolesPermisos`, `TicketsActivos`, `ProblemasTickets` y 
 | `ResumenTickets` | `HekDesk.Application/UseCases/ResumenTickets/` | `ResumenTicketsController.cs` | `ResumenTickets.cs` |
 | `Auditoria` | `HekDesk.Application/UseCases/Auditoria/` | `AuditoriaController.cs` | `Auditoria.cs` |
 
-**Además:**
+**Además sube y mantiene la base compartida:**
 
-- Carpeta completa `HekDesk.Application/UseCases/Reportes/`.
-- `HelpDesk.Api/Controllers/ReportesController.cs`, incluyendo la consulta de indicadores.
+- `HekDesk.Application/UseCases/Reportes/Queries/` y `HelpDesk.Api/Controllers/ReportesController.cs`.
+- `HelpDesk.Domain/Ports/IGenericRepository.cs`, `IUnitOfWork.cs` e `ISecurityServices.cs`.
+- `HelpDesk.Domain/Models/` como scaffolding común; cada dueño de entidad revisa los cambios que le afectan.
+- `HelpDesk.Domain/Exceptions/BusinessException.cs`.
+- `HelpDesk.Infrastructure/Repositories/GenericRepository.cs` y `UnitOfWork.cs`.
+- `HelpDesk.Infrastructure/Services/PasswordService.cs` y `JwtService.cs`.
+- `HelpDesk.Infrastructure/Data/HelpDeskDbContext.cs` y `HelpDeskDbContext.Custom.cs`.
+- `HelpDesk.Infrastructure/Configuration/InfrastructureServicesExtensions.cs`.
+- `HekDesk.Application/Configuration/ApplicationServicesExtensions.cs` y los contratos de `Common/`.
+- `HelpDesk.Api/Program.cs`, `HelpDesk.Api/Middleware/`, solución, referencias y dependencias.
+- `scripts/Actualizar-Modelo.ps1`, SQL, documentación y suite de integración compartida.
+- Si se añade un servicio técnico adicional a Infrastructure, Brahan coordina su implementación, interfaz y registro. El responsable funcional correspondiente aporta sus requisitos y pruebas.
 
-**Qué debe demostrar antes de integrar:**
+**Debe demostrar:**
 
-- Completar el ciclo de creación, asignación, atención, resolución y cierre.
-- Rechazar cambios con una versión antigua del ticket.
-- Comprobar historial, auditoría, indicadores y visibilidad por usuario/equipo.
+- Completar registro, asignación, atención, resolución y cierre de un ticket.
+- Rechazar modificaciones con una versión anterior.
+- Comprobar guardado transaccional, auditoría, reportes, JWT y hash junto con Diego.
 
-**Ejemplo de mensaje de commit:** `feat: completar atención, seguimiento e integración`.
+## Código compartido: responsabilidad y revisión
 
-## Archivos compartidos: quién coordina
-
-Estos archivos afectan a varios grupos. Brahan coordina su integración; Diego revisa seguridad. Cada integrante solicita los cambios necesarios en lugar de reemplazarlos con una copia antigua.
-
-| Archivo o área | Coordinación | Motivo |
+| Componente | Responsable de subir / mantener | Coordinación |
 |---|---|---|
-| `HelpDeskBackend.sln` y archivos `.csproj` | Brahan | Referencias, dependencias y compilación de la solución. |
-| `HelpDesk.Infrastructure/Data/HelpDeskDbContext.cs` | Brahan | Contexto generado que contiene relaciones de todas las entidades. |
-| `HelpDesk.Infrastructure/Data/HelpDeskDbContext.Custom.cs` | Brahan, con responsable afectado | Relaciones corregidas y concurrencia sin editar a mano el contexto generado. |
-| `scripts/Actualizar-Modelo.ps1` | Brahan | Regeneración coordinada del scaffolding. |
-| `HekDesk.Application/Configuration/ApplicationServicesExtensions.cs` | Brahan | Registro de handlers y dependencias comunes. |
-| `HelpDesk.Api/Program.cs` | Brahan + Diego | Arranque, JWT, middleware, Swagger y configuración. |
-| `HelpDesk.Infrastructure/Configuration/InfrastructureServicesExtensions.cs` | Diego + Brahan | Persistencia, JWT y comprobación de identidad. |
-| `HekDesk.Application/Security/AccessRules.cs` | Diego + Brahan | Acceso transversal por propietario, rol y equipo. |
-| `HelpDesk.Domain/Ports/` y `HelpDesk.Infrastructure/Repositories/` | Brahan | Contratos, repositorio y Unit of Work. |
-| `HekDesk.Application/Common/` | Brahan | Respuestas, paginación, validación básica y contratos compartidos. |
-| `HelpDesk.Api/Middleware/` | Brahan | Respaldo de errores fuera de los handlers. |
-| `tests/HelpDesk.IntegrationTests/` | Brahan integra; todos aportan casos | Suite compartida para prevenir regresiones. |
-| SQL y cambios de esquema | Brahan coordina; dueño de entidad revisa | Evitar versiones incompatibles de la base. |
+| Repositorio genérico e interfaz | Brahan | Todos utilizan `Repository<T>()`. |
+| Unit of Work e interfaz | Brahan | Todos confirman las escrituras con `Complete(ct)`. |
+| Interfaces de servicios en Domain | Brahan | Diego revisa los contratos de seguridad. |
+| JWT y hash en Infrastructure/Services | Brahan | Diego consume los servicios desde autenticación y prueba el acceso. |
+| Usuario actual y reglas de autorización | Diego | Brahan integra con la configuración de la API. |
+| Contexto, modelos y correcciones del scaffolding | Brahan | Cada integrante revisa sus entidades; no regenerar independientemente. |
+| Program, registro DI, middleware y Common | Brahan | Registrar contratos y handlers de todos sin reemplazar cambios ajenos. |
+| SQL, `.sln`, `.csproj`, scripts y pruebas compartidas | Brahan | Los seis aportan escenarios; cambios de esquema coordinados. |
 
-Los responsables indicados coordinan estos archivos; eso no cambia la propiedad funcional de las entidades de los otros integrantes.
+**Domain no lleva implementaciones de acceso a PostgreSQL ni generación de JWT.** Brahan mantiene allí entidades, excepciones y contratos; implementa persistencia y servicios en Infrastructure.
 
 ## Dependencias entre grupos
 
-| Grupo que necesita información | Coordina con | Dependencia |
+| Grupo | Necesita coordinar con | Información compartida |
 |---|---|---|
-| Todos | Diego | Usuarios autenticados, roles y permisos. |
-| Usuarios, servicios, inventario y tickets | Stiven | Sedes, áreas, equipos e integrantes. |
-| Brahan | Ederson | Servicio y política activa antes de crear un ticket. |
-| Brahan | Frank | Comentarios, avisos y evidencias del proceso de atención. |
-| Brahan | Gianfranco | Aprobaciones necesarias para continuar una atención. |
-| Fernando, Leticia y Gianfranco | Brahan | Identificador del ticket para sus relaciones. |
-| Ederson | Brahan | Ticket cerrado para permitir una encuesta. |
-| Reportes | Todos | Datos consistentes para consultas e indicadores. |
+| Todos | Brahan | Interfaces, repositorios, servicios y configuración común. |
+| Todos | Diego | Identidades, roles y permisos. |
+| Usuarios, inventario, servicios y tickets | Stiven | Sedes, áreas, equipos e integrantes. |
+| Tickets | Ederson | Servicio y política activa antes de registrar un caso. |
+| Tickets | Fernando | Comentarios, adjuntos y activos relacionados. |
+| Tickets y cambios | Gianfranco | Aprobaciones, problemas y cambios relacionados. |
+| Tickets | Stiven | Avisos y destinatarios. |
+| Conocimiento y encuestas | Brahan | Estado y acceso al ticket relacionado. |
+| Reportes | Los seis | Datos coherentes para indicadores. |
 
-## Cómo organizar la primera subida
+## Cómo incorporar los archivos al repositorio de trabajo
 
-1. Brahan integra un **commit base compilable**: solución, cuatro proyectos, paquetes, puertos, repositorios, configuración sin secretos, contexto y todos los modelos generados por scaffolding. Así los ocho trabajan sobre la misma base y el contexto no referencia clases que faltan.
-2. Los modelos del commit base quedan bajo revisión de sus responsables por entidad; no hace falta volver a subirlos sin cambios. El trabajo funcional de cada integrante se concentra en sus casos de uso, DTOs, controladores, pruebas y ajustes de modelo necesarios.
-3. Cada integrante parte de esa base común y usa la rama indicada. Los casos de uso compartidos ya existentes pueden formar parte de una base más completa si el equipo lo acuerda; se conservarán y cada integrante identificará sus cambios reales sobre esa base.
-4. Cada integrante revisa únicamente sus rutas, valida su grupo y prepara commits con archivos explícitos. Evitar `git add .` cuando hay cambios de otros compañeros en la misma carpeta de trabajo.
-5. Crear una solicitud de integración por grupo, describiendo entidades, endpoints y verificaciones. La cuenta, el repositorio remoto y la rama principal se confirman cuando se configure Git.
-6. Integrar primero organización y seguridad, después catálogo y tickets; luego comunicación, activos, conocimiento, problemas y cambios. Cerrar con pruebas completas de los ocho grupos.
+1. Partir de `main` actualizado de `brahanquispedev/HelpDeskApi`, no de una copia de la solución completa de referencia.
+2. Brahan integra primero la persistencia, servicios técnicos, contratos, contexto y configuración común. La base debe seguir compilando.
+3. Cada integrante crea su rama, adapta los archivos de sus entidades a los nombres del proyecto destino y agrega pruebas.
+4. Subir solo los archivos de su responsabilidad. Los archivos compartidos se coordinan con Brahan; los de seguridad con Diego y Brahan.
+5. Abrir un Pull Request hacia `main`, indicando qué se incorporó, qué se adaptó y cómo se probó. Cada persona usa su cuenta y autoría propia.
+6. Integrar los grupos por dependencias y ejecutar las pruebas compartidas. Que haya más o menos entidades no significa igual carga; revisar avance entre los seis.
+
+No se incorporan automáticamente contribuciones al repositorio de trabajo por actualizar este documento de la plantilla. Este documento define quién debe subirlas.
 
 ## Qué NO subir
 
-- Carpetas `bin/`, `obj/`, `.idea/` ni archivos de preferencias personales.
-- Contraseñas, claves JWT, cadenas de conexión con credenciales o archivos de User Secrets.
-- Bases de datos locales, copias con información personal o registros de pruebas con secretos.
-- Archivos compartidos reemplazados sin coordinar, ni una segunda versión del esquema incompatible.
+- Secretos, contraseñas, tokens, cadenas de conexión con credenciales ni archivos de User Secrets.
+- Carpetas `bin/`, `obj/`, `.idea/` o configuración personal.
+- Copias completas de contexto o configuración que reemplacen cambios de otro integrante sin revisión.
 
 ## Verificación antes de integrar
 
+Cada integrante compila y prueba sus endpoints. En esta plantilla:
+
 ```powershell
+cd HelpDeskBackend
 dotnet build HelpDeskBackend.sln
-```
-
-Brahan ejecuta además la suite compartida en la integración:
-
-```powershell
 dotnet run --project tests/HelpDesk.IntegrationTests
 ```
 
-La suite usa una base temporal y necesita permisos para crearla y eliminarla. No debe apuntarse manualmente a una base con datos reales. Cada integrante debe documentar también qué escenarios de su grupo verificó; la suite general no reemplaza revisar todos sus endpoints.
+En el repositorio del equipo se utilizan los nombres de su propia solución. La suite completa requiere una base temporal y permisos para crearla/eliminarla; su coordinación corresponde a Brahan.
 
-## Cobertura del reparto
+## Cobertura y versión del reparto
 
-- **36 tablas:** cada una tiene un responsable único.
-- **2 vistas:** `CargaTecnicos` y `ResumenTickets`, a cargo de Brahan.
-- **Autenticación:** Diego.
-- **Reportes e integración compartida:** Brahan.
-- Los DTOs mantienen su ubicación actual dentro de `UseCases/{Entidad}/Dtos`; este reparto no mueve archivos de código.
-
-Esta distribución no publica commits ni modifica el repositorio remoto. Es una guía de responsabilidades que el equipo puede ajustar según disponibilidad y experiencia.
+- Seis integrantes activos.
+- 36 tablas y 2 vistas: 38 recursos asignados una sola vez.
+- Autenticación asignada a Diego; servicios técnicos y contratos asignados a Brahan.
+- Reportes, repositorios, Unit of Work e integración asignados a Brahan.
+- Se conserva la guía inicial de instalación y ejecución al principio del documento.
+- El reparto anterior de ocho personas queda reemplazado por esta versión del 2 de noviembre de 2026.
