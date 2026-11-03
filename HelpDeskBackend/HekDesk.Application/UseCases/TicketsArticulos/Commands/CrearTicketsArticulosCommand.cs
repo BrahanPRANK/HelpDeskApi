@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TicketsArticulos;
@@ -17,7 +16,7 @@ public class CrearTicketsArticulosCommand : IRequest<ResponseDto<TicketsArticulo
     public Guid IdUsuario { get; set; }
 }
 
-internal sealed class CrearTicketsArticulosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearTicketsArticulosCommandHandler> _logger) : IRequestHandler<CrearTicketsArticulosCommand, ResponseDto<TicketsArticulosResponseDto>>
+internal sealed class CrearTicketsArticulosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<CrearTicketsArticulosCommand, ResponseDto<TicketsArticulosResponseDto>>
 {
     public async Task<ResponseDto<TicketsArticulosResponseDto>> Handle(CrearTicketsArticulosCommand request, CancellationToken ct)
     {
@@ -36,7 +35,7 @@ internal sealed class CrearTicketsArticulosCommandHandler(IUnitOfWork _unitOfWor
             entity.IdUsuario = actor.Id;
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TicketsArticulos>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new TicketsArticulosResponseDto
+            return new ResponseDto<TicketsArticulosResponseDto>(201, new TicketsArticulosResponseDto
             {
                 IdTicket = entity.IdTicket,
                 IdArticulo = entity.IdArticulo,
@@ -46,14 +45,11 @@ internal sealed class CrearTicketsArticulosCommandHandler(IUnitOfWork _unitOfWor
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearTicketsArticulosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TicketsArticulosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearTicketsArticulosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TicketsArticulosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

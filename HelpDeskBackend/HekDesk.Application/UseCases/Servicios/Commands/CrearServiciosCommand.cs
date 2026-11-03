@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Servicios;
@@ -24,7 +23,7 @@ public class CrearServiciosCommand : IRequest<ResponseDto<ServiciosResponseDto>>
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class CrearServiciosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearServiciosCommandHandler> _logger) : IRequestHandler<CrearServiciosCommand, ResponseDto<ServiciosResponseDto>>
+internal sealed class CrearServiciosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearServiciosCommand, ResponseDto<ServiciosResponseDto>>
 {
     public async Task<ResponseDto<ServiciosResponseDto>> Handle(CrearServiciosCommand request, CancellationToken ct)
     {
@@ -46,7 +45,7 @@ internal sealed class CrearServiciosCommandHandler(IUnitOfWork _unitOfWork, Acce
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Servicios>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new ServiciosResponseDto
+            return new ResponseDto<ServiciosResponseDto>(201, new ServiciosResponseDto
             {
                 IdServicio = entity.IdServicio,
                 IdEquipoResponsable = entity.IdEquipoResponsable,
@@ -59,14 +58,11 @@ internal sealed class CrearServiciosCommandHandler(IUnitOfWork _unitOfWork, Acce
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearServiciosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ServiciosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearServiciosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ServiciosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

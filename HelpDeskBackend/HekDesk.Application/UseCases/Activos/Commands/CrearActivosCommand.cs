@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Activos;
@@ -29,7 +28,7 @@ public class CrearActivosCommand : IRequest<ResponseDto<ActivosResponseDto>>
     public string Estado { get; set; } = "disponible";
 }
 
-internal sealed class CrearActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearActivosCommandHandler> _logger) : IRequestHandler<CrearActivosCommand, ResponseDto<ActivosResponseDto>>
+internal sealed class CrearActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearActivosCommand, ResponseDto<ActivosResponseDto>>
 {
     public async Task<ResponseDto<ActivosResponseDto>> Handle(CrearActivosCommand request, CancellationToken ct)
     {
@@ -55,7 +54,7 @@ internal sealed class CrearActivosCommandHandler(IUnitOfWork _unitOfWork, Access
             Validation.Require(entity.Estado != "asignado", "Primero registre el activo y despues su asignacion.");
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Activos>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new ActivosResponseDto
+            return new ResponseDto<ActivosResponseDto>(201, new ActivosResponseDto
             {
                 IdActivo = entity.IdActivo,
                 IdSede = entity.IdSede,
@@ -72,14 +71,11 @@ internal sealed class CrearActivosCommandHandler(IUnitOfWork _unitOfWork, Access
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearActivosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ActivosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearActivosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ActivosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

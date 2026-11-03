@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.CambiosTickets;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.CambiosTickets;
 
 public record ObtenerCambiosTicketsQuery(object[] Keys) : IRequest<ResponseDto<CambiosTicketsResponseDto>>;
 
-internal sealed class ObtenerCambiosTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerCambiosTicketsQueryHandler> _logger) : IRequestHandler<ObtenerCambiosTicketsQuery, ResponseDto<CambiosTicketsResponseDto>>
+internal sealed class ObtenerCambiosTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerCambiosTicketsQuery, ResponseDto<CambiosTicketsResponseDto>>
 {
     public async Task<ResponseDto<CambiosTicketsResponseDto>> Handle(ObtenerCambiosTicketsQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerCambiosTicketsQueryHandler(IUnitOfWork _unitOfWork,
             var entity = await _unitOfWork.Repository<Dictionary<string, object>>("CambiosTickets").GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new CambiosTicketsResponseDto()
+            return new ResponseDto<CambiosTicketsResponseDto>(200, new CambiosTicketsResponseDto()
             {
                 IdCambio = (Guid)entity["IdCambio"],
                 IdTicket = (Guid)entity["IdTicket"]
@@ -28,14 +27,11 @@ internal sealed class ObtenerCambiosTicketsQueryHandler(IUnitOfWork _unitOfWork,
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerCambiosTicketsQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<CambiosTicketsResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerCambiosTicketsQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<CambiosTicketsResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

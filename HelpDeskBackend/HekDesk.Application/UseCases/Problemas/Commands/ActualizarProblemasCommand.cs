@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Problemas;
@@ -31,7 +30,7 @@ public class ActualizarProblemasCommand : IRequest<ResponseDto<ProblemasResponse
     public string? SolucionDefinitiva { get; set; }
 }
 
-internal sealed class ActualizarProblemasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarProblemasCommandHandler> _logger) : IRequestHandler<ActualizarProblemasCommand, ResponseDto<ProblemasResponseDto>>
+internal sealed class ActualizarProblemasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarProblemasCommand, ResponseDto<ProblemasResponseDto>>
 {
     public async Task<ResponseDto<ProblemasResponseDto>> Handle(ActualizarProblemasCommand request, CancellationToken ct)
     {
@@ -53,7 +52,7 @@ internal sealed class ActualizarProblemasCommandHandler(IUnitOfWork _unitOfWork,
             entity.SolucionDefinitiva = request.SolucionDefinitiva;
 
             await _unitOfWork.Complete();
-            return new(200, new ProblemasResponseDto
+            return new ResponseDto<ProblemasResponseDto>(200, new ProblemasResponseDto
             {
                 IdProblema = entity.IdProblema,
                 IdResponsable = entity.IdResponsable,
@@ -68,14 +67,11 @@ internal sealed class ActualizarProblemasCommandHandler(IUnitOfWork _unitOfWork,
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarProblemasCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ProblemasResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarProblemasCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ProblemasResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

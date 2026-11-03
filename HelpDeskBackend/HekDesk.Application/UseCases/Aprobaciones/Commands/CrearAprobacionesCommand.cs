@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Aprobaciones;
@@ -22,7 +21,7 @@ public class CrearAprobacionesCommand : IRequest<ResponseDto<AprobacionesRespons
     public string? ComentarioDecision { get; set; }
 }
 
-internal sealed class CrearAprobacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearAprobacionesCommandHandler> _logger) : IRequestHandler<CrearAprobacionesCommand, ResponseDto<AprobacionesResponseDto>>
+internal sealed class CrearAprobacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<CrearAprobacionesCommand, ResponseDto<AprobacionesResponseDto>>
 {
     public async Task<ResponseDto<AprobacionesResponseDto>> Handle(CrearAprobacionesCommand request, CancellationToken ct)
     {
@@ -52,7 +51,7 @@ internal sealed class CrearAprobacionesCommandHandler(IUnitOfWork _unitOfWork, A
             if (entity.IdCambio is Guid approvalChange) access.EnsureRead(await Required<global::HelpDesk.Domain.Models.Cambios>(approvalChange));
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Aprobaciones>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new AprobacionesResponseDto
+            return new ResponseDto<AprobacionesResponseDto>(201, new AprobacionesResponseDto
             {
                 IdAprobacion = entity.IdAprobacion,
                 IdTicket = entity.IdTicket,
@@ -69,14 +68,11 @@ internal sealed class CrearAprobacionesCommandHandler(IUnitOfWork _unitOfWork, A
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearAprobacionesCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<AprobacionesResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearAprobacionesCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<AprobacionesResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

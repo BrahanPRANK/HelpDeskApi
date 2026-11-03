@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Activos;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Activos;
 
 public record ListarActivosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<ActivosResponseDto>>>;
 
-internal sealed class ListarActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarActivosQueryHandler> _logger) : IRequestHandler<ListarActivosQuery, ResponseDto<PaginaDto<ActivosResponseDto>>>
+internal sealed class ListarActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarActivosQuery, ResponseDto<PaginaDto<ActivosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<ActivosResponseDto>>> Handle(ListarActivosQuery request, CancellationToken ct)
     {
@@ -40,18 +39,15 @@ internal sealed class ListarActivosQueryHandler(IUnitOfWork _unitOfWork, AccessR
                 Estado = entity.Estado,
                 FechaRegistro = entity.FechaRegistro
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<ActivosResponseDto>>(200, new PaginaDto<ActivosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarActivosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<ActivosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarActivosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<ActivosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

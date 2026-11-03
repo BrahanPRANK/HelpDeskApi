@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Cambios;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.Cambios;
 
 public record ObtenerCambiosQuery(object[] Keys) : IRequest<ResponseDto<CambiosResponseDto>>;
 
-internal sealed class ObtenerCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerCambiosQueryHandler> _logger) : IRequestHandler<ObtenerCambiosQuery, ResponseDto<CambiosResponseDto>>
+internal sealed class ObtenerCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerCambiosQuery, ResponseDto<CambiosResponseDto>>
 {
     public async Task<ResponseDto<CambiosResponseDto>> Handle(ObtenerCambiosQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerCambiosQueryHandler(IUnitOfWork _unitOfWork, Access
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Cambios>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new CambiosResponseDto
+            return new ResponseDto<CambiosResponseDto>(200, new CambiosResponseDto
             {
                 IdCambio = entity.IdCambio,
                 IdSolicitante = entity.IdSolicitante,
@@ -40,14 +39,11 @@ internal sealed class ObtenerCambiosQueryHandler(IUnitOfWork _unitOfWork, Access
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerCambiosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<CambiosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerCambiosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<CambiosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

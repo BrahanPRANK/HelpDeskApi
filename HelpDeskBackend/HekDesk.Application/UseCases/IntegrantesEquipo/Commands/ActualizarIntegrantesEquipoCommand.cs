@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.IntegrantesEquipo;
@@ -23,7 +22,7 @@ public class ActualizarIntegrantesEquipoCommand : IRequest<ResponseDto<Integrant
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class ActualizarIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarIntegrantesEquipoCommandHandler> _logger) : IRequestHandler<ActualizarIntegrantesEquipoCommand, ResponseDto<IntegrantesEquipoResponseDto>>
+internal sealed class ActualizarIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarIntegrantesEquipoCommand, ResponseDto<IntegrantesEquipoResponseDto>>
 {
     public async Task<ResponseDto<IntegrantesEquipoResponseDto>> Handle(ActualizarIntegrantesEquipoCommand request, CancellationToken ct)
     {
@@ -41,7 +40,7 @@ internal sealed class ActualizarIntegrantesEquipoCommandHandler(IUnitOfWork _uni
             entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
-            return new(200, new IntegrantesEquipoResponseDto
+            return new ResponseDto<IntegrantesEquipoResponseDto>(200, new IntegrantesEquipoResponseDto
             {
                 IdEquipo = entity.IdEquipo,
                 IdUsuario = entity.IdUsuario,
@@ -52,14 +51,11 @@ internal sealed class ActualizarIntegrantesEquipoCommandHandler(IUnitOfWork _uni
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarIntegrantesEquipoCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<IntegrantesEquipoResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarIntegrantesEquipoCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<IntegrantesEquipoResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

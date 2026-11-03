@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.CargaTecnicos;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.CargaTecnicos;
 
 public record ListarCargaTecnicosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<CargaTecnicosResponseDto>>>;
 
-internal sealed class ListarCargaTecnicosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarCargaTecnicosQueryHandler> _logger) : IRequestHandler<ListarCargaTecnicosQuery, ResponseDto<PaginaDto<CargaTecnicosResponseDto>>>
+internal sealed class ListarCargaTecnicosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarCargaTecnicosQuery, ResponseDto<PaginaDto<CargaTecnicosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<CargaTecnicosResponseDto>>> Handle(ListarCargaTecnicosQuery request, CancellationToken ct)
     {
@@ -32,18 +31,15 @@ internal sealed class ListarCargaTecnicosQueryHandler(IUnitOfWork _unitOfWork, A
                 Prioridad = entity.Prioridad,
                 TicketsPendientes = entity.TicketsPendientes
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<CargaTecnicosResponseDto>>(200, new PaginaDto<CargaTecnicosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarCargaTecnicosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<CargaTecnicosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarCargaTecnicosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<CargaTecnicosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Exceptions;
@@ -19,7 +18,7 @@ public class ActivarUsuarioCommand : IRequest<ResponseDto<AccionResultadoDto>>
     public string Motivo { get; set; } = string.Empty;
 }
 
-internal sealed class ActivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActivarUsuarioCommandHandler> _logger)
+internal sealed class ActivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, AccessRules access)
     : IRequestHandler<ActivarUsuarioCommand, ResponseDto<AccionResultadoDto>>
 {
     public async Task<ResponseDto<AccionResultadoDto>> Handle(ActivarUsuarioCommand r, CancellationToken ct)
@@ -34,18 +33,15 @@ internal sealed class ActivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, Acce
             user.Activo = true;
             result = user.Activo ? "activo" : "inactivo";
             await _unitOfWork.Complete();
-            return new(200, new(r.Id, result));
+            return new ResponseDto<AccionResultadoDto>(200, new AccionResultadoDto(r.Id, result));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActivarUsuarioCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<AccionResultadoDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActivarUsuarioCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<AccionResultadoDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

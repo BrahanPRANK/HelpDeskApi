@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.ProblemasTickets;
@@ -16,7 +15,7 @@ public class CrearProblemasTicketsCommand : IRequest<ResponseDto<ProblemasTicket
     public Guid IdTicket { get; set; }
 }
 
-internal sealed class CrearProblemasTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearProblemasTicketsCommandHandler> _logger) : IRequestHandler<CrearProblemasTicketsCommand, ResponseDto<ProblemasTicketsResponseDto>>
+internal sealed class CrearProblemasTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearProblemasTicketsCommand, ResponseDto<ProblemasTicketsResponseDto>>
 {
     public async Task<ResponseDto<ProblemasTicketsResponseDto>> Handle(CrearProblemasTicketsCommand request, CancellationToken ct)
     {
@@ -29,7 +28,7 @@ internal sealed class CrearProblemasTicketsCommandHandler(IUnitOfWork _unitOfWor
 
             await _unitOfWork.Repository<Dictionary<string, object>>("ProblemasTickets").AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new ProblemasTicketsResponseDto()
+            return new ResponseDto<ProblemasTicketsResponseDto>(201, new ProblemasTicketsResponseDto()
             {
                 IdProblema = (Guid)entity["IdProblema"],
                 IdTicket = (Guid)entity["IdTicket"]
@@ -37,14 +36,11 @@ internal sealed class CrearProblemasTicketsCommandHandler(IUnitOfWork _unitOfWor
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearProblemasTicketsCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ProblemasTicketsResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearProblemasTicketsCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ProblemasTicketsResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.IntegrantesEquipo;
@@ -19,7 +18,7 @@ public class CrearIntegrantesEquipoCommand : IRequest<ResponseDto<IntegrantesEqu
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class CrearIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearIntegrantesEquipoCommandHandler> _logger) : IRequestHandler<CrearIntegrantesEquipoCommand, ResponseDto<IntegrantesEquipoResponseDto>>
+internal sealed class CrearIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearIntegrantesEquipoCommand, ResponseDto<IntegrantesEquipoResponseDto>>
 {
     public async Task<ResponseDto<IntegrantesEquipoResponseDto>> Handle(CrearIntegrantesEquipoCommand request, CancellationToken ct)
     {
@@ -39,7 +38,7 @@ internal sealed class CrearIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWo
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.IntegrantesEquipo>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new IntegrantesEquipoResponseDto
+            return new ResponseDto<IntegrantesEquipoResponseDto>(201, new IntegrantesEquipoResponseDto
             {
                 IdEquipo = entity.IdEquipo,
                 IdUsuario = entity.IdUsuario,
@@ -50,14 +49,11 @@ internal sealed class CrearIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWo
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearIntegrantesEquipoCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<IntegrantesEquipoResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearIntegrantesEquipoCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<IntegrantesEquipoResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

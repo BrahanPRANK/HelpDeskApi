@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Tickets;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.Tickets;
 
 public record ObtenerTicketsQuery(object[] Keys) : IRequest<ResponseDto<TicketsResponseDto>>;
 
-internal sealed class ObtenerTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerTicketsQueryHandler> _logger) : IRequestHandler<ObtenerTicketsQuery, ResponseDto<TicketsResponseDto>>
+internal sealed class ObtenerTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerTicketsQuery, ResponseDto<TicketsResponseDto>>
 {
     public async Task<ResponseDto<TicketsResponseDto>> Handle(ObtenerTicketsQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerTicketsQueryHandler(IUnitOfWork _unitOfWork, Access
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Tickets>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new TicketsResponseDto
+            return new ResponseDto<TicketsResponseDto>(200, new TicketsResponseDto
             {
                 IdTicket = entity.IdTicket,
                 Numero = entity.Numero,
@@ -54,14 +53,11 @@ internal sealed class ObtenerTicketsQueryHandler(IUnitOfWork _unitOfWork, Access
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerTicketsQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TicketsResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerTicketsQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TicketsResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

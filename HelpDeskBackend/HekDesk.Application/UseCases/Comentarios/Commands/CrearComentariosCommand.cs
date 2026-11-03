@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Comentarios;
@@ -19,7 +18,7 @@ public class CrearComentariosCommand : IRequest<ResponseDto<ComentariosResponseD
     public bool EsInterno { get; set; }
 }
 
-internal sealed class CrearComentariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearComentariosCommandHandler> _logger) : IRequestHandler<CrearComentariosCommand, ResponseDto<ComentariosResponseDto>>
+internal sealed class CrearComentariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<CrearComentariosCommand, ResponseDto<ComentariosResponseDto>>
 {
     public async Task<ResponseDto<ComentariosResponseDto>> Handle(CrearComentariosCommand request, CancellationToken ct)
     {
@@ -50,7 +49,7 @@ internal sealed class CrearComentariosCommandHandler(IUnitOfWork _unitOfWork, Ac
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Comentarios>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new ComentariosResponseDto
+            return new ResponseDto<ComentariosResponseDto>(201, new ComentariosResponseDto
             {
                 IdComentario = entity.IdComentario,
                 IdTicket = entity.IdTicket,
@@ -62,14 +61,11 @@ internal sealed class CrearComentariosCommandHandler(IUnitOfWork _unitOfWork, Ac
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearComentariosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ComentariosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearComentariosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ComentariosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

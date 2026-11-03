@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Exceptions;
@@ -19,7 +18,7 @@ public class MarcarNotificacionLeidaCommand : IRequest<ResponseDto<AccionResulta
     public string Motivo { get; set; } = string.Empty;
 }
 
-internal sealed class MarcarNotificacionLeidaCommandHandler(IUnitOfWork _unitOfWork, ICurrentUser actor, ILogger<MarcarNotificacionLeidaCommandHandler> _logger)
+internal sealed class MarcarNotificacionLeidaCommandHandler(IUnitOfWork _unitOfWork, ICurrentUser actor)
     : IRequestHandler<MarcarNotificacionLeidaCommand, ResponseDto<AccionResultadoDto>>
 {
     public async Task<ResponseDto<AccionResultadoDto>> Handle(MarcarNotificacionLeidaCommand r, CancellationToken ct)
@@ -33,18 +32,15 @@ internal sealed class MarcarNotificacionLeidaCommandHandler(IUnitOfWork _unitOfW
             notification.FechaLectura ??= DateTime.UtcNow;
             result = "leida";
             await _unitOfWork.Complete();
-            return new(200, new(r.Id, result));
+            return new ResponseDto<AccionResultadoDto>(200, new AccionResultadoDto(r.Id, result));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en MarcarNotificacionLeidaCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<AccionResultadoDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar MarcarNotificacionLeidaCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<AccionResultadoDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

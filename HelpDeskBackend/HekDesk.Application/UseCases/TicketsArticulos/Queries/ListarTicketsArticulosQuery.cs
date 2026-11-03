@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TicketsArticulos;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.TicketsArticulos;
 
 public record ListarTicketsArticulosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<TicketsArticulosResponseDto>>>;
 
-internal sealed class ListarTicketsArticulosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarTicketsArticulosQueryHandler> _logger) : IRequestHandler<ListarTicketsArticulosQuery, ResponseDto<PaginaDto<TicketsArticulosResponseDto>>>
+internal sealed class ListarTicketsArticulosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarTicketsArticulosQuery, ResponseDto<PaginaDto<TicketsArticulosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<TicketsArticulosResponseDto>>> Handle(ListarTicketsArticulosQuery request, CancellationToken ct)
     {
@@ -32,18 +31,15 @@ internal sealed class ListarTicketsArticulosQueryHandler(IUnitOfWork _unitOfWork
                 IdUsuario = entity.IdUsuario,
                 FechaVinculacion = entity.FechaVinculacion
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<TicketsArticulosResponseDto>>(200, new PaginaDto<TicketsArticulosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarTicketsArticulosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<TicketsArticulosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarTicketsArticulosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<TicketsArticulosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

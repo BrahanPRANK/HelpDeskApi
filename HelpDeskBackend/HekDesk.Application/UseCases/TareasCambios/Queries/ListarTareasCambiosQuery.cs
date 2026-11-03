@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TareasCambios;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.TareasCambios;
 
 public record ListarTareasCambiosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<TareasCambiosResponseDto>>>;
 
-internal sealed class ListarTareasCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarTareasCambiosQueryHandler> _logger) : IRequestHandler<ListarTareasCambiosQuery, ResponseDto<PaginaDto<TareasCambiosResponseDto>>>
+internal sealed class ListarTareasCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarTareasCambiosQuery, ResponseDto<PaginaDto<TareasCambiosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<TareasCambiosResponseDto>>> Handle(ListarTareasCambiosQuery request, CancellationToken ct)
     {
@@ -38,18 +37,15 @@ internal sealed class ListarTareasCambiosQueryHandler(IUnitOfWork _unitOfWork, A
                 FechaCreacion = entity.FechaCreacion,
                 FechaFinalizacion = entity.FechaFinalizacion
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<TareasCambiosResponseDto>>(200, new PaginaDto<TareasCambiosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarTareasCambiosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<TareasCambiosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarTareasCambiosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<TareasCambiosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

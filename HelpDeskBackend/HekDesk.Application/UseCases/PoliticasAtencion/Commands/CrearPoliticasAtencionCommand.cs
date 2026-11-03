@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.PoliticasAtencion;
@@ -20,7 +19,7 @@ public class CrearPoliticasAtencionCommand : IRequest<ResponseDto<PoliticasAtenc
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class CrearPoliticasAtencionCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearPoliticasAtencionCommandHandler> _logger) : IRequestHandler<CrearPoliticasAtencionCommand, ResponseDto<PoliticasAtencionResponseDto>>
+internal sealed class CrearPoliticasAtencionCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearPoliticasAtencionCommand, ResponseDto<PoliticasAtencionResponseDto>>
 {
     public async Task<ResponseDto<PoliticasAtencionResponseDto>> Handle(CrearPoliticasAtencionCommand request, CancellationToken ct)
     {
@@ -40,7 +39,7 @@ internal sealed class CrearPoliticasAtencionCommandHandler(IUnitOfWork _unitOfWo
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PoliticasAtencion>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new PoliticasAtencionResponseDto
+            return new ResponseDto<PoliticasAtencionResponseDto>(201, new PoliticasAtencionResponseDto
             {
                 IdPolitica = entity.IdPolitica,
                 Prioridad = entity.Prioridad,
@@ -51,14 +50,11 @@ internal sealed class CrearPoliticasAtencionCommandHandler(IUnitOfWork _unitOfWo
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearPoliticasAtencionCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PoliticasAtencionResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearPoliticasAtencionCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PoliticasAtencionResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.AsignacionesActivos;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.AsignacionesActivos;
 
 public record ListarAsignacionesActivosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>>;
 
-internal sealed class ListarAsignacionesActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarAsignacionesActivosQueryHandler> _logger) : IRequestHandler<ListarAsignacionesActivosQuery, ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>>
+internal sealed class ListarAsignacionesActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarAsignacionesActivosQuery, ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>> Handle(ListarAsignacionesActivosQuery request, CancellationToken ct)
     {
@@ -35,18 +34,15 @@ internal sealed class ListarAsignacionesActivosQueryHandler(IUnitOfWork _unitOfW
                 FechaDevolucion = entity.FechaDevolucion,
                 Observaciones = entity.Observaciones
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>(200, new PaginaDto<AsignacionesActivosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarAsignacionesActivosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarAsignacionesActivosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

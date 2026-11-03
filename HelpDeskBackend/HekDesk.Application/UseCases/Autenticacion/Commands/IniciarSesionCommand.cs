@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using HelpDesk.Domain.Dtos.Autenticacion;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
 using HelpDesk.Application.Common;
@@ -20,7 +19,7 @@ public class IniciarSesionCommand : IRequest<ResponseDto<SesionDto>>
     [Required, StringLength(128)]
     public string Clave { get; set; } = string.Empty;
 }
-internal sealed class IniciarSesionCommandHandler(IUnitOfWork _unitOfWork, IPasswordService passwords, ITokenService tokens, ILogger<IniciarSesionCommandHandler> _logger) : IRequestHandler<IniciarSesionCommand, ResponseDto<SesionDto>>
+internal sealed class IniciarSesionCommandHandler(IUnitOfWork _unitOfWork, IPasswordService passwords, ITokenService tokens) : IRequestHandler<IniciarSesionCommand, ResponseDto<SesionDto>>
 {
     public async Task<ResponseDto<SesionDto>> Handle(IniciarSesionCommand request, CancellationToken ct)
     {
@@ -36,18 +35,15 @@ internal sealed class IniciarSesionCommandHandler(IUnitOfWork _unitOfWork, IPass
             var roleIds = _unitOfWork.Repository<UsuariosRoles>().Query().Where(x => x.IdUsuario == user.IdUsuario).Select(x => x.IdRol);
             var roles = await (_unitOfWork.Repository<Roles>().Query().Where(x => roleIds.Contains(x.IdRol)).Select(x => x.Nombre)).ToListAsync();
             var token = tokens.Create(user.IdUsuario, user.NombreUsuario, roles, Digest(user.ClaveHash));
-            return new(200, new(token.Token, token.ExpiresAt, user.IdUsuario, user.NombreUsuario, roles));
+            return new ResponseDto<SesionDto>(200, new SesionDto(token.Token, token.ExpiresAt, user.IdUsuario, user.NombreUsuario, roles));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en IniciarSesionCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<SesionDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar IniciarSesionCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<SesionDto>(500, default, "No se pudo completar la operacion.");
         }
     }
     private static string Digest(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));

@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Notificaciones;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Notificaciones;
 
 public record ListarNotificacionesQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<NotificacionesResponseDto>>>;
 
-internal sealed class ListarNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarNotificacionesQueryHandler> _logger) : IRequestHandler<ListarNotificacionesQuery, ResponseDto<PaginaDto<NotificacionesResponseDto>>>
+internal sealed class ListarNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarNotificacionesQuery, ResponseDto<PaginaDto<NotificacionesResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<NotificacionesResponseDto>>> Handle(ListarNotificacionesQuery request, CancellationToken ct)
     {
@@ -38,18 +37,15 @@ internal sealed class ListarNotificacionesQueryHandler(IUnitOfWork _unitOfWork, 
                 ClaveEvento = entity.ClaveEvento,
                 TipoEvento = entity.TipoEvento
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<NotificacionesResponseDto>>(200, new PaginaDto<NotificacionesResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarNotificacionesQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<NotificacionesResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarNotificacionesQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<NotificacionesResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

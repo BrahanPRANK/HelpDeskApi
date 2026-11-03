@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Comentarios;
@@ -23,7 +22,7 @@ public class ActualizarComentariosCommand : IRequest<ResponseDto<ComentariosResp
     public bool EsInterno { get; set; }
 }
 
-internal sealed class ActualizarComentariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<ActualizarComentariosCommandHandler> _logger) : IRequestHandler<ActualizarComentariosCommand, ResponseDto<ComentariosResponseDto>>
+internal sealed class ActualizarComentariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<ActualizarComentariosCommand, ResponseDto<ComentariosResponseDto>>
 {
     public async Task<ResponseDto<ComentariosResponseDto>> Handle(ActualizarComentariosCommand request, CancellationToken ct)
     {
@@ -46,7 +45,7 @@ internal sealed class ActualizarComentariosCommandHandler(IUnitOfWork _unitOfWor
             Validation.Require(access.Admin || entity.IdAutor == actor.Id, "No puede editar mensajes ajenos.", 403);
 
             await _unitOfWork.Complete();
-            return new(200, new ComentariosResponseDto
+            return new ResponseDto<ComentariosResponseDto>(200, new ComentariosResponseDto
             {
                 IdComentario = entity.IdComentario,
                 IdTicket = entity.IdTicket,
@@ -58,14 +57,11 @@ internal sealed class ActualizarComentariosCommandHandler(IUnitOfWork _unitOfWor
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarComentariosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ComentariosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarComentariosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ComentariosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

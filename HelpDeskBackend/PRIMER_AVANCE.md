@@ -31,7 +31,7 @@ RegistroDto se conserva exclusivamente como entrada del alta inicial de administ
 
 ## Cómo se escribe un handler
 
-El Command recibe los datos, el handler valida, consulta el repositorio, modifica la entidad, llama a Complete() y devuelve un ResponseDto tipado. El Query solo consulta y devuelve su DTO. Mantener try/catch en cada Handle. CancellationToken solo se declara en la firma que exige MediatR.
+El Command recibe los datos, el handler valida, consulta el repositorio, modifica la entidad, llama a Complete() y devuelve un ResponseDto tipado. El Query solo consulta y devuelve su DTO. Tanto el envoltorio ResponseDto<T> como el DTO de datos se construyen explícitamente dentro del handler. No se utiliza ILogger. Mantener try/catch en cada Handle. CancellationToken solo se declara en la firma que exige MediatR.
 
 Ejemplo de persistencia usado en los Commands:
 

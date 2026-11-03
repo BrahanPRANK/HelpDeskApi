@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TiposActivos;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.TiposActivos;
 
 public record ObtenerTiposActivosQuery(object[] Keys) : IRequest<ResponseDto<TiposActivosResponseDto>>;
 
-internal sealed class ObtenerTiposActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerTiposActivosQueryHandler> _logger) : IRequestHandler<ObtenerTiposActivosQuery, ResponseDto<TiposActivosResponseDto>>
+internal sealed class ObtenerTiposActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerTiposActivosQuery, ResponseDto<TiposActivosResponseDto>>
 {
     public async Task<ResponseDto<TiposActivosResponseDto>> Handle(ObtenerTiposActivosQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerTiposActivosQueryHandler(IUnitOfWork _unitOfWork, A
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TiposActivos>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new TiposActivosResponseDto
+            return new ResponseDto<TiposActivosResponseDto>(200, new TiposActivosResponseDto
             {
                 IdTipoActivo = entity.IdTipoActivo,
                 Nombre = entity.Nombre,
@@ -30,14 +29,11 @@ internal sealed class ObtenerTiposActivosQueryHandler(IUnitOfWork _unitOfWork, A
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerTiposActivosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TiposActivosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerTiposActivosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TiposActivosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

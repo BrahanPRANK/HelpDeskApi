@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Usuarios;
@@ -30,7 +29,7 @@ public class CrearUsuariosCommand : IRequest<ResponseDto<UsuariosResponseDto>>
     public string? Clave { get; set; }
 }
 
-internal sealed class CrearUsuariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, IPasswordService passwords, ILogger<CrearUsuariosCommandHandler> _logger) : IRequestHandler<CrearUsuariosCommand, ResponseDto<UsuariosResponseDto>>
+internal sealed class CrearUsuariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, IPasswordService passwords) : IRequestHandler<CrearUsuariosCommand, ResponseDto<UsuariosResponseDto>>
 {
     public async Task<ResponseDto<UsuariosResponseDto>> Handle(CrearUsuariosCommand request, CancellationToken ct)
     {
@@ -59,7 +58,7 @@ internal sealed class CrearUsuariosCommandHandler(IUnitOfWork _unitOfWork, Acces
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new UsuariosResponseDto
+            return new ResponseDto<UsuariosResponseDto>(201, new UsuariosResponseDto
             {
                 IdUsuario = entity.IdUsuario,
                 IdArea = entity.IdArea,
@@ -74,14 +73,11 @@ internal sealed class CrearUsuariosCommandHandler(IUnitOfWork _unitOfWork, Acces
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearUsuariosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<UsuariosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearUsuariosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<UsuariosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -60,7 +60,7 @@ dotnet restore HelpDeskBackend.sln
 dotnet build HelpDeskBackend.sln
 ```
 
-`dotnet restore` instala las dependencias indicadas en los `.csproj`: EF Core, PostgreSQL/Npgsql, MediatR, JWT, Swagger y logging. **No hace falta agregar los paquetes uno por uno ni actualizar sus versiones.** Esta compilación no inicia la API ni necesita todavía consultar la base.
+`dotnet restore` instala las dependencias indicadas en los `.csproj`: EF Core, PostgreSQL/Npgsql, MediatR, JWT y Swagger. **No hace falta agregar los paquetes uno por uno ni actualizar sus versiones.** Esta compilación no inicia la API ni necesita todavía consultar la base.
 
 La carpeta `HekDesk.Application` está escrita así en la solución actual. No renombrarla individualmente: afectaría referencias del equipo.
 

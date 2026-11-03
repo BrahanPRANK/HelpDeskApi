@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.CategoriasConocimiento;
@@ -23,7 +22,7 @@ public class ActualizarCategoriasConocimientoCommand : IRequest<ResponseDto<Cate
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class ActualizarCategoriasConocimientoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarCategoriasConocimientoCommandHandler> _logger) : IRequestHandler<ActualizarCategoriasConocimientoCommand, ResponseDto<CategoriasConocimientoResponseDto>>
+internal sealed class ActualizarCategoriasConocimientoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarCategoriasConocimientoCommand, ResponseDto<CategoriasConocimientoResponseDto>>
 {
     public async Task<ResponseDto<CategoriasConocimientoResponseDto>> Handle(ActualizarCategoriasConocimientoCommand request, CancellationToken ct)
     {
@@ -41,7 +40,7 @@ internal sealed class ActualizarCategoriasConocimientoCommandHandler(IUnitOfWork
             entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
-            return new(200, new CategoriasConocimientoResponseDto
+            return new ResponseDto<CategoriasConocimientoResponseDto>(200, new CategoriasConocimientoResponseDto
             {
                 IdCategoriaConocimiento = entity.IdCategoriaConocimiento,
                 Nombre = entity.Nombre,
@@ -51,14 +50,11 @@ internal sealed class ActualizarCategoriasConocimientoCommandHandler(IUnitOfWork
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarCategoriasConocimientoCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<CategoriasConocimientoResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarCategoriasConocimientoCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<CategoriasConocimientoResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

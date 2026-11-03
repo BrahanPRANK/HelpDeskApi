@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.UsuariosRoles;
@@ -20,7 +19,7 @@ public class ActualizarUsuariosRolesCommand : IRequest<ResponseDto<UsuariosRoles
     public Guid IdRol { get; set; }
 }
 
-internal sealed class ActualizarUsuariosRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarUsuariosRolesCommandHandler> _logger) : IRequestHandler<ActualizarUsuariosRolesCommand, ResponseDto<UsuariosRolesResponseDto>>
+internal sealed class ActualizarUsuariosRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarUsuariosRolesCommand, ResponseDto<UsuariosRolesResponseDto>>
 {
     public async Task<ResponseDto<UsuariosRolesResponseDto>> Handle(ActualizarUsuariosRolesCommand request, CancellationToken ct)
     {
@@ -36,7 +35,7 @@ internal sealed class ActualizarUsuariosRolesCommandHandler(IUnitOfWork _unitOfW
             await Required<global::HelpDesk.Domain.Models.Usuarios>(entity.IdUsuario);
             await Required<global::HelpDesk.Domain.Models.Roles>(entity.IdRol);
             await _unitOfWork.Complete();
-            return new(200, new UsuariosRolesResponseDto
+            return new ResponseDto<UsuariosRolesResponseDto>(200, new UsuariosRolesResponseDto
             {
                 IdUsuario = entity.IdUsuario,
                 IdRol = entity.IdRol,
@@ -45,14 +44,11 @@ internal sealed class ActualizarUsuariosRolesCommandHandler(IUnitOfWork _unitOfW
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarUsuariosRolesCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<UsuariosRolesResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarUsuariosRolesCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<UsuariosRolesResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

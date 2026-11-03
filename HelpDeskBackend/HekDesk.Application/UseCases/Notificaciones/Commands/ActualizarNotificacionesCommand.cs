@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Notificaciones;
@@ -32,7 +31,7 @@ public class ActualizarNotificacionesCommand : IRequest<ResponseDto<Notificacion
     public string TipoEvento { get; set; } = "";
 }
 
-internal sealed class ActualizarNotificacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarNotificacionesCommandHandler> _logger) : IRequestHandler<ActualizarNotificacionesCommand, ResponseDto<NotificacionesResponseDto>>
+internal sealed class ActualizarNotificacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarNotificacionesCommand, ResponseDto<NotificacionesResponseDto>>
 {
     public async Task<ResponseDto<NotificacionesResponseDto>> Handle(ActualizarNotificacionesCommand request, CancellationToken ct)
     {
@@ -53,7 +52,7 @@ internal sealed class ActualizarNotificacionesCommandHandler(IUnitOfWork _unitOf
             entity.TipoEvento = request.TipoEvento;
 
             await _unitOfWork.Complete();
-            return new(200, new NotificacionesResponseDto
+            return new ResponseDto<NotificacionesResponseDto>(200, new NotificacionesResponseDto
             {
                 IdNotificacion = entity.IdNotificacion,
                 IdUsuario = entity.IdUsuario,
@@ -68,14 +67,11 @@ internal sealed class ActualizarNotificacionesCommandHandler(IUnitOfWork _unitOf
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarNotificacionesCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<NotificacionesResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarNotificacionesCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<NotificacionesResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

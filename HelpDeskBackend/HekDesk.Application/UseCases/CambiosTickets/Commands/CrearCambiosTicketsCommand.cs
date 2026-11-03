@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.CambiosTickets;
@@ -16,7 +15,7 @@ public class CrearCambiosTicketsCommand : IRequest<ResponseDto<CambiosTicketsRes
     public Guid IdTicket { get; set; }
 }
 
-internal sealed class CrearCambiosTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearCambiosTicketsCommandHandler> _logger) : IRequestHandler<CrearCambiosTicketsCommand, ResponseDto<CambiosTicketsResponseDto>>
+internal sealed class CrearCambiosTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearCambiosTicketsCommand, ResponseDto<CambiosTicketsResponseDto>>
 {
     public async Task<ResponseDto<CambiosTicketsResponseDto>> Handle(CrearCambiosTicketsCommand request, CancellationToken ct)
     {
@@ -29,7 +28,7 @@ internal sealed class CrearCambiosTicketsCommandHandler(IUnitOfWork _unitOfWork,
 
             await _unitOfWork.Repository<Dictionary<string, object>>("CambiosTickets").AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new CambiosTicketsResponseDto()
+            return new ResponseDto<CambiosTicketsResponseDto>(201, new CambiosTicketsResponseDto()
             {
                 IdCambio = (Guid)entity["IdCambio"],
                 IdTicket = (Guid)entity["IdTicket"]
@@ -37,14 +36,11 @@ internal sealed class CrearCambiosTicketsCommandHandler(IUnitOfWork _unitOfWork,
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearCambiosTicketsCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<CambiosTicketsResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearCambiosTicketsCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<CambiosTicketsResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

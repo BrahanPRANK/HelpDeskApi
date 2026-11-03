@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Auditoria;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Auditoria;
 
 public record ListarAuditoriaQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<AuditoriaResponseDto>>>;
 
-internal sealed class ListarAuditoriaQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarAuditoriaQueryHandler> _logger) : IRequestHandler<ListarAuditoriaQuery, ResponseDto<PaginaDto<AuditoriaResponseDto>>>
+internal sealed class ListarAuditoriaQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarAuditoriaQuery, ResponseDto<PaginaDto<AuditoriaResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<AuditoriaResponseDto>>> Handle(ListarAuditoriaQuery request, CancellationToken ct)
     {
@@ -35,18 +34,15 @@ internal sealed class ListarAuditoriaQueryHandler(IUnitOfWork _unitOfWork, Acces
                 Descripcion = entity.Descripcion,
                 Fecha = entity.Fecha
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<AuditoriaResponseDto>>(200, new PaginaDto<AuditoriaResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarAuditoriaQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<AuditoriaResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarAuditoriaQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<AuditoriaResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Servicios;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Servicios;
 
 public record ListarServiciosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<ServiciosResponseDto>>>;
 
-internal sealed class ListarServiciosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarServiciosQueryHandler> _logger) : IRequestHandler<ListarServiciosQuery, ResponseDto<PaginaDto<ServiciosResponseDto>>>
+internal sealed class ListarServiciosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarServiciosQuery, ResponseDto<PaginaDto<ServiciosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<ServiciosResponseDto>>> Handle(ListarServiciosQuery request, CancellationToken ct)
     {
@@ -35,18 +34,15 @@ internal sealed class ListarServiciosQueryHandler(IUnitOfWork _unitOfWork, Acces
                 RequiereAprobacion = entity.RequiereAprobacion,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<ServiciosResponseDto>>(200, new PaginaDto<ServiciosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarServiciosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<ServiciosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarServiciosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<ServiciosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

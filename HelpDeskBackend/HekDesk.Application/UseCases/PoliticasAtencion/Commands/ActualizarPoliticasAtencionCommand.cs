@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.PoliticasAtencion;
@@ -24,7 +23,7 @@ public class ActualizarPoliticasAtencionCommand : IRequest<ResponseDto<Politicas
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class ActualizarPoliticasAtencionCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarPoliticasAtencionCommandHandler> _logger) : IRequestHandler<ActualizarPoliticasAtencionCommand, ResponseDto<PoliticasAtencionResponseDto>>
+internal sealed class ActualizarPoliticasAtencionCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarPoliticasAtencionCommand, ResponseDto<PoliticasAtencionResponseDto>>
 {
     public async Task<ResponseDto<PoliticasAtencionResponseDto>> Handle(ActualizarPoliticasAtencionCommand request, CancellationToken ct)
     {
@@ -43,7 +42,7 @@ internal sealed class ActualizarPoliticasAtencionCommandHandler(IUnitOfWork _uni
             entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
-            return new(200, new PoliticasAtencionResponseDto
+            return new ResponseDto<PoliticasAtencionResponseDto>(200, new PoliticasAtencionResponseDto
             {
                 IdPolitica = entity.IdPolitica,
                 Prioridad = entity.Prioridad,
@@ -54,14 +53,11 @@ internal sealed class ActualizarPoliticasAtencionCommandHandler(IUnitOfWork _uni
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarPoliticasAtencionCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PoliticasAtencionResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarPoliticasAtencionCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PoliticasAtencionResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

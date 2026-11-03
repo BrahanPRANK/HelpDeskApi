@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.EquiposSoporte;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.EquiposSoporte;
 
 public record ObtenerEquiposSoporteQuery(object[] Keys) : IRequest<ResponseDto<EquiposSoporteResponseDto>>;
 
-internal sealed class ObtenerEquiposSoporteQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerEquiposSoporteQueryHandler> _logger) : IRequestHandler<ObtenerEquiposSoporteQuery, ResponseDto<EquiposSoporteResponseDto>>
+internal sealed class ObtenerEquiposSoporteQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerEquiposSoporteQuery, ResponseDto<EquiposSoporteResponseDto>>
 {
     public async Task<ResponseDto<EquiposSoporteResponseDto>> Handle(ObtenerEquiposSoporteQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerEquiposSoporteQueryHandler(IUnitOfWork _unitOfWork,
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.EquiposSoporte>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new EquiposSoporteResponseDto
+            return new ResponseDto<EquiposSoporteResponseDto>(200, new EquiposSoporteResponseDto
             {
                 IdEquipo = entity.IdEquipo,
                 Nombre = entity.Nombre,
@@ -30,14 +29,11 @@ internal sealed class ObtenerEquiposSoporteQueryHandler(IUnitOfWork _unitOfWork,
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerEquiposSoporteQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<EquiposSoporteResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerEquiposSoporteQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<EquiposSoporteResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

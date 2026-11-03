@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using HelpDesk.Domain.Dtos.Autenticacion;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
 using HelpDesk.Application.Common;
@@ -26,7 +25,7 @@ public class RegistrarCommand : IRequest<ResponseDto<UsuarioRegistradoDto>>
     [Required, StringLength(128, MinimumLength = 10)]
     public string Clave { get; set; } = string.Empty;
 }
-internal sealed class RegistrarCommandHandler(IUnitOfWork _unitOfWork, IPasswordService passwords, ILogger<RegistrarCommandHandler> _logger) : IRequestHandler<RegistrarCommand, ResponseDto<UsuarioRegistradoDto>>
+internal sealed class RegistrarCommandHandler(IUnitOfWork _unitOfWork, IPasswordService passwords) : IRequestHandler<RegistrarCommand, ResponseDto<UsuarioRegistradoDto>>
 {
     public async Task<ResponseDto<UsuarioRegistradoDto>> Handle(RegistrarCommand request, CancellationToken ct)
     {
@@ -46,18 +45,15 @@ internal sealed class RegistrarCommandHandler(IUnitOfWork _unitOfWork, IPassword
                 FechaAsignacion = DateTime.UtcNow
             });
             await _unitOfWork.Complete();
-            return new(201, new(user.IdUsuario, user.NombreUsuario), "Cuenta creada con rol empleado.");
+            return new ResponseDto<UsuarioRegistradoDto>(201, new UsuarioRegistradoDto(user.IdUsuario, user.NombreUsuario), "Cuenta creada con rol empleado.");
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en RegistrarCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<UsuarioRegistradoDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar RegistrarCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<UsuarioRegistradoDto>(500, default, "No se pudo completar la operacion.");
         }
     }
     private Usuarios MakeUser(RegistrarCommand x) => new()

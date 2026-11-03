@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.CategoriasServicios;
@@ -19,7 +18,7 @@ public class CrearCategoriasServiciosCommand : IRequest<ResponseDto<CategoriasSe
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class CrearCategoriasServiciosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearCategoriasServiciosCommandHandler> _logger) : IRequestHandler<CrearCategoriasServiciosCommand, ResponseDto<CategoriasServiciosResponseDto>>
+internal sealed class CrearCategoriasServiciosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearCategoriasServiciosCommand, ResponseDto<CategoriasServiciosResponseDto>>
 {
     public async Task<ResponseDto<CategoriasServiciosResponseDto>> Handle(CrearCategoriasServiciosCommand request, CancellationToken ct)
     {
@@ -38,7 +37,7 @@ internal sealed class CrearCategoriasServiciosCommandHandler(IUnitOfWork _unitOf
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.CategoriasServicios>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new CategoriasServiciosResponseDto
+            return new ResponseDto<CategoriasServiciosResponseDto>(201, new CategoriasServiciosResponseDto
             {
                 IdCategoriaServicio = entity.IdCategoriaServicio,
                 Nombre = entity.Nombre,
@@ -48,14 +47,11 @@ internal sealed class CrearCategoriasServiciosCommandHandler(IUnitOfWork _unitOf
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearCategoriasServiciosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<CategoriasServiciosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearCategoriasServiciosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<CategoriasServiciosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

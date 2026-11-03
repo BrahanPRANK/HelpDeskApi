@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TiposActivos;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.TiposActivos;
 
 public record ListarTiposActivosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<TiposActivosResponseDto>>>;
 
-internal sealed class ListarTiposActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarTiposActivosQueryHandler> _logger) : IRequestHandler<ListarTiposActivosQuery, ResponseDto<PaginaDto<TiposActivosResponseDto>>>
+internal sealed class ListarTiposActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarTiposActivosQuery, ResponseDto<PaginaDto<TiposActivosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<TiposActivosResponseDto>>> Handle(ListarTiposActivosQuery request, CancellationToken ct)
     {
@@ -32,18 +31,15 @@ internal sealed class ListarTiposActivosQueryHandler(IUnitOfWork _unitOfWork, Ac
                 Descripcion = entity.Descripcion,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<TiposActivosResponseDto>>(200, new PaginaDto<TiposActivosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarTiposActivosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<TiposActivosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarTiposActivosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<TiposActivosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

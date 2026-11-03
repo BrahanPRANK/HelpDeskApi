@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.CategoriasConocimiento;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.CategoriasConocimiento;
 
 public record ObtenerCategoriasConocimientoQuery(object[] Keys) : IRequest<ResponseDto<CategoriasConocimientoResponseDto>>;
 
-internal sealed class ObtenerCategoriasConocimientoQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerCategoriasConocimientoQueryHandler> _logger) : IRequestHandler<ObtenerCategoriasConocimientoQuery, ResponseDto<CategoriasConocimientoResponseDto>>
+internal sealed class ObtenerCategoriasConocimientoQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerCategoriasConocimientoQuery, ResponseDto<CategoriasConocimientoResponseDto>>
 {
     public async Task<ResponseDto<CategoriasConocimientoResponseDto>> Handle(ObtenerCategoriasConocimientoQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerCategoriasConocimientoQueryHandler(IUnitOfWork _uni
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.CategoriasConocimiento>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new CategoriasConocimientoResponseDto
+            return new ResponseDto<CategoriasConocimientoResponseDto>(200, new CategoriasConocimientoResponseDto
             {
                 IdCategoriaConocimiento = entity.IdCategoriaConocimiento,
                 Nombre = entity.Nombre,
@@ -30,14 +29,11 @@ internal sealed class ObtenerCategoriasConocimientoQueryHandler(IUnitOfWork _uni
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerCategoriasConocimientoQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<CategoriasConocimientoResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerCategoriasConocimientoQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<CategoriasConocimientoResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

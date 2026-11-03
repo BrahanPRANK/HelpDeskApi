@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Notificaciones;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.Notificaciones;
 
 public record ObtenerNotificacionesQuery(object[] Keys) : IRequest<ResponseDto<NotificacionesResponseDto>>;
 
-internal sealed class ObtenerNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerNotificacionesQueryHandler> _logger) : IRequestHandler<ObtenerNotificacionesQuery, ResponseDto<NotificacionesResponseDto>>
+internal sealed class ObtenerNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerNotificacionesQuery, ResponseDto<NotificacionesResponseDto>>
 {
     public async Task<ResponseDto<NotificacionesResponseDto>> Handle(ObtenerNotificacionesQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerNotificacionesQueryHandler(IUnitOfWork _unitOfWork,
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Notificaciones>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new NotificacionesResponseDto
+            return new ResponseDto<NotificacionesResponseDto>(200, new NotificacionesResponseDto
             {
                 IdNotificacion = entity.IdNotificacion,
                 IdUsuario = entity.IdUsuario,
@@ -35,14 +34,11 @@ internal sealed class ObtenerNotificacionesQueryHandler(IUnitOfWork _unitOfWork,
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerNotificacionesQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<NotificacionesResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerNotificacionesQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<NotificacionesResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

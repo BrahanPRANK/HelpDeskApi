@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TareasCambios;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.TareasCambios;
 
 public record ObtenerTareasCambiosQuery(object[] Keys) : IRequest<ResponseDto<TareasCambiosResponseDto>>;
 
-internal sealed class ObtenerTareasCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerTareasCambiosQueryHandler> _logger) : IRequestHandler<ObtenerTareasCambiosQuery, ResponseDto<TareasCambiosResponseDto>>
+internal sealed class ObtenerTareasCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerTareasCambiosQuery, ResponseDto<TareasCambiosResponseDto>>
 {
     public async Task<ResponseDto<TareasCambiosResponseDto>> Handle(ObtenerTareasCambiosQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerTareasCambiosQueryHandler(IUnitOfWork _unitOfWork, 
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TareasCambios>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new TareasCambiosResponseDto
+            return new ResponseDto<TareasCambiosResponseDto>(200, new TareasCambiosResponseDto
             {
                 IdTareaCambio = entity.IdTareaCambio,
                 IdCambio = entity.IdCambio,
@@ -35,14 +34,11 @@ internal sealed class ObtenerTareasCambiosQueryHandler(IUnitOfWork _unitOfWork, 
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerTareasCambiosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TareasCambiosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerTareasCambiosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TareasCambiosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Usuarios;
@@ -35,7 +34,7 @@ public class ActualizarUsuariosCommand : IRequest<ResponseDto<UsuariosResponseDt
     public string? Clave { get; set; }
 }
 
-internal sealed class ActualizarUsuariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, IPasswordService passwords, ILogger<ActualizarUsuariosCommandHandler> _logger) : IRequestHandler<ActualizarUsuariosCommand, ResponseDto<UsuariosResponseDto>>
+internal sealed class ActualizarUsuariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, IPasswordService passwords) : IRequestHandler<ActualizarUsuariosCommand, ResponseDto<UsuariosResponseDto>>
 {
     public async Task<ResponseDto<UsuariosResponseDto>> Handle(ActualizarUsuariosCommand request, CancellationToken ct)
     {
@@ -62,7 +61,7 @@ internal sealed class ActualizarUsuariosCommandHandler(IUnitOfWork _unitOfWork, 
             if (!string.IsNullOrWhiteSpace(userInput.Clave)) entity.ClaveHash = passwords.Hash(userInput.Clave);
 
             await _unitOfWork.Complete();
-            return new(200, new UsuariosResponseDto
+            return new ResponseDto<UsuariosResponseDto>(200, new UsuariosResponseDto
             {
                 IdUsuario = entity.IdUsuario,
                 IdArea = entity.IdArea,
@@ -77,14 +76,11 @@ internal sealed class ActualizarUsuariosCommandHandler(IUnitOfWork _unitOfWork, 
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarUsuariosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<UsuariosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarUsuariosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<UsuariosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
     private async Task EnsureNotLastAdmin(Guid userId)

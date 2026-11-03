@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.RolesPermisos;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.RolesPermisos;
 
 public record ObtenerRolesPermisosQuery(object[] Keys) : IRequest<ResponseDto<RolesPermisosResponseDto>>;
 
-internal sealed class ObtenerRolesPermisosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerRolesPermisosQueryHandler> _logger) : IRequestHandler<ObtenerRolesPermisosQuery, ResponseDto<RolesPermisosResponseDto>>
+internal sealed class ObtenerRolesPermisosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerRolesPermisosQuery, ResponseDto<RolesPermisosResponseDto>>
 {
     public async Task<ResponseDto<RolesPermisosResponseDto>> Handle(ObtenerRolesPermisosQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerRolesPermisosQueryHandler(IUnitOfWork _unitOfWork, 
             var entity = await _unitOfWork.Repository<Dictionary<string, object>>("RolesPermisos").GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new RolesPermisosResponseDto()
+            return new ResponseDto<RolesPermisosResponseDto>(200, new RolesPermisosResponseDto()
             {
                 IdRol = (Guid)entity["IdRol"],
                 IdPermiso = (Guid)entity["IdPermiso"]
@@ -28,14 +27,11 @@ internal sealed class ObtenerRolesPermisosQueryHandler(IUnitOfWork _unitOfWork, 
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerRolesPermisosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<RolesPermisosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerRolesPermisosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<RolesPermisosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

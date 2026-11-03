@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TicketsArticulos;
@@ -21,7 +20,7 @@ public class ActualizarTicketsArticulosCommand : IRequest<ResponseDto<TicketsArt
     public Guid IdUsuario { get; set; }
 }
 
-internal sealed class ActualizarTicketsArticulosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<ActualizarTicketsArticulosCommandHandler> _logger) : IRequestHandler<ActualizarTicketsArticulosCommand, ResponseDto<TicketsArticulosResponseDto>>
+internal sealed class ActualizarTicketsArticulosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<ActualizarTicketsArticulosCommand, ResponseDto<TicketsArticulosResponseDto>>
 {
     public async Task<ResponseDto<TicketsArticulosResponseDto>> Handle(ActualizarTicketsArticulosCommand request, CancellationToken ct)
     {
@@ -37,7 +36,7 @@ internal sealed class ActualizarTicketsArticulosCommandHandler(IUnitOfWork _unit
             entity.IdUsuario = request.IdUsuario;
             entity.IdUsuario = actor.Id;
             await _unitOfWork.Complete();
-            return new(200, new TicketsArticulosResponseDto
+            return new ResponseDto<TicketsArticulosResponseDto>(200, new TicketsArticulosResponseDto
             {
                 IdTicket = entity.IdTicket,
                 IdArticulo = entity.IdArticulo,
@@ -47,14 +46,11 @@ internal sealed class ActualizarTicketsArticulosCommandHandler(IUnitOfWork _unit
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarTicketsArticulosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TicketsArticulosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarTicketsArticulosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TicketsArticulosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

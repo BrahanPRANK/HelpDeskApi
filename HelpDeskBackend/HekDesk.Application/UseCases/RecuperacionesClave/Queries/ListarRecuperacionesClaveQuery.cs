@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.RecuperacionesClave;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.RecuperacionesClave;
 
 public record ListarRecuperacionesClaveQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>>;
 
-internal sealed class ListarRecuperacionesClaveQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarRecuperacionesClaveQueryHandler> _logger) : IRequestHandler<ListarRecuperacionesClaveQuery, ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>>
+internal sealed class ListarRecuperacionesClaveQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarRecuperacionesClaveQuery, ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>> Handle(ListarRecuperacionesClaveQuery request, CancellationToken ct)
     {
@@ -33,18 +32,15 @@ internal sealed class ListarRecuperacionesClaveQueryHandler(IUnitOfWork _unitOfW
                 FechaVencimiento = entity.FechaVencimiento,
                 FechaUso = entity.FechaUso
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>(200, new PaginaDto<RecuperacionesClaveResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarRecuperacionesClaveQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarRecuperacionesClaveQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

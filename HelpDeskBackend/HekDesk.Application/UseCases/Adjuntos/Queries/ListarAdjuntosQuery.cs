@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Adjuntos;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Adjuntos;
 
 public record ListarAdjuntosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<AdjuntosResponseDto>>>;
 
-internal sealed class ListarAdjuntosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarAdjuntosQueryHandler> _logger) : IRequestHandler<ListarAdjuntosQuery, ResponseDto<PaginaDto<AdjuntosResponseDto>>>
+internal sealed class ListarAdjuntosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarAdjuntosQuery, ResponseDto<PaginaDto<AdjuntosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<AdjuntosResponseDto>>> Handle(ListarAdjuntosQuery request, CancellationToken ct)
     {
@@ -38,18 +37,15 @@ internal sealed class ListarAdjuntosQueryHandler(IUnitOfWork _unitOfWork, Access
                 EsInterno = entity.EsInterno,
                 Fecha = entity.Fecha
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<AdjuntosResponseDto>>(200, new PaginaDto<AdjuntosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarAdjuntosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<AdjuntosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarAdjuntosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<AdjuntosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

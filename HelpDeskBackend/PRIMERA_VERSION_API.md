@@ -31,7 +31,7 @@ UnitOfWork solo obtiene repositorios y confirma cambios con `await _unitOfWork.C
 
 La excepción al repositorio sin parámetros son RolesPermisos, TicketsActivos, ProblemasTickets y CambiosTickets: el scaffolding las representa como diccionarios compartidos y por eso Repository recibe el nombre del conjunto en esos casos.
 
-En los handlers, CancellationToken aparece únicamente como parámetro obligatorio de Handle. No se comprueba ni se pasa a las operaciones. Cada Handle maneja BusinessException y registra errores inesperados; el middleware sirve como respaldo. No hay un servicio CRUD genérico que ejecute los casos de uso.
+En los handlers, CancellationToken aparece únicamente como parámetro obligatorio de Handle. No se comprueba ni se pasa a las operaciones. Cada Handle maneja BusinessException y devuelve un mensaje genérico ante errores inesperados; el middleware sirve como respaldo. No se utiliza ILogger en el código de la plantilla. No hay un servicio CRUD genérico que ejecute los casos de uso.
 
 ## CRUD por recurso
 

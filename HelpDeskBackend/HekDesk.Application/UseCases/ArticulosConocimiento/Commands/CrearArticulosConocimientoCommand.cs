@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.ArticulosConocimiento;
@@ -22,7 +21,7 @@ public class CrearArticulosConocimientoCommand : IRequest<ResponseDto<ArticulosC
     public bool EsInterno { get; set; }
 }
 
-internal sealed class CrearArticulosConocimientoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearArticulosConocimientoCommandHandler> _logger) : IRequestHandler<CrearArticulosConocimientoCommand, ResponseDto<ArticulosConocimientoResponseDto>>
+internal sealed class CrearArticulosConocimientoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<CrearArticulosConocimientoCommand, ResponseDto<ArticulosConocimientoResponseDto>>
 {
     public async Task<ResponseDto<ArticulosConocimientoResponseDto>> Handle(CrearArticulosConocimientoCommand request, CancellationToken ct)
     {
@@ -44,7 +43,7 @@ internal sealed class CrearArticulosConocimientoCommandHandler(IUnitOfWork _unit
             entity.IdAutor = actor.Id;
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.ArticulosConocimiento>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new ArticulosConocimientoResponseDto
+            return new ResponseDto<ArticulosConocimientoResponseDto>(201, new ArticulosConocimientoResponseDto
             {
                 IdArticulo = entity.IdArticulo,
                 IdAutor = entity.IdAutor,
@@ -60,14 +59,11 @@ internal sealed class CrearArticulosConocimientoCommandHandler(IUnitOfWork _unit
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearArticulosConocimientoCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ArticulosConocimientoResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearArticulosConocimientoCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ArticulosConocimientoResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

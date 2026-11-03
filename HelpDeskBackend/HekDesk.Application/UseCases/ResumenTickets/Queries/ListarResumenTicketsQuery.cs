@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.ResumenTickets;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.ResumenTickets;
 
 public record ListarResumenTicketsQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<ResumenTicketsResponseDto>>>;
 
-internal sealed class ListarResumenTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarResumenTicketsQueryHandler> _logger) : IRequestHandler<ListarResumenTicketsQuery, ResponseDto<PaginaDto<ResumenTicketsResponseDto>>>
+internal sealed class ListarResumenTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarResumenTicketsQuery, ResponseDto<PaginaDto<ResumenTicketsResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<ResumenTicketsResponseDto>>> Handle(ListarResumenTicketsQuery request, CancellationToken ct)
     {
@@ -49,18 +48,15 @@ internal sealed class ListarResumenTicketsQueryHandler(IUnitOfWork _unitOfWork, 
                 ResolucionEnPlazo = entity.ResolucionEnPlazo,
                 Calificacion = entity.Calificacion
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<ResumenTicketsResponseDto>>(200, new PaginaDto<ResumenTicketsResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarResumenTicketsQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<ResumenTicketsResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarResumenTicketsQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<ResumenTicketsResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

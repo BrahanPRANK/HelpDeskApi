@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Permisos;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Permisos;
 
 public record ListarPermisosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<PermisosResponseDto>>>;
 
-internal sealed class ListarPermisosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarPermisosQueryHandler> _logger) : IRequestHandler<ListarPermisosQuery, ResponseDto<PaginaDto<PermisosResponseDto>>>
+internal sealed class ListarPermisosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarPermisosQuery, ResponseDto<PaginaDto<PermisosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<PermisosResponseDto>>> Handle(ListarPermisosQuery request, CancellationToken ct)
     {
@@ -32,18 +31,15 @@ internal sealed class ListarPermisosQueryHandler(IUnitOfWork _unitOfWork, Access
                 Modulo = entity.Modulo,
                 Descripcion = entity.Descripcion
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<PermisosResponseDto>>(200, new PaginaDto<PermisosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarPermisosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<PermisosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarPermisosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<PermisosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TiposActivos;
@@ -23,7 +22,7 @@ public class ActualizarTiposActivosCommand : IRequest<ResponseDto<TiposActivosRe
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class ActualizarTiposActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarTiposActivosCommandHandler> _logger) : IRequestHandler<ActualizarTiposActivosCommand, ResponseDto<TiposActivosResponseDto>>
+internal sealed class ActualizarTiposActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarTiposActivosCommand, ResponseDto<TiposActivosResponseDto>>
 {
     public async Task<ResponseDto<TiposActivosResponseDto>> Handle(ActualizarTiposActivosCommand request, CancellationToken ct)
     {
@@ -41,7 +40,7 @@ internal sealed class ActualizarTiposActivosCommandHandler(IUnitOfWork _unitOfWo
             entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
-            return new(200, new TiposActivosResponseDto
+            return new ResponseDto<TiposActivosResponseDto>(200, new TiposActivosResponseDto
             {
                 IdTipoActivo = entity.IdTipoActivo,
                 Nombre = entity.Nombre,
@@ -51,14 +50,11 @@ internal sealed class ActualizarTiposActivosCommandHandler(IUnitOfWork _unitOfWo
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarTiposActivosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TiposActivosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarTiposActivosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TiposActivosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

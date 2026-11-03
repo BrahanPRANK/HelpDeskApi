@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Exceptions;
@@ -20,7 +19,7 @@ public class DesactivarUsuarioCommand : IRequest<ResponseDto<AccionResultadoDto>
     public string Motivo { get; set; } = string.Empty;
 }
 
-internal sealed class DesactivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<DesactivarUsuarioCommandHandler> _logger)
+internal sealed class DesactivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, AccessRules access)
     : IRequestHandler<DesactivarUsuarioCommand, ResponseDto<AccionResultadoDto>>
 {
     public async Task<ResponseDto<AccionResultadoDto>> Handle(DesactivarUsuarioCommand r, CancellationToken ct)
@@ -35,18 +34,15 @@ internal sealed class DesactivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, A
             user.Activo = false;
             result = user.Activo ? "activo" : "inactivo";
             await _unitOfWork.Complete();
-            return new(200, new(r.Id, result));
+            return new ResponseDto<AccionResultadoDto>(200, new AccionResultadoDto(r.Id, result));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en DesactivarUsuarioCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<AccionResultadoDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar DesactivarUsuarioCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<AccionResultadoDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

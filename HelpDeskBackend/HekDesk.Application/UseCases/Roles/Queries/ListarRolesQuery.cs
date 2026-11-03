@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Roles;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Roles;
 
 public record ListarRolesQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<RolesResponseDto>>>;
 
-internal sealed class ListarRolesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarRolesQueryHandler> _logger) : IRequestHandler<ListarRolesQuery, ResponseDto<PaginaDto<RolesResponseDto>>>
+internal sealed class ListarRolesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarRolesQuery, ResponseDto<PaginaDto<RolesResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<RolesResponseDto>>> Handle(ListarRolesQuery request, CancellationToken ct)
     {
@@ -31,18 +30,15 @@ internal sealed class ListarRolesQueryHandler(IUnitOfWork _unitOfWork, AccessRul
                 Nombre = entity.Nombre,
                 Descripcion = entity.Descripcion
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<RolesResponseDto>>(200, new PaginaDto<RolesResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarRolesQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<RolesResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarRolesQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<RolesResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

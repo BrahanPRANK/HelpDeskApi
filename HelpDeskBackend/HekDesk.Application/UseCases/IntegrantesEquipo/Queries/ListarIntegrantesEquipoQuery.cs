@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.IntegrantesEquipo;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.IntegrantesEquipo;
 
 public record ListarIntegrantesEquipoQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>>;
 
-internal sealed class ListarIntegrantesEquipoQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarIntegrantesEquipoQueryHandler> _logger) : IRequestHandler<ListarIntegrantesEquipoQuery, ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>>
+internal sealed class ListarIntegrantesEquipoQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarIntegrantesEquipoQuery, ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>> Handle(ListarIntegrantesEquipoQuery request, CancellationToken ct)
     {
@@ -33,18 +32,15 @@ internal sealed class ListarIntegrantesEquipoQueryHandler(IUnitOfWork _unitOfWor
                 Disponible = entity.Disponible,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>(200, new PaginaDto<IntegrantesEquipoResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarIntegrantesEquipoQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarIntegrantesEquipoQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Usuarios;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Usuarios;
 
 public record ListarUsuariosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<UsuariosResponseDto>>>;
 
-internal sealed class ListarUsuariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarUsuariosQueryHandler> _logger) : IRequestHandler<ListarUsuariosQuery, ResponseDto<PaginaDto<UsuariosResponseDto>>>
+internal sealed class ListarUsuariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarUsuariosQuery, ResponseDto<PaginaDto<UsuariosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<UsuariosResponseDto>>> Handle(ListarUsuariosQuery request, CancellationToken ct)
     {
@@ -37,18 +36,15 @@ internal sealed class ListarUsuariosQueryHandler(IUnitOfWork _unitOfWork, Access
                 Activo = entity.Activo,
                 FechaRegistro = entity.FechaRegistro
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<UsuariosResponseDto>>(200, new PaginaDto<UsuariosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarUsuariosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<UsuariosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarUsuariosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<UsuariosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

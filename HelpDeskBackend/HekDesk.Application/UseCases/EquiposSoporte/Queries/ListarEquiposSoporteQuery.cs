@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.EquiposSoporte;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.EquiposSoporte;
 
 public record ListarEquiposSoporteQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<EquiposSoporteResponseDto>>>;
 
-internal sealed class ListarEquiposSoporteQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarEquiposSoporteQueryHandler> _logger) : IRequestHandler<ListarEquiposSoporteQuery, ResponseDto<PaginaDto<EquiposSoporteResponseDto>>>
+internal sealed class ListarEquiposSoporteQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarEquiposSoporteQuery, ResponseDto<PaginaDto<EquiposSoporteResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<EquiposSoporteResponseDto>>> Handle(ListarEquiposSoporteQuery request, CancellationToken ct)
     {
@@ -32,18 +31,15 @@ internal sealed class ListarEquiposSoporteQueryHandler(IUnitOfWork _unitOfWork, 
                 Descripcion = entity.Descripcion,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<EquiposSoporteResponseDto>>(200, new PaginaDto<EquiposSoporteResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarEquiposSoporteQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<EquiposSoporteResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarEquiposSoporteQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<EquiposSoporteResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

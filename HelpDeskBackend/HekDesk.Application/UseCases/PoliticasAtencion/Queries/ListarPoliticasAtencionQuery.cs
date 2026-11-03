@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.PoliticasAtencion;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.PoliticasAtencion;
 
 public record ListarPoliticasAtencionQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>>;
 
-internal sealed class ListarPoliticasAtencionQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarPoliticasAtencionQueryHandler> _logger) : IRequestHandler<ListarPoliticasAtencionQuery, ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>>
+internal sealed class ListarPoliticasAtencionQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarPoliticasAtencionQuery, ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>> Handle(ListarPoliticasAtencionQuery request, CancellationToken ct)
     {
@@ -33,18 +32,15 @@ internal sealed class ListarPoliticasAtencionQueryHandler(IUnitOfWork _unitOfWor
                 MinutosResolucion = entity.MinutosResolucion,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>(200, new PaginaDto<PoliticasAtencionResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarPoliticasAtencionQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarPoliticasAtencionQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

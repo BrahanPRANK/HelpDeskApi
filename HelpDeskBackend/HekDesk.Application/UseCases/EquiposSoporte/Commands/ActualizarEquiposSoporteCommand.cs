@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.EquiposSoporte;
@@ -23,7 +22,7 @@ public class ActualizarEquiposSoporteCommand : IRequest<ResponseDto<EquiposSopor
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class ActualizarEquiposSoporteCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarEquiposSoporteCommandHandler> _logger) : IRequestHandler<ActualizarEquiposSoporteCommand, ResponseDto<EquiposSoporteResponseDto>>
+internal sealed class ActualizarEquiposSoporteCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarEquiposSoporteCommand, ResponseDto<EquiposSoporteResponseDto>>
 {
     public async Task<ResponseDto<EquiposSoporteResponseDto>> Handle(ActualizarEquiposSoporteCommand request, CancellationToken ct)
     {
@@ -41,7 +40,7 @@ internal sealed class ActualizarEquiposSoporteCommandHandler(IUnitOfWork _unitOf
             entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
-            return new(200, new EquiposSoporteResponseDto
+            return new ResponseDto<EquiposSoporteResponseDto>(200, new EquiposSoporteResponseDto
             {
                 IdEquipo = entity.IdEquipo,
                 Nombre = entity.Nombre,
@@ -51,14 +50,11 @@ internal sealed class ActualizarEquiposSoporteCommandHandler(IUnitOfWork _unitOf
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarEquiposSoporteCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<EquiposSoporteResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarEquiposSoporteCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<EquiposSoporteResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

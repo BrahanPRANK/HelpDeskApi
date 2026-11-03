@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using HelpDesk.Domain.Dtos.Autenticacion;
-using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
 using HelpDesk.Application.Common;
@@ -19,7 +18,7 @@ public class CambiarClaveCommand : IRequest<ResponseDto<OperacionDto>>
     [Required, StringLength(128, MinimumLength = 10)]
     public string ClaveNueva { get; set; } = string.Empty;
 }
-internal sealed class CambiarClaveCommandHandler(IUnitOfWork _unitOfWork, ICurrentUser actor, IPasswordService passwords, ILogger<CambiarClaveCommandHandler> _logger) : IRequestHandler<CambiarClaveCommand, ResponseDto<OperacionDto>>
+internal sealed class CambiarClaveCommandHandler(IUnitOfWork _unitOfWork, ICurrentUser actor, IPasswordService passwords) : IRequestHandler<CambiarClaveCommand, ResponseDto<OperacionDto>>
 {
     public async Task<ResponseDto<OperacionDto>> Handle(CambiarClaveCommand request, CancellationToken ct)
     {
@@ -32,18 +31,15 @@ internal sealed class CambiarClaveCommandHandler(IUnitOfWork _unitOfWork, ICurre
             Validation.Require(passwords.Verify(user.ClaveHash, request.ClaveActual), "La clave actual no coincide.", 400);
             user.ClaveHash = passwords.Hash(request.ClaveNueva);
             await _unitOfWork.Complete();
-            return new(200, new(true), "Clave actualizada; vuelva a iniciar sesion.");
+            return new ResponseDto<OperacionDto>(200, new OperacionDto(true), "Clave actualizada; vuelva a iniciar sesion.");
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CambiarClaveCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<OperacionDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CambiarClaveCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<OperacionDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

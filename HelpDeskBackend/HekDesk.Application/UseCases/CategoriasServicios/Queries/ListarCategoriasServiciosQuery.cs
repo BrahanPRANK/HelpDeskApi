@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.CategoriasServicios;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.CategoriasServicios;
 
 public record ListarCategoriasServiciosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<CategoriasServiciosResponseDto>>>;
 
-internal sealed class ListarCategoriasServiciosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarCategoriasServiciosQueryHandler> _logger) : IRequestHandler<ListarCategoriasServiciosQuery, ResponseDto<PaginaDto<CategoriasServiciosResponseDto>>>
+internal sealed class ListarCategoriasServiciosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarCategoriasServiciosQuery, ResponseDto<PaginaDto<CategoriasServiciosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<CategoriasServiciosResponseDto>>> Handle(ListarCategoriasServiciosQuery request, CancellationToken ct)
     {
@@ -32,18 +31,15 @@ internal sealed class ListarCategoriasServiciosQueryHandler(IUnitOfWork _unitOfW
                 Descripcion = entity.Descripcion,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<CategoriasServiciosResponseDto>>(200, new PaginaDto<CategoriasServiciosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarCategoriasServiciosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<CategoriasServiciosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarCategoriasServiciosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<CategoriasServiciosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

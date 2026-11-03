@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Cambios;
@@ -37,7 +36,7 @@ public class ActualizarCambiosCommand : IRequest<ResponseDto<CambiosResponseDto>
     public string? Resultado { get; set; }
 }
 
-internal sealed class ActualizarCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarCambiosCommandHandler> _logger) : IRequestHandler<ActualizarCambiosCommand, ResponseDto<CambiosResponseDto>>
+internal sealed class ActualizarCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarCambiosCommand, ResponseDto<CambiosResponseDto>>
 {
     public async Task<ResponseDto<CambiosResponseDto>> Handle(ActualizarCambiosCommand request, CancellationToken ct)
     {
@@ -61,7 +60,7 @@ internal sealed class ActualizarCambiosCommandHandler(IUnitOfWork _unitOfWork, A
             entity.Resultado = request.Resultado;
 
             await _unitOfWork.Complete();
-            return new(200, new CambiosResponseDto
+            return new ResponseDto<CambiosResponseDto>(200, new CambiosResponseDto
             {
                 IdCambio = entity.IdCambio,
                 IdSolicitante = entity.IdSolicitante,
@@ -81,14 +80,11 @@ internal sealed class ActualizarCambiosCommandHandler(IUnitOfWork _unitOfWork, A
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarCambiosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<CambiosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarCambiosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<CambiosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

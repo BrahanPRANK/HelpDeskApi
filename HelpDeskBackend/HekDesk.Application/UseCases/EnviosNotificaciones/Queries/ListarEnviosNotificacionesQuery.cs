@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.EnviosNotificaciones;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.EnviosNotificaciones;
 
 public record ListarEnviosNotificacionesQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>>;
 
-internal sealed class ListarEnviosNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarEnviosNotificacionesQueryHandler> _logger) : IRequestHandler<ListarEnviosNotificacionesQuery, ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>>
+internal sealed class ListarEnviosNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarEnviosNotificacionesQuery, ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>> Handle(ListarEnviosNotificacionesQuery request, CancellationToken ct)
     {
@@ -39,18 +38,15 @@ internal sealed class ListarEnviosNotificacionesQueryHandler(IUnitOfWork _unitOf
                 FechaEnvio = entity.FechaEnvio,
                 IdentificadorProveedor = entity.IdentificadorProveedor
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>(200, new PaginaDto<EnviosNotificacionesResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarEnviosNotificacionesQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarEnviosNotificacionesQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

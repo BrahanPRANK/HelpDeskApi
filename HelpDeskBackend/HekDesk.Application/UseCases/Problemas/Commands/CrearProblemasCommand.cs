@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Problemas;
@@ -27,7 +26,7 @@ public class CrearProblemasCommand : IRequest<ResponseDto<ProblemasResponseDto>>
     public string? SolucionDefinitiva { get; set; }
 }
 
-internal sealed class CrearProblemasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearProblemasCommandHandler> _logger) : IRequestHandler<CrearProblemasCommand, ResponseDto<ProblemasResponseDto>>
+internal sealed class CrearProblemasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearProblemasCommand, ResponseDto<ProblemasResponseDto>>
 {
     public async Task<ResponseDto<ProblemasResponseDto>> Handle(CrearProblemasCommand request, CancellationToken ct)
     {
@@ -51,7 +50,7 @@ internal sealed class CrearProblemasCommandHandler(IUnitOfWork _unitOfWork, Acce
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Problemas>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new ProblemasResponseDto
+            return new ResponseDto<ProblemasResponseDto>(201, new ProblemasResponseDto
             {
                 IdProblema = entity.IdProblema,
                 IdResponsable = entity.IdResponsable,
@@ -66,14 +65,11 @@ internal sealed class CrearProblemasCommandHandler(IUnitOfWork _unitOfWork, Acce
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearProblemasCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ProblemasResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearProblemasCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ProblemasResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

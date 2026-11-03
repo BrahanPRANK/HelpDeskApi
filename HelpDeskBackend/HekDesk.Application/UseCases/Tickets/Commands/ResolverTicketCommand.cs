@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Exceptions;
@@ -25,7 +24,7 @@ public class ResolverTicketCommand : IRequest<ResponseDto<TicketsResponseDto>>
     public Guid? IdTecnico { get; set; }
 }
 
-internal sealed class ResolverTicketCommandHandler(IUnitOfWork _unitOfWork, ICurrentUser actor, AccessRules access, ILogger<ResolverTicketCommandHandler> _logger)
+internal sealed class ResolverTicketCommandHandler(IUnitOfWork _unitOfWork, ICurrentUser actor, AccessRules access)
     : IRequestHandler<ResolverTicketCommand, ResponseDto<TicketsResponseDto>>
 {
     public async Task<ResponseDto<TicketsResponseDto>> Handle(ResolverTicketCommand request, CancellationToken ct)
@@ -47,7 +46,7 @@ internal sealed class ResolverTicketCommandHandler(IUnitOfWork _unitOfWork, ICur
             t.Version++;
             t.FechaActualizacion = now;
             await _unitOfWork.Complete();
-            return new(200, new TicketsResponseDto
+            return new ResponseDto<TicketsResponseDto>(200, new TicketsResponseDto
             {
                 IdTicket = t.IdTicket,
                 Numero = t.Numero,
@@ -81,14 +80,11 @@ internal sealed class ResolverTicketCommandHandler(IUnitOfWork _unitOfWork, ICur
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ResolverTicketCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TicketsResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ResolverTicketCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TicketsResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

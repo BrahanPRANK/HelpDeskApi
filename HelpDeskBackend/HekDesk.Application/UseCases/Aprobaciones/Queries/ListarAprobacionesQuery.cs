@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Aprobaciones;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Aprobaciones;
 
 public record ListarAprobacionesQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<AprobacionesResponseDto>>>;
 
-internal sealed class ListarAprobacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarAprobacionesQueryHandler> _logger) : IRequestHandler<ListarAprobacionesQuery, ResponseDto<PaginaDto<AprobacionesResponseDto>>>
+internal sealed class ListarAprobacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarAprobacionesQuery, ResponseDto<PaginaDto<AprobacionesResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<AprobacionesResponseDto>>> Handle(ListarAprobacionesQuery request, CancellationToken ct)
     {
@@ -41,18 +40,15 @@ internal sealed class ListarAprobacionesQueryHandler(IUnitOfWork _unitOfWork, Ac
                 FechaSolicitud = entity.FechaSolicitud,
                 FechaDecision = entity.FechaDecision
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<AprobacionesResponseDto>>(200, new PaginaDto<AprobacionesResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarAprobacionesQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<AprobacionesResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarAprobacionesQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<AprobacionesResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

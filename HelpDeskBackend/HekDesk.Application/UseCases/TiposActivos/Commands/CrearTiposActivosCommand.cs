@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TiposActivos;
@@ -19,7 +18,7 @@ public class CrearTiposActivosCommand : IRequest<ResponseDto<TiposActivosRespons
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class CrearTiposActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearTiposActivosCommandHandler> _logger) : IRequestHandler<CrearTiposActivosCommand, ResponseDto<TiposActivosResponseDto>>
+internal sealed class CrearTiposActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearTiposActivosCommand, ResponseDto<TiposActivosResponseDto>>
 {
     public async Task<ResponseDto<TiposActivosResponseDto>> Handle(CrearTiposActivosCommand request, CancellationToken ct)
     {
@@ -38,7 +37,7 @@ internal sealed class CrearTiposActivosCommandHandler(IUnitOfWork _unitOfWork, A
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TiposActivos>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new TiposActivosResponseDto
+            return new ResponseDto<TiposActivosResponseDto>(201, new TiposActivosResponseDto
             {
                 IdTipoActivo = entity.IdTipoActivo,
                 Nombre = entity.Nombre,
@@ -48,14 +47,11 @@ internal sealed class CrearTiposActivosCommandHandler(IUnitOfWork _unitOfWork, A
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearTiposActivosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TiposActivosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearTiposActivosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TiposActivosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

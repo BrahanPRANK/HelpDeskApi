@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Tickets;
@@ -32,7 +31,7 @@ public class ActualizarTicketsCommand : IRequest<ResponseDto<TicketsResponseDto>
     public int? Version { get; set; }
 }
 
-internal sealed class ActualizarTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<ActualizarTicketsCommandHandler> _logger) : IRequestHandler<ActualizarTicketsCommand, ResponseDto<TicketsResponseDto>>
+internal sealed class ActualizarTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<ActualizarTicketsCommand, ResponseDto<TicketsResponseDto>>
 {
     public async Task<ResponseDto<TicketsResponseDto>> Handle(ActualizarTicketsCommand request, CancellationToken ct)
     {
@@ -54,7 +53,7 @@ internal sealed class ActualizarTicketsCommandHandler(IUnitOfWork _unitOfWork, A
             entity.Version++;
             entity.FechaActualizacion = DateTime.UtcNow;
             await _unitOfWork.Complete();
-            return new(200, new TicketsResponseDto
+            return new ResponseDto<TicketsResponseDto>(200, new TicketsResponseDto
             {
                 IdTicket = entity.IdTicket,
                 Numero = entity.Numero,
@@ -88,14 +87,11 @@ internal sealed class ActualizarTicketsCommandHandler(IUnitOfWork _unitOfWork, A
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarTicketsCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TicketsResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarTicketsCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TicketsResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

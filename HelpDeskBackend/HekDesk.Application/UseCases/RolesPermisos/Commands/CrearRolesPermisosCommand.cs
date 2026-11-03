@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.RolesPermisos;
@@ -16,7 +15,7 @@ public class CrearRolesPermisosCommand : IRequest<ResponseDto<RolesPermisosRespo
     public Guid IdPermiso { get; set; }
 }
 
-internal sealed class CrearRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearRolesPermisosCommandHandler> _logger) : IRequestHandler<CrearRolesPermisosCommand, ResponseDto<RolesPermisosResponseDto>>
+internal sealed class CrearRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearRolesPermisosCommand, ResponseDto<RolesPermisosResponseDto>>
 {
     public async Task<ResponseDto<RolesPermisosResponseDto>> Handle(CrearRolesPermisosCommand request, CancellationToken ct)
     {
@@ -29,7 +28,7 @@ internal sealed class CrearRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, 
 
             await _unitOfWork.Repository<Dictionary<string, object>>("RolesPermisos").AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new RolesPermisosResponseDto()
+            return new ResponseDto<RolesPermisosResponseDto>(201, new RolesPermisosResponseDto()
             {
                 IdRol = (Guid)entity["IdRol"],
                 IdPermiso = (Guid)entity["IdPermiso"]
@@ -37,14 +36,11 @@ internal sealed class CrearRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, 
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearRolesPermisosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<RolesPermisosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearRolesPermisosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<RolesPermisosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

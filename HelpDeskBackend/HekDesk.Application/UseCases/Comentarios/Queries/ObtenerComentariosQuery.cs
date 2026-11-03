@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Comentarios;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.Comentarios;
 
 public record ObtenerComentariosQuery(object[] Keys) : IRequest<ResponseDto<ComentariosResponseDto>>;
 
-internal sealed class ObtenerComentariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerComentariosQueryHandler> _logger) : IRequestHandler<ObtenerComentariosQuery, ResponseDto<ComentariosResponseDto>>
+internal sealed class ObtenerComentariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerComentariosQuery, ResponseDto<ComentariosResponseDto>>
 {
     public async Task<ResponseDto<ComentariosResponseDto>> Handle(ObtenerComentariosQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerComentariosQueryHandler(IUnitOfWork _unitOfWork, Ac
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Comentarios>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new ComentariosResponseDto
+            return new ResponseDto<ComentariosResponseDto>(200, new ComentariosResponseDto
             {
                 IdComentario = entity.IdComentario,
                 IdTicket = entity.IdTicket,
@@ -32,14 +31,11 @@ internal sealed class ObtenerComentariosQueryHandler(IUnitOfWork _unitOfWork, Ac
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerComentariosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ComentariosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerComentariosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ComentariosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

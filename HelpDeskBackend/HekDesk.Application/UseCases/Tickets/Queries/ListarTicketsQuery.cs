@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Tickets;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Tickets;
 
 public record ListarTicketsQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<TicketsResponseDto>>>;
 
-internal sealed class ListarTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarTicketsQueryHandler> _logger) : IRequestHandler<ListarTicketsQuery, ResponseDto<PaginaDto<TicketsResponseDto>>>
+internal sealed class ListarTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarTicketsQuery, ResponseDto<PaginaDto<TicketsResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<TicketsResponseDto>>> Handle(ListarTicketsQuery request, CancellationToken ct)
     {
@@ -58,18 +57,15 @@ internal sealed class ListarTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessR
                 FechaCancelacion = entity.FechaCancelacion,
                 Version = entity.Version
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<TicketsResponseDto>>(200, new PaginaDto<TicketsResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarTicketsQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<TicketsResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarTicketsQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<TicketsResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

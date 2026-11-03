@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TareasCambios;
@@ -24,7 +23,7 @@ public class CrearTareasCambiosCommand : IRequest<ResponseDto<TareasCambiosRespo
     public string Estado { get; set; } = "pendiente";
 }
 
-internal sealed class CrearTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearTareasCambiosCommandHandler> _logger) : IRequestHandler<CrearTareasCambiosCommand, ResponseDto<TareasCambiosResponseDto>>
+internal sealed class CrearTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearTareasCambiosCommand, ResponseDto<TareasCambiosResponseDto>>
 {
     public async Task<ResponseDto<TareasCambiosResponseDto>> Handle(CrearTareasCambiosCommand request, CancellationToken ct)
     {
@@ -48,7 +47,7 @@ internal sealed class CrearTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, 
             entity.FechaFinalizacion = entity.Estado == "completada" ? DateTime.UtcNow : null;
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TareasCambios>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new TareasCambiosResponseDto
+            return new ResponseDto<TareasCambiosResponseDto>(201, new TareasCambiosResponseDto
             {
                 IdTareaCambio = entity.IdTareaCambio,
                 IdCambio = entity.IdCambio,
@@ -63,14 +62,11 @@ internal sealed class CrearTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, 
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearTareasCambiosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TareasCambiosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearTareasCambiosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TareasCambiosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

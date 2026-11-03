@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Encuestas;
@@ -17,7 +16,7 @@ public class CrearEncuestasCommand : IRequest<ResponseDto<EncuestasResponseDto>>
     public string? Comentario { get; set; }
 }
 
-internal sealed class CrearEncuestasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearEncuestasCommandHandler> _logger) : IRequestHandler<CrearEncuestasCommand, ResponseDto<EncuestasResponseDto>>
+internal sealed class CrearEncuestasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<CrearEncuestasCommand, ResponseDto<EncuestasResponseDto>>
 {
     public async Task<ResponseDto<EncuestasResponseDto>> Handle(CrearEncuestasCommand request, CancellationToken ct)
     {
@@ -41,7 +40,7 @@ internal sealed class CrearEncuestasCommandHandler(IUnitOfWork _unitOfWork, Acce
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Encuestas>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new EncuestasResponseDto
+            return new ResponseDto<EncuestasResponseDto>(201, new EncuestasResponseDto
             {
                 IdEncuesta = entity.IdEncuesta,
                 IdTicket = entity.IdTicket,
@@ -53,14 +52,11 @@ internal sealed class CrearEncuestasCommandHandler(IUnitOfWork _unitOfWork, Acce
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearEncuestasCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<EncuestasResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearEncuestasCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<EncuestasResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

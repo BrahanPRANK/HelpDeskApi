@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.CambiosTickets;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.CambiosTickets;
 
 public record ListarCambiosTicketsQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<CambiosTicketsResponseDto>>>;
 
-internal sealed class ListarCambiosTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarCambiosTicketsQueryHandler> _logger) : IRequestHandler<ListarCambiosTicketsQuery, ResponseDto<PaginaDto<CambiosTicketsResponseDto>>>
+internal sealed class ListarCambiosTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarCambiosTicketsQuery, ResponseDto<PaginaDto<CambiosTicketsResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<CambiosTicketsResponseDto>>> Handle(ListarCambiosTicketsQuery request, CancellationToken ct)
     {
@@ -30,18 +29,15 @@ internal sealed class ListarCambiosTicketsQueryHandler(IUnitOfWork _unitOfWork, 
                 IdCambio = (Guid)entity["IdCambio"],
                 IdTicket = (Guid)entity["IdTicket"]
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<CambiosTicketsResponseDto>>(200, new PaginaDto<CambiosTicketsResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarCambiosTicketsQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<CambiosTicketsResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarCambiosTicketsQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<CambiosTicketsResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Cambios;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Cambios;
 
 public record ListarCambiosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<CambiosResponseDto>>>;
 
-internal sealed class ListarCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarCambiosQueryHandler> _logger) : IRequestHandler<ListarCambiosQuery, ResponseDto<PaginaDto<CambiosResponseDto>>>
+internal sealed class ListarCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarCambiosQuery, ResponseDto<PaginaDto<CambiosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<CambiosResponseDto>>> Handle(ListarCambiosQuery request, CancellationToken ct)
     {
@@ -43,18 +42,15 @@ internal sealed class ListarCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessR
                 Resultado = entity.Resultado,
                 FechaCreacion = entity.FechaCreacion
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<CambiosResponseDto>>(200, new PaginaDto<CambiosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarCambiosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<CambiosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarCambiosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<CambiosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

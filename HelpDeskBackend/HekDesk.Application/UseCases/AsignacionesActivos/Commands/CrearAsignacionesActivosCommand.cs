@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.AsignacionesActivos;
@@ -17,7 +16,7 @@ public class CrearAsignacionesActivosCommand : IRequest<ResponseDto<Asignaciones
     public string? Observaciones { get; set; }
 }
 
-internal sealed class CrearAsignacionesActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearAsignacionesActivosCommandHandler> _logger) : IRequestHandler<CrearAsignacionesActivosCommand, ResponseDto<AsignacionesActivosResponseDto>>
+internal sealed class CrearAsignacionesActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<CrearAsignacionesActivosCommand, ResponseDto<AsignacionesActivosResponseDto>>
 {
     public async Task<ResponseDto<AsignacionesActivosResponseDto>> Handle(CrearAsignacionesActivosCommand request, CancellationToken ct)
     {
@@ -41,7 +40,7 @@ internal sealed class CrearAsignacionesActivosCommandHandler(IUnitOfWork _unitOf
             asset.Estado = "asignado";
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.AsignacionesActivos>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new AsignacionesActivosResponseDto
+            return new ResponseDto<AsignacionesActivosResponseDto>(201, new AsignacionesActivosResponseDto
             {
                 IdAsignacion = entity.IdAsignacion,
                 IdActivo = entity.IdActivo,
@@ -54,14 +53,11 @@ internal sealed class CrearAsignacionesActivosCommandHandler(IUnitOfWork _unitOf
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearAsignacionesActivosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<AsignacionesActivosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearAsignacionesActivosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<AsignacionesActivosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

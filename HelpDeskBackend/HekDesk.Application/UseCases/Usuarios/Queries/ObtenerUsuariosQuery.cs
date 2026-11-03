@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Usuarios;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.Usuarios;
 
 public record ObtenerUsuariosQuery(object[] Keys) : IRequest<ResponseDto<UsuariosResponseDto>>;
 
-internal sealed class ObtenerUsuariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerUsuariosQueryHandler> _logger) : IRequestHandler<ObtenerUsuariosQuery, ResponseDto<UsuariosResponseDto>>
+internal sealed class ObtenerUsuariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerUsuariosQuery, ResponseDto<UsuariosResponseDto>>
 {
     public async Task<ResponseDto<UsuariosResponseDto>> Handle(ObtenerUsuariosQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerUsuariosQueryHandler(IUnitOfWork _unitOfWork, Acces
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new UsuariosResponseDto
+            return new ResponseDto<UsuariosResponseDto>(200, new UsuariosResponseDto
             {
                 IdUsuario = entity.IdUsuario,
                 IdArea = entity.IdArea,
@@ -35,14 +34,11 @@ internal sealed class ObtenerUsuariosQueryHandler(IUnitOfWork _unitOfWork, Acces
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerUsuariosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<UsuariosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerUsuariosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<UsuariosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

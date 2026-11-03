@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TareasCambios;
@@ -16,7 +15,7 @@ public class EliminarTareasCambiosCommand : IRequest<ResponseDto<OperacionDto>>
     public object[] Keys { get; set; } = [];
 }
 
-internal sealed class EliminarTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<EliminarTareasCambiosCommandHandler> _logger) : IRequestHandler<EliminarTareasCambiosCommand, ResponseDto<OperacionDto>>
+internal sealed class EliminarTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<EliminarTareasCambiosCommand, ResponseDto<OperacionDto>>
 {
     public async Task<ResponseDto<OperacionDto>> Handle(EliminarTareasCambiosCommand request, CancellationToken ct)
     {
@@ -29,18 +28,15 @@ internal sealed class EliminarTareasCambiosCommandHandler(IUnitOfWork _unitOfWor
 
             _unitOfWork.Repository<global::HelpDesk.Domain.Models.TareasCambios>(null).Delete(entity);
             await _unitOfWork.Complete();
-            return new(200, new(true), "Registro eliminado.");
+            return new ResponseDto<OperacionDto>(200, new OperacionDto(true), "Registro eliminado.");
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en EliminarTareasCambiosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<OperacionDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar EliminarTareasCambiosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<OperacionDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

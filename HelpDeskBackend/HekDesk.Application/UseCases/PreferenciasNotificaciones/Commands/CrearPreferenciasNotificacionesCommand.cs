@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.PreferenciasNotificaciones;
@@ -20,7 +19,7 @@ public class CrearPreferenciasNotificacionesCommand : IRequest<ResponseDto<Prefe
     public bool RecibirPorCorreo { get; set; }
 }
 
-internal sealed class CrearPreferenciasNotificacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearPreferenciasNotificacionesCommandHandler> _logger) : IRequestHandler<CrearPreferenciasNotificacionesCommand, ResponseDto<PreferenciasNotificacionesResponseDto>>
+internal sealed class CrearPreferenciasNotificacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<CrearPreferenciasNotificacionesCommand, ResponseDto<PreferenciasNotificacionesResponseDto>>
 {
     public async Task<ResponseDto<PreferenciasNotificacionesResponseDto>> Handle(CrearPreferenciasNotificacionesCommand request, CancellationToken ct)
     {
@@ -39,7 +38,7 @@ internal sealed class CrearPreferenciasNotificacionesCommandHandler(IUnitOfWork 
             Validation.Require(access.Admin || entity.IdUsuario == actor.Id, "Solo puede modificar preferencias propias.", 403);
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PreferenciasNotificaciones>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new PreferenciasNotificacionesResponseDto
+            return new ResponseDto<PreferenciasNotificacionesResponseDto>(201, new PreferenciasNotificacionesResponseDto
             {
                 IdUsuario = entity.IdUsuario,
                 TipoEvento = entity.TipoEvento,
@@ -49,14 +48,11 @@ internal sealed class CrearPreferenciasNotificacionesCommandHandler(IUnitOfWork 
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearPreferenciasNotificacionesCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PreferenciasNotificacionesResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearPreferenciasNotificacionesCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PreferenciasNotificacionesResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

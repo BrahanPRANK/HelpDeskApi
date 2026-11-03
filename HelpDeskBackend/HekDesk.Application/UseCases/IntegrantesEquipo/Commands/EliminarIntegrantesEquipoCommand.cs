@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.IntegrantesEquipo;
@@ -17,7 +16,7 @@ public class EliminarIntegrantesEquipoCommand : IRequest<ResponseDto<OperacionDt
     public object[] Keys { get; set; } = [];
 }
 
-internal sealed class EliminarIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<EliminarIntegrantesEquipoCommandHandler> _logger) : IRequestHandler<EliminarIntegrantesEquipoCommand, ResponseDto<OperacionDto>>
+internal sealed class EliminarIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<EliminarIntegrantesEquipoCommand, ResponseDto<OperacionDto>>
 {
     public async Task<ResponseDto<OperacionDto>> Handle(EliminarIntegrantesEquipoCommand request, CancellationToken ct)
     {
@@ -31,18 +30,15 @@ internal sealed class EliminarIntegrantesEquipoCommandHandler(IUnitOfWork _unitO
             "El integrante tiene tickets asociados; desactivelo en vez de borrarlo.", 409);
             _unitOfWork.Repository<global::HelpDesk.Domain.Models.IntegrantesEquipo>(null).Delete(entity);
             await _unitOfWork.Complete();
-            return new(200, new(true), "Registro eliminado.");
+            return new ResponseDto<OperacionDto>(200, new OperacionDto(true), "Registro eliminado.");
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en EliminarIntegrantesEquipoCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<OperacionDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar EliminarIntegrantesEquipoCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<OperacionDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

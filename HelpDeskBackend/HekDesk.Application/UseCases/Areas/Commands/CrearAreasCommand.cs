@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Areas;
@@ -19,7 +18,7 @@ public class CrearAreasCommand : IRequest<ResponseDto<AreasResponseDto>>
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class CrearAreasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearAreasCommandHandler> _logger) : IRequestHandler<CrearAreasCommand, ResponseDto<AreasResponseDto>>
+internal sealed class CrearAreasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearAreasCommand, ResponseDto<AreasResponseDto>>
 {
     public async Task<ResponseDto<AreasResponseDto>> Handle(CrearAreasCommand request, CancellationToken ct)
     {
@@ -38,7 +37,7 @@ internal sealed class CrearAreasCommandHandler(IUnitOfWork _unitOfWork, AccessRu
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Areas>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new AreasResponseDto
+            return new ResponseDto<AreasResponseDto>(201, new AreasResponseDto
             {
                 IdArea = entity.IdArea,
                 IdSede = entity.IdSede,
@@ -48,14 +47,11 @@ internal sealed class CrearAreasCommandHandler(IUnitOfWork _unitOfWork, AccessRu
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearAreasCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<AreasResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearAreasCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<AreasResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

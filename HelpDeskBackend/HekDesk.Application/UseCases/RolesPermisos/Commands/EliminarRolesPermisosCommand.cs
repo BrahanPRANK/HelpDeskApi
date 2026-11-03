@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.RolesPermisos;
@@ -16,7 +15,7 @@ public class EliminarRolesPermisosCommand : IRequest<ResponseDto<OperacionDto>>
     public object[] Keys { get; set; } = [];
 }
 
-internal sealed class EliminarRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<EliminarRolesPermisosCommandHandler> _logger) : IRequestHandler<EliminarRolesPermisosCommand, ResponseDto<OperacionDto>>
+internal sealed class EliminarRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<EliminarRolesPermisosCommand, ResponseDto<OperacionDto>>
 {
     public async Task<ResponseDto<OperacionDto>> Handle(EliminarRolesPermisosCommand request, CancellationToken ct)
     {
@@ -31,18 +30,15 @@ internal sealed class EliminarRolesPermisosCommandHandler(IUnitOfWork _unitOfWor
             Validation.Require(role.Nombre != "administrador" || permission.Codigo != "usuarios.administrar", "Se conserva el permiso base de administracion.", 409);
             _unitOfWork.Repository<Dictionary<string, object>>("RolesPermisos").Delete(entity);
             await _unitOfWork.Complete();
-            return new(200, new(true), "Registro eliminado.");
+            return new ResponseDto<OperacionDto>(200, new OperacionDto(true), "Registro eliminado.");
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en EliminarRolesPermisosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<OperacionDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar EliminarRolesPermisosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<OperacionDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

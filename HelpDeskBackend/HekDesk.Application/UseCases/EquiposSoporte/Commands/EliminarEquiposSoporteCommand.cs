@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.EquiposSoporte;
@@ -16,7 +15,7 @@ public class EliminarEquiposSoporteCommand : IRequest<ResponseDto<OperacionDto>>
     public object[] Keys { get; set; } = [];
 }
 
-internal sealed class EliminarEquiposSoporteCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<EliminarEquiposSoporteCommandHandler> _logger) : IRequestHandler<EliminarEquiposSoporteCommand, ResponseDto<OperacionDto>>
+internal sealed class EliminarEquiposSoporteCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<EliminarEquiposSoporteCommand, ResponseDto<OperacionDto>>
 {
     public async Task<ResponseDto<OperacionDto>> Handle(EliminarEquiposSoporteCommand request, CancellationToken ct)
     {
@@ -29,18 +28,15 @@ internal sealed class EliminarEquiposSoporteCommandHandler(IUnitOfWork _unitOfWo
 
             _unitOfWork.Repository<global::HelpDesk.Domain.Models.EquiposSoporte>(null).Delete(entity);
             await _unitOfWork.Complete();
-            return new(200, new(true), "Registro eliminado.");
+            return new ResponseDto<OperacionDto>(200, new OperacionDto(true), "Registro eliminado.");
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en EliminarEquiposSoporteCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<OperacionDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar EliminarEquiposSoporteCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<OperacionDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

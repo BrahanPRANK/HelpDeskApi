@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Roles;
@@ -18,7 +17,7 @@ public class CrearRolesCommand : IRequest<ResponseDto<RolesResponseDto>>
     public string? Descripcion { get; set; }
 }
 
-internal sealed class CrearRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearRolesCommandHandler> _logger) : IRequestHandler<CrearRolesCommand, ResponseDto<RolesResponseDto>>
+internal sealed class CrearRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearRolesCommand, ResponseDto<RolesResponseDto>>
 {
     public async Task<ResponseDto<RolesResponseDto>> Handle(CrearRolesCommand request, CancellationToken ct)
     {
@@ -36,7 +35,7 @@ internal sealed class CrearRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRu
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new RolesResponseDto
+            return new ResponseDto<RolesResponseDto>(201, new RolesResponseDto
             {
                 IdRol = entity.IdRol,
                 Nombre = entity.Nombre,
@@ -45,14 +44,11 @@ internal sealed class CrearRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRu
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearRolesCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<RolesResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearRolesCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<RolesResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

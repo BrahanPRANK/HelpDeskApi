@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Tickets;
@@ -29,7 +28,7 @@ public class CrearTicketsCommand : IRequest<ResponseDto<TicketsResponseDto>>
     public int? Version { get; set; }
 }
 
-internal sealed class CrearTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearTicketsCommandHandler> _logger) : IRequestHandler<CrearTicketsCommand, ResponseDto<TicketsResponseDto>>
+internal sealed class CrearTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<CrearTicketsCommand, ResponseDto<TicketsResponseDto>>
 {
     public async Task<ResponseDto<TicketsResponseDto>> Handle(CrearTicketsCommand request, CancellationToken ct)
     {
@@ -104,7 +103,7 @@ internal sealed class CrearTicketsCommandHandler(IUnitOfWork _unitOfWork, Access
                 Fecha = DateTime.UtcNow
             });
             await _unitOfWork.Complete();
-            return new(201, new TicketsResponseDto
+            return new ResponseDto<TicketsResponseDto>(201, new TicketsResponseDto
             {
                 IdTicket = entity.IdTicket,
                 Numero = entity.Numero,
@@ -138,14 +137,11 @@ internal sealed class CrearTicketsCommandHandler(IUnitOfWork _unitOfWork, Access
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearTicketsCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TicketsResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearTicketsCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TicketsResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

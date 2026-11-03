@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Servicios;
@@ -28,7 +27,7 @@ public class ActualizarServiciosCommand : IRequest<ResponseDto<ServiciosResponse
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class ActualizarServiciosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarServiciosCommandHandler> _logger) : IRequestHandler<ActualizarServiciosCommand, ResponseDto<ServiciosResponseDto>>
+internal sealed class ActualizarServiciosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarServiciosCommand, ResponseDto<ServiciosResponseDto>>
 {
     public async Task<ResponseDto<ServiciosResponseDto>> Handle(ActualizarServiciosCommand request, CancellationToken ct)
     {
@@ -49,7 +48,7 @@ internal sealed class ActualizarServiciosCommandHandler(IUnitOfWork _unitOfWork,
             entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
-            return new(200, new ServiciosResponseDto
+            return new ResponseDto<ServiciosResponseDto>(200, new ServiciosResponseDto
             {
                 IdServicio = entity.IdServicio,
                 IdEquipoResponsable = entity.IdEquipoResponsable,
@@ -62,14 +61,11 @@ internal sealed class ActualizarServiciosCommandHandler(IUnitOfWork _unitOfWork,
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarServiciosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ServiciosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarServiciosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ServiciosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

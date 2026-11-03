@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.CategoriasServicios;
@@ -16,7 +15,7 @@ public class EliminarCategoriasServiciosCommand : IRequest<ResponseDto<Operacion
     public object[] Keys { get; set; } = [];
 }
 
-internal sealed class EliminarCategoriasServiciosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<EliminarCategoriasServiciosCommandHandler> _logger) : IRequestHandler<EliminarCategoriasServiciosCommand, ResponseDto<OperacionDto>>
+internal sealed class EliminarCategoriasServiciosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<EliminarCategoriasServiciosCommand, ResponseDto<OperacionDto>>
 {
     public async Task<ResponseDto<OperacionDto>> Handle(EliminarCategoriasServiciosCommand request, CancellationToken ct)
     {
@@ -29,18 +28,15 @@ internal sealed class EliminarCategoriasServiciosCommandHandler(IUnitOfWork _uni
 
             _unitOfWork.Repository<global::HelpDesk.Domain.Models.CategoriasServicios>(null).Delete(entity);
             await _unitOfWork.Complete();
-            return new(200, new(true), "Registro eliminado.");
+            return new ResponseDto<OperacionDto>(200, new OperacionDto(true), "Registro eliminado.");
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en EliminarCategoriasServiciosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<OperacionDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar EliminarCategoriasServiciosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<OperacionDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

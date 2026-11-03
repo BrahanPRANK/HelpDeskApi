@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.TareasCambios;
@@ -28,7 +27,7 @@ public class ActualizarTareasCambiosCommand : IRequest<ResponseDto<TareasCambios
     public string Estado { get; set; } = "pendiente";
 }
 
-internal sealed class ActualizarTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarTareasCambiosCommandHandler> _logger) : IRequestHandler<ActualizarTareasCambiosCommand, ResponseDto<TareasCambiosResponseDto>>
+internal sealed class ActualizarTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarTareasCambiosCommand, ResponseDto<TareasCambiosResponseDto>>
 {
     public async Task<ResponseDto<TareasCambiosResponseDto>> Handle(ActualizarTareasCambiosCommand request, CancellationToken ct)
     {
@@ -50,7 +49,7 @@ internal sealed class ActualizarTareasCambiosCommandHandler(IUnitOfWork _unitOfW
             access.EnsureRead(await Required<global::HelpDesk.Domain.Models.Cambios>(entity.IdCambio));
             entity.FechaFinalizacion = entity.Estado == "completada" ? DateTime.UtcNow : null;
             await _unitOfWork.Complete();
-            return new(200, new TareasCambiosResponseDto
+            return new ResponseDto<TareasCambiosResponseDto>(200, new TareasCambiosResponseDto
             {
                 IdTareaCambio = entity.IdTareaCambio,
                 IdCambio = entity.IdCambio,
@@ -65,14 +64,11 @@ internal sealed class ActualizarTareasCambiosCommandHandler(IUnitOfWork _unitOfW
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarTareasCambiosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<TareasCambiosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarTareasCambiosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<TareasCambiosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

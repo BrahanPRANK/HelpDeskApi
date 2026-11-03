@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Activos;
@@ -34,7 +33,7 @@ public class ActualizarActivosCommand : IRequest<ResponseDto<ActivosResponseDto>
     public string Estado { get; set; } = "disponible";
 }
 
-internal sealed class ActualizarActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarActivosCommandHandler> _logger) : IRequestHandler<ActualizarActivosCommand, ResponseDto<ActivosResponseDto>>
+internal sealed class ActualizarActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarActivosCommand, ResponseDto<ActivosResponseDto>>
 {
     public async Task<ResponseDto<ActivosResponseDto>> Handle(ActualizarActivosCommand request, CancellationToken ct)
     {
@@ -59,7 +58,7 @@ internal sealed class ActualizarActivosCommandHandler(IUnitOfWork _unitOfWork, A
             var assigned = await (_unitOfWork.Repository<global::HelpDesk.Domain.Models.AsignacionesActivos>().Query().Where(x => x.IdActivo == entity.IdActivo && x.FechaDevolucion == null)).CountAsync();
             Validation.Require((assigned > 0) == (entity.Estado == "asignado"), "Cambie la asignacion con asignar/devolver; el estado debe coincidir.", 409);
             await _unitOfWork.Complete();
-            return new(200, new ActivosResponseDto
+            return new ResponseDto<ActivosResponseDto>(200, new ActivosResponseDto
             {
                 IdActivo = entity.IdActivo,
                 IdSede = entity.IdSede,
@@ -76,14 +75,11 @@ internal sealed class ActualizarActivosCommandHandler(IUnitOfWork _unitOfWork, A
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarActivosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<ActivosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarActivosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<ActivosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

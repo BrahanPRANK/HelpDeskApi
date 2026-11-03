@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Adjuntos;
@@ -24,7 +23,7 @@ public class CrearAdjuntosCommand : IRequest<ResponseDto<AdjuntosResponseDto>>
     public bool EsInterno { get; set; }
 }
 
-internal sealed class CrearAdjuntosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearAdjuntosCommandHandler> _logger) : IRequestHandler<CrearAdjuntosCommand, ResponseDto<AdjuntosResponseDto>>
+internal sealed class CrearAdjuntosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<CrearAdjuntosCommand, ResponseDto<AdjuntosResponseDto>>
 {
     public async Task<ResponseDto<AdjuntosResponseDto>> Handle(CrearAdjuntosCommand request, CancellationToken ct)
     {
@@ -57,7 +56,7 @@ internal sealed class CrearAdjuntosCommandHandler(IUnitOfWork _unitOfWork, Acces
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Adjuntos>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new AdjuntosResponseDto
+            return new ResponseDto<AdjuntosResponseDto>(201, new AdjuntosResponseDto
             {
                 IdAdjunto = entity.IdAdjunto,
                 IdTicket = entity.IdTicket,
@@ -72,14 +71,11 @@ internal sealed class CrearAdjuntosCommandHandler(IUnitOfWork _unitOfWork, Acces
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearAdjuntosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<AdjuntosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearAdjuntosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<AdjuntosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

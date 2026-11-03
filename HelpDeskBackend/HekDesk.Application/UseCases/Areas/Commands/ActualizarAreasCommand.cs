@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Areas;
@@ -23,7 +22,7 @@ public class ActualizarAreasCommand : IRequest<ResponseDto<AreasResponseDto>>
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class ActualizarAreasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarAreasCommandHandler> _logger) : IRequestHandler<ActualizarAreasCommand, ResponseDto<AreasResponseDto>>
+internal sealed class ActualizarAreasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarAreasCommand, ResponseDto<AreasResponseDto>>
 {
     public async Task<ResponseDto<AreasResponseDto>> Handle(ActualizarAreasCommand request, CancellationToken ct)
     {
@@ -41,7 +40,7 @@ internal sealed class ActualizarAreasCommandHandler(IUnitOfWork _unitOfWork, Acc
             entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
-            return new(200, new AreasResponseDto
+            return new ResponseDto<AreasResponseDto>(200, new AreasResponseDto
             {
                 IdArea = entity.IdArea,
                 IdSede = entity.IdSede,
@@ -51,14 +50,11 @@ internal sealed class ActualizarAreasCommandHandler(IUnitOfWork _unitOfWork, Acc
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarAreasCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<AreasResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarAreasCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<AreasResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

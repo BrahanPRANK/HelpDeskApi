@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.ArticulosConocimiento;
@@ -16,7 +15,7 @@ public class EliminarArticulosConocimientoCommand : IRequest<ResponseDto<Operaci
     public object[] Keys { get; set; } = [];
 }
 
-internal sealed class EliminarArticulosConocimientoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<EliminarArticulosConocimientoCommandHandler> _logger) : IRequestHandler<EliminarArticulosConocimientoCommand, ResponseDto<OperacionDto>>
+internal sealed class EliminarArticulosConocimientoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<EliminarArticulosConocimientoCommand, ResponseDto<OperacionDto>>
 {
     public async Task<ResponseDto<OperacionDto>> Handle(EliminarArticulosConocimientoCommand request, CancellationToken ct)
     {
@@ -29,18 +28,15 @@ internal sealed class EliminarArticulosConocimientoCommandHandler(IUnitOfWork _u
 
             _unitOfWork.Repository<global::HelpDesk.Domain.Models.ArticulosConocimiento>(null).Delete(entity);
             await _unitOfWork.Complete();
-            return new(200, new(true), "Registro eliminado.");
+            return new ResponseDto<OperacionDto>(200, new OperacionDto(true), "Registro eliminado.");
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en EliminarArticulosConocimientoCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<OperacionDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar EliminarArticulosConocimientoCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<OperacionDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

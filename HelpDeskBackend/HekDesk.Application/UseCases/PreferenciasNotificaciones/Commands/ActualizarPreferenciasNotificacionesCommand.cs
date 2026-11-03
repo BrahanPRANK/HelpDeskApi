@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.PreferenciasNotificaciones;
@@ -24,7 +23,7 @@ public class ActualizarPreferenciasNotificacionesCommand : IRequest<ResponseDto<
     public bool RecibirPorCorreo { get; set; }
 }
 
-internal sealed class ActualizarPreferenciasNotificacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<ActualizarPreferenciasNotificacionesCommandHandler> _logger) : IRequestHandler<ActualizarPreferenciasNotificacionesCommand, ResponseDto<PreferenciasNotificacionesResponseDto>>
+internal sealed class ActualizarPreferenciasNotificacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor) : IRequestHandler<ActualizarPreferenciasNotificacionesCommand, ResponseDto<PreferenciasNotificacionesResponseDto>>
 {
     public async Task<ResponseDto<PreferenciasNotificacionesResponseDto>> Handle(ActualizarPreferenciasNotificacionesCommand request, CancellationToken ct)
     {
@@ -41,7 +40,7 @@ internal sealed class ActualizarPreferenciasNotificacionesCommandHandler(IUnitOf
             entity.RecibirPorCorreo = request.RecibirPorCorreo;
             Validation.Require(access.Admin || entity.IdUsuario == actor.Id, "Solo puede modificar preferencias propias.", 403);
             await _unitOfWork.Complete();
-            return new(200, new PreferenciasNotificacionesResponseDto
+            return new ResponseDto<PreferenciasNotificacionesResponseDto>(200, new PreferenciasNotificacionesResponseDto
             {
                 IdUsuario = entity.IdUsuario,
                 TipoEvento = entity.TipoEvento,
@@ -51,14 +50,11 @@ internal sealed class ActualizarPreferenciasNotificacionesCommandHandler(IUnitOf
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarPreferenciasNotificacionesCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PreferenciasNotificacionesResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarPreferenciasNotificacionesCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PreferenciasNotificacionesResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

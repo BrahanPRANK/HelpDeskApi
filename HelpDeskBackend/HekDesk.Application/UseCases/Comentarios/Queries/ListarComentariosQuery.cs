@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Comentarios;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Comentarios;
 
 public record ListarComentariosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<ComentariosResponseDto>>>;
 
-internal sealed class ListarComentariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarComentariosQueryHandler> _logger) : IRequestHandler<ListarComentariosQuery, ResponseDto<PaginaDto<ComentariosResponseDto>>>
+internal sealed class ListarComentariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarComentariosQuery, ResponseDto<PaginaDto<ComentariosResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<ComentariosResponseDto>>> Handle(ListarComentariosQuery request, CancellationToken ct)
     {
@@ -35,18 +34,15 @@ internal sealed class ListarComentariosQueryHandler(IUnitOfWork _unitOfWork, Acc
                 EsInterno = entity.EsInterno,
                 Fecha = entity.Fecha
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<ComentariosResponseDto>>(200, new PaginaDto<ComentariosResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarComentariosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<ComentariosResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarComentariosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<ComentariosResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

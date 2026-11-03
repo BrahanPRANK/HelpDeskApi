@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.HistorialTickets;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.HistorialTickets;
 
 public record ListarHistorialTicketsQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<HistorialTicketsResponseDto>>>;
 
-internal sealed class ListarHistorialTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarHistorialTicketsQueryHandler> _logger) : IRequestHandler<ListarHistorialTicketsQuery, ResponseDto<PaginaDto<HistorialTicketsResponseDto>>>
+internal sealed class ListarHistorialTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarHistorialTicketsQuery, ResponseDto<PaginaDto<HistorialTicketsResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<HistorialTicketsResponseDto>>> Handle(ListarHistorialTicketsQuery request, CancellationToken ct)
     {
@@ -38,18 +37,15 @@ internal sealed class ListarHistorialTicketsQueryHandler(IUnitOfWork _unitOfWork
                 Motivo = entity.Motivo,
                 Fecha = entity.Fecha
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<HistorialTicketsResponseDto>>(200, new PaginaDto<HistorialTicketsResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarHistorialTicketsQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<HistorialTicketsResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarHistorialTicketsQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<HistorialTicketsResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

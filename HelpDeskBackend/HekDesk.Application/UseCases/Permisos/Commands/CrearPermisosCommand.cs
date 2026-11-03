@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Permisos;
@@ -23,7 +22,7 @@ public class CrearPermisosCommand : IRequest<ResponseDto<PermisosResponseDto>>
     public string Descripcion { get; set; } = "";
 }
 
-internal sealed class CrearPermisosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearPermisosCommandHandler> _logger) : IRequestHandler<CrearPermisosCommand, ResponseDto<PermisosResponseDto>>
+internal sealed class CrearPermisosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearPermisosCommand, ResponseDto<PermisosResponseDto>>
 {
     public async Task<ResponseDto<PermisosResponseDto>> Handle(CrearPermisosCommand request, CancellationToken ct)
     {
@@ -42,7 +41,7 @@ internal sealed class CrearPermisosCommandHandler(IUnitOfWork _unitOfWork, Acces
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Permisos>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new PermisosResponseDto
+            return new ResponseDto<PermisosResponseDto>(201, new PermisosResponseDto
             {
                 IdPermiso = entity.IdPermiso,
                 Codigo = entity.Codigo,
@@ -52,14 +51,11 @@ internal sealed class CrearPermisosCommandHandler(IUnitOfWork _unitOfWork, Acces
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearPermisosCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PermisosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearPermisosCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PermisosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.AsignacionesTickets;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.AsignacionesTickets;
 
 public record ListarAsignacionesTicketsQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<AsignacionesTicketsResponseDto>>>;
 
-internal sealed class ListarAsignacionesTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarAsignacionesTicketsQueryHandler> _logger) : IRequestHandler<ListarAsignacionesTicketsQuery, ResponseDto<PaginaDto<AsignacionesTicketsResponseDto>>>
+internal sealed class ListarAsignacionesTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarAsignacionesTicketsQuery, ResponseDto<PaginaDto<AsignacionesTicketsResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<AsignacionesTicketsResponseDto>>> Handle(ListarAsignacionesTicketsQuery request, CancellationToken ct)
     {
@@ -37,18 +36,15 @@ internal sealed class ListarAsignacionesTicketsQueryHandler(IUnitOfWork _unitOfW
                 FechaFin = entity.FechaFin,
                 Motivo = entity.Motivo
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<AsignacionesTicketsResponseDto>>(200, new PaginaDto<AsignacionesTicketsResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarAsignacionesTicketsQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<AsignacionesTicketsResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarAsignacionesTicketsQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<AsignacionesTicketsResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

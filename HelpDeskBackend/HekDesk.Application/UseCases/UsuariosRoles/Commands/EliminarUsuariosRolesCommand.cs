@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.UsuariosRoles;
@@ -17,7 +16,7 @@ public class EliminarUsuariosRolesCommand : IRequest<ResponseDto<OperacionDto>>
     public object[] Keys { get; set; } = [];
 }
 
-internal sealed class EliminarUsuariosRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<EliminarUsuariosRolesCommandHandler> _logger) : IRequestHandler<EliminarUsuariosRolesCommand, ResponseDto<OperacionDto>>
+internal sealed class EliminarUsuariosRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<EliminarUsuariosRolesCommand, ResponseDto<OperacionDto>>
 {
     public async Task<ResponseDto<OperacionDto>> Handle(EliminarUsuariosRolesCommand request, CancellationToken ct)
     {
@@ -30,18 +29,15 @@ internal sealed class EliminarUsuariosRolesCommandHandler(IUnitOfWork _unitOfWor
             await EnsureNotLastAdmin(entity.IdUsuario);
             _unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>(null).Delete(entity);
             await _unitOfWork.Complete();
-            return new(200, new(true), "Registro eliminado.");
+            return new ResponseDto<OperacionDto>(200, new OperacionDto(true), "Registro eliminado.");
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en EliminarUsuariosRolesCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<OperacionDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar EliminarUsuariosRolesCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<OperacionDto>(500, default, "No se pudo completar la operacion.");
         }
     }
     private async Task EnsureNotLastAdmin(Guid userId)

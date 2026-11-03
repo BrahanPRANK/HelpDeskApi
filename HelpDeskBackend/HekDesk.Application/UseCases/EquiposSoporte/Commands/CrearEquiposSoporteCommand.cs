@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.EquiposSoporte;
@@ -19,7 +18,7 @@ public class CrearEquiposSoporteCommand : IRequest<ResponseDto<EquiposSoporteRes
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class CrearEquiposSoporteCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearEquiposSoporteCommandHandler> _logger) : IRequestHandler<CrearEquiposSoporteCommand, ResponseDto<EquiposSoporteResponseDto>>
+internal sealed class CrearEquiposSoporteCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<CrearEquiposSoporteCommand, ResponseDto<EquiposSoporteResponseDto>>
 {
     public async Task<ResponseDto<EquiposSoporteResponseDto>> Handle(CrearEquiposSoporteCommand request, CancellationToken ct)
     {
@@ -38,7 +37,7 @@ internal sealed class CrearEquiposSoporteCommandHandler(IUnitOfWork _unitOfWork,
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.EquiposSoporte>().AddAsync(entity);
             await _unitOfWork.Complete();
-            return new(201, new EquiposSoporteResponseDto
+            return new ResponseDto<EquiposSoporteResponseDto>(201, new EquiposSoporteResponseDto
             {
                 IdEquipo = entity.IdEquipo,
                 Nombre = entity.Nombre,
@@ -48,14 +47,11 @@ internal sealed class CrearEquiposSoporteCommandHandler(IUnitOfWork _unitOfWork,
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en CrearEquiposSoporteCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<EquiposSoporteResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar CrearEquiposSoporteCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<EquiposSoporteResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

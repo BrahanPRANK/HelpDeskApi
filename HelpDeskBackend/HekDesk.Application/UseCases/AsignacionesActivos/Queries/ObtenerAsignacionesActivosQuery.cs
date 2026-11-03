@@ -1,5 +1,4 @@
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.AsignacionesActivos;
@@ -11,7 +10,7 @@ namespace HelpDesk.Application.UseCases.AsignacionesActivos;
 
 public record ObtenerAsignacionesActivosQuery(object[] Keys) : IRequest<ResponseDto<AsignacionesActivosResponseDto>>;
 
-internal sealed class ObtenerAsignacionesActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ObtenerAsignacionesActivosQueryHandler> _logger) : IRequestHandler<ObtenerAsignacionesActivosQuery, ResponseDto<AsignacionesActivosResponseDto>>
+internal sealed class ObtenerAsignacionesActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerAsignacionesActivosQuery, ResponseDto<AsignacionesActivosResponseDto>>
 {
     public async Task<ResponseDto<AsignacionesActivosResponseDto>> Handle(ObtenerAsignacionesActivosQuery request, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ internal sealed class ObtenerAsignacionesActivosQueryHandler(IUnitOfWork _unitOf
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.AsignacionesActivos>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200, new AsignacionesActivosResponseDto
+            return new ResponseDto<AsignacionesActivosResponseDto>(200, new AsignacionesActivosResponseDto
             {
                 IdAsignacion = entity.IdAsignacion,
                 IdActivo = entity.IdActivo,
@@ -33,14 +32,11 @@ internal sealed class ObtenerAsignacionesActivosQueryHandler(IUnitOfWork _unitOf
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ObtenerAsignacionesActivosQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<AsignacionesActivosResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ObtenerAsignacionesActivosQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<AsignacionesActivosResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

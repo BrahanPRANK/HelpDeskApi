@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Sedes;
@@ -23,7 +22,7 @@ public class ActualizarSedesCommand : IRequest<ResponseDto<SedesResponseDto>>
     public bool Activo { get; set; } = true;
 }
 
-internal sealed class ActualizarSedesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarSedesCommandHandler> _logger) : IRequestHandler<ActualizarSedesCommand, ResponseDto<SedesResponseDto>>
+internal sealed class ActualizarSedesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ActualizarSedesCommand, ResponseDto<SedesResponseDto>>
 {
     public async Task<ResponseDto<SedesResponseDto>> Handle(ActualizarSedesCommand request, CancellationToken ct)
     {
@@ -41,7 +40,7 @@ internal sealed class ActualizarSedesCommandHandler(IUnitOfWork _unitOfWork, Acc
             entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
-            return new(200, new SedesResponseDto
+            return new ResponseDto<SedesResponseDto>(200, new SedesResponseDto
             {
                 IdSede = entity.IdSede,
                 Nombre = entity.Nombre,
@@ -51,14 +50,11 @@ internal sealed class ActualizarSedesCommandHandler(IUnitOfWork _unitOfWork, Acc
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ActualizarSedesCommandHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<SedesResponseDto>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ActualizarSedesCommandHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<SedesResponseDto>(500, default, "No se pudo completar la operacion.");
         }
     }
 

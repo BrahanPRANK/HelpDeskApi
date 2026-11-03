@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.CategoriasConocimiento;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.CategoriasConocimiento;
 
 public record ListarCategoriasConocimientoQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<CategoriasConocimientoResponseDto>>>;
 
-internal sealed class ListarCategoriasConocimientoQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarCategoriasConocimientoQueryHandler> _logger) : IRequestHandler<ListarCategoriasConocimientoQuery, ResponseDto<PaginaDto<CategoriasConocimientoResponseDto>>>
+internal sealed class ListarCategoriasConocimientoQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarCategoriasConocimientoQuery, ResponseDto<PaginaDto<CategoriasConocimientoResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<CategoriasConocimientoResponseDto>>> Handle(ListarCategoriasConocimientoQuery request, CancellationToken ct)
     {
@@ -32,18 +31,15 @@ internal sealed class ListarCategoriasConocimientoQueryHandler(IUnitOfWork _unit
                 Descripcion = entity.Descripcion,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<CategoriasConocimientoResponseDto>>(200, new PaginaDto<CategoriasConocimientoResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarCategoriasConocimientoQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<CategoriasConocimientoResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarCategoriasConocimientoQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<CategoriasConocimientoResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

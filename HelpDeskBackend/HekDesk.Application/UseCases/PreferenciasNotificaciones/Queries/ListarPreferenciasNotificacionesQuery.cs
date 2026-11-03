@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.PreferenciasNotificaciones;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.PreferenciasNotificaciones;
 
 public record ListarPreferenciasNotificacionesQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>>;
 
-internal sealed class ListarPreferenciasNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarPreferenciasNotificacionesQueryHandler> _logger) : IRequestHandler<ListarPreferenciasNotificacionesQuery, ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>>
+internal sealed class ListarPreferenciasNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarPreferenciasNotificacionesQuery, ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>> Handle(ListarPreferenciasNotificacionesQuery request, CancellationToken ct)
     {
@@ -32,18 +31,15 @@ internal sealed class ListarPreferenciasNotificacionesQueryHandler(IUnitOfWork _
                 RecibirEnSistema = entity.RecibirEnSistema,
                 RecibirPorCorreo = entity.RecibirPorCorreo
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>(200, new PaginaDto<PreferenciasNotificacionesResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarPreferenciasNotificacionesQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarPreferenciasNotificacionesQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 

@@ -1,6 +1,5 @@
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
 using HelpDesk.Domain.Dtos.Sedes;
@@ -12,7 +11,7 @@ namespace HelpDesk.Application.UseCases.Sedes;
 
 public record ListarSedesQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<SedesResponseDto>>>;
 
-internal sealed class ListarSedesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ListarSedesQueryHandler> _logger) : IRequestHandler<ListarSedesQuery, ResponseDto<PaginaDto<SedesResponseDto>>>
+internal sealed class ListarSedesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarSedesQuery, ResponseDto<PaginaDto<SedesResponseDto>>>
 {
     public async Task<ResponseDto<PaginaDto<SedesResponseDto>>> Handle(ListarSedesQuery request, CancellationToken ct)
     {
@@ -32,18 +31,15 @@ internal sealed class ListarSedesQueryHandler(IUnitOfWork _unitOfWork, AccessRul
                 Direccion = entity.Direccion,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new(200, new(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<SedesResponseDto>>(200, new PaginaDto<SedesResponseDto>(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
-            if (ex.Status >= 500)
-                _logger.LogError(ex, "Error controlado en ListarSedesQueryHandler.");
-            return new(ex.Status, default, ex.Message);
+            return new ResponseDto<PaginaDto<SedesResponseDto>>(ex.Status, default, ex.Message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error al ejecutar ListarSedesQueryHandler.");
-            return new(500, default, "No se pudo completar la operacion.");
+            return new ResponseDto<PaginaDto<SedesResponseDto>>(500, default, "No se pudo completar la operacion.");
         }
     }
 
