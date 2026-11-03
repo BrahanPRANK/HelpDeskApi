@@ -1,9 +1,9 @@
-using HelpDesk.Application.Dtos.Common;
+using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.Dtos.Adjuntos;
+using HelpDesk.Domain.Dtos.Adjuntos;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;

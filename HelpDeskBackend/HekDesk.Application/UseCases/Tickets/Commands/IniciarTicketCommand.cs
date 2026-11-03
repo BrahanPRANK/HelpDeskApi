@@ -1,4 +1,4 @@
-using HelpDesk.Application.Dtos.Common;
+using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -7,7 +7,7 @@ using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
 using MediatR;
-using HelpDesk.Application.Dtos.Tickets;
+using HelpDesk.Domain.Dtos.Tickets;
 namespace HelpDesk.Application.UseCases.Tickets.Commands;
 
 public record IniciarTicketCommand(Guid IdTicket, AccionTicketDto Datos) : IRequest<ResponseDto<TicketsResponseDto>>;

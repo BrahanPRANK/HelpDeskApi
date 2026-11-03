@@ -32,8 +32,8 @@ Swagger: [http://localhost:5014/](http://localhost:5014/). Iniciar sesión en `P
 ```text
 HelpDeskBackend/
 ├── HelpDesk.Api/             Controladores, middleware, Swagger y arranque
-├── HekDesk.Application/      Casos de uso y Dtos/{Entidad}, un DTO por archivo
-├── HelpDesk.Domain/          Modelos e interfaces
+├── HekDesk.Application/      Comandos, consultas y handlers
+├── HelpDesk.Domain/          Modelos, interfaces y Dtos/{Entidad}
 ├── HelpDesk.Infrastructure/  EF Core, repositorios, Unit of Work y seguridad
 ├── scripts/                 Scaffolding y administrador inicial
 └── tests/                   Pruebas de integración

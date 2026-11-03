@@ -1,8 +1,8 @@
-using HelpDesk.Application.Dtos.Common;
+using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.Dtos.Aprobaciones;
+using HelpDesk.Domain.Dtos.Aprobaciones;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;

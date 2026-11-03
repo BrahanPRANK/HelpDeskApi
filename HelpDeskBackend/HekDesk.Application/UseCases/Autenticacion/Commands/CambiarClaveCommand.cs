@@ -1,5 +1,5 @@
-using HelpDesk.Application.Dtos.Common;
-using HelpDesk.Application.Dtos.Autenticacion;
+using HelpDesk.Domain.Dtos.Common;
+using HelpDesk.Domain.Dtos.Autenticacion;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;

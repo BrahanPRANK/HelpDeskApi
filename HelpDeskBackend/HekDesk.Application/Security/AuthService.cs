@@ -1,4 +1,4 @@
-using HelpDesk.Application.Dtos.Autenticacion;
+using HelpDesk.Domain.Dtos.Autenticacion;
 using Microsoft.EntityFrameworkCore;
 using HelpDesk.Application.Common;
 using HelpDesk.Domain.Models;

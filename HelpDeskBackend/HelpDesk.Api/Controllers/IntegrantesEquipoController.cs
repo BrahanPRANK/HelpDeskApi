@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.IntegrantesEquipo;
-using HelpDesk.Application.Dtos.IntegrantesEquipo;
+using HelpDesk.Domain.Dtos.IntegrantesEquipo;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

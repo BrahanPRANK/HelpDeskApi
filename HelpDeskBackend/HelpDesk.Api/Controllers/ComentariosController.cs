@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.Comentarios;
-using HelpDesk.Application.Dtos.Comentarios;
+using HelpDesk.Domain.Dtos.Comentarios;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

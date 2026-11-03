@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.PoliticasAtencion;
-using HelpDesk.Application.Dtos.PoliticasAtencion;
+using HelpDesk.Domain.Dtos.PoliticasAtencion;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

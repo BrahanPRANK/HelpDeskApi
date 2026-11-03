@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.Sedes;
-using HelpDesk.Application.Dtos.Sedes;
+using HelpDesk.Domain.Dtos.Sedes;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

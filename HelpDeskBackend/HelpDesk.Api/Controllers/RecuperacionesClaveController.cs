@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.RecuperacionesClave;
-using HelpDesk.Application.Dtos.RecuperacionesClave;
+using HelpDesk.Domain.Dtos.RecuperacionesClave;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

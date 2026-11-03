@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.CambiosTickets;
-using HelpDesk.Application.Dtos.CambiosTickets;
+using HelpDesk.Domain.Dtos.CambiosTickets;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

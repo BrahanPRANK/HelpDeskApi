@@ -1,5 +1,5 @@
-using HelpDesk.Application.Dtos.Reportes;
-using HelpDesk.Application.Dtos.Common;
+using HelpDesk.Domain.Dtos.Reportes;
+using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;

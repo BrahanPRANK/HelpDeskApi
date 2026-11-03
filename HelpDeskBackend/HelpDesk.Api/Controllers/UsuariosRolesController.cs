@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.UsuariosRoles;
-using HelpDesk.Application.Dtos.UsuariosRoles;
+using HelpDesk.Domain.Dtos.UsuariosRoles;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -13,7 +13,7 @@ Este es el reparto vigente. Sustituye al de ocho integrantes. El equipo actual e
 Esta plantilla se adapta al estilo del laboratorio 11. El reparto de entidades entre seis integrantes se mantiene; cada uno incorpora solamente los archivos del alcance actual. Las funciones que se describían antes como publicación de artículos, recuperación de contraseña, programación de cambios y reapertura de tickets quedan para una segunda entrega.
 
 - Los casos de uso están en `HekDesk.Application/UseCases/{Entidad}/Commands` y `Queries`.
-- Todos los DTOs están en `HekDesk.Application/Dtos/{Entidad}/`, uno por archivo. Los compartidos están en `Dtos/Common/` y los de acceso en `Dtos/Autenticacion/`.
+- Todos los DTOs están en `HelpDesk.Domain/Dtos/{Entidad}/`, uno por archivo. Los compartidos están en `Dtos/Common/` y los de acceso en `Dtos/Autenticacion/`.
 - Los handlers contienen su lógica y `try/catch`. `CancellationToken` solo se declara en `Handle` para cumplir la interfaz de MediatR; no se utiliza ni se pasa al repositorio.
 - `IUnitOfWork` ofrece `Repository<T>()` y `Complete()`. Los repositorios exponen operaciones básicas; cada escritura se confirma desde el handler. No hay auditoría automática dentro de UnitOfWork.
 - Se conserva el flujo de tickets: crear → asignar → iniciar → resolver → cerrar. No se implementa reasignación en esta entrega.
@@ -314,7 +314,7 @@ Cada tabla o vista tiene un solo responsable funcional. `CargaTecnicos` y `Resum
 
 Por cada entidad asignada, el responsable incorpora al repositorio de trabajo:
 
-1. `Application/UseCases/{Entidad}/`: comandos, consultas y handlers de su entidad. Además, subir `Application/Dtos/{Entidad}/`, un DTO por archivo.
+1. `Application/UseCases/{Entidad}/`: comandos, consultas y handlers de su entidad. Además, subir `Domain/Dtos/{Entidad}/`, un DTO por archivo.
 2. Los controladores CRUD y de acciones correspondientes en el proyecto API.
 3. Pruebas y ejemplos de peticiones que demuestren su parte.
 4. Ajustes de modelo necesarios, coordinados con Brahan; los modelos generados ya pertenecen a la base común.
@@ -349,7 +349,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 **Además sube:**
 
 - `HekDesk.Application/UseCases/Autenticacion/Commands/`.
-- `HekDesk.Application/Dtos/Autenticacion/` y `HekDesk.Application/Security/AuthService.cs` (alta inicial por consola).
+- `HelpDesk.Domain/Dtos/Autenticacion/` y `HekDesk.Application/Security/AuthService.cs` (alta inicial por consola).
 - `HelpDesk.Api/Controllers/AuthController.cs` y `HelpDesk.Api/Security/CurrentUser.cs`.
 - `HekDesk.Application/Security/AccessRules.cs` y `scripts/Crear-Administrador.ps1`, coordinando su integración.
 - Diego define y prueba el flujo de acceso. Brahan sube las implementaciones técnicas `PasswordService`, `JwtService` y sus interfaces; no se duplican esos archivos.

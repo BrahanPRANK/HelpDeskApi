@@ -1,4 +1,4 @@
-using HelpDesk.Application.Dtos.Autenticacion;
+using HelpDesk.Domain.Dtos.Autenticacion;
 using HelpDesk.Application.Security;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

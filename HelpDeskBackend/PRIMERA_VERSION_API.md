@@ -19,8 +19,8 @@ Abrir `http://localhost:5014/`, iniciar sesión en `POST /api/auth/login` y pega
 
 - `Application/UseCases/{Entidad}/Commands`: escrituras y sus handlers, con lógica propia.
 - `Application/UseCases/{Entidad}/Queries`: consultas y sus handlers, con filtros LINQ y proyección.
-- `Application/Dtos/{Entidad}`: DTOs de entrada y salida, cada uno en su propio archivo.
-- `Application/Dtos/Common`: ResponseDto, PaginaDto, ListOptions y respuestas compartidas, separados.
+- `Domain/Dtos/{Entidad}`: DTOs de entrada y salida, cada uno en su propio archivo.
+- `Domain/Dtos/Common`: ResponseDto, PaginaDto, ListOptions y respuestas compartidas, separados.
 - `Application/Common`: validación básica; `Application/Security`: reglas de acceso y alta inicial.
 - `Domain/Ports`: interfaces de repositorio, UnitOfWork y seguridad.
 - `Infrastructure`: contexto, repositorios, UnitOfWork, JWT y hash de contraseñas.

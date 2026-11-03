@@ -1,4 +1,4 @@
-using HelpDesk.Application.Dtos.Common;
+using HelpDesk.Domain.Dtos.Common;
 using HelpDesk.Application.UseCases.AsignacionesActivos.Commands;
 using HelpDesk.Application.Common;
 using MediatR;

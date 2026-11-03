@@ -1,5 +1,5 @@
-using HelpDesk.Application.Dtos.Common;
-using HelpDesk.Application.Dtos.Autenticacion;
+using HelpDesk.Domain.Dtos.Common;
+using HelpDesk.Domain.Dtos.Autenticacion;
 using System.Threading.RateLimiting;
 using System.Text.Json.Serialization;
 using HelpDesk.Api.Middleware;

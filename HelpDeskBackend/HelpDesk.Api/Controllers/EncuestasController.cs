@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.Encuestas;
-using HelpDesk.Application.Dtos.Encuestas;
+using HelpDesk.Domain.Dtos.Encuestas;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.PreferenciasNotificaciones;
-using HelpDesk.Application.Dtos.PreferenciasNotificaciones;
+using HelpDesk.Domain.Dtos.PreferenciasNotificaciones;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

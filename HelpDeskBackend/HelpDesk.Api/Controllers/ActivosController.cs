@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.Activos;
-using HelpDesk.Application.Dtos.Activos;
+using HelpDesk.Domain.Dtos.Activos;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

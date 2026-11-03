@@ -1,4 +1,4 @@
-using HelpDesk.Application.Dtos.Common;
+using HelpDesk.Domain.Dtos.Common;
 using HelpDesk.Application.Common;
 using HelpDesk.Domain.Exceptions;
 namespace HelpDesk.Api.Middleware;

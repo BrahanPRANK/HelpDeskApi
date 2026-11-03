@@ -4,12 +4,12 @@ Consultar primero la instalación en [DISTRIBUCION_EQUIPO.md](DISTRIBUCION_EQUIP
 
 ## Qué copiar por entidad
 
-1. `HekDesk.Application/Dtos/{Entidad}/`: cada clase de entrada o salida tiene su archivo.
+1. `HelpDesk.Domain/Dtos/{Entidad}/`: cada clase de entrada o salida tiene su archivo.
 2. `HekDesk.Application/UseCases/{Entidad}/Commands/` y `Queries/`.
 3. Su controlador y, si existe, el controlador de acciones indicado en el reparto.
 4. Adaptar los nombres de los proyectos del equipo. No reemplazar Program ni la configuración compartida sin coordinar con Brahan.
 
-Brahan incorpora Domain, contexto, repositorio, UnitOfWork, servicios técnicos y configuración común. Diego incorpora autenticación y coordina sus contratos de seguridad. Los DTOs compartidos están en Dtos/Common; los de autenticación en Dtos/Autenticacion. Common ya no contiene DTOs.
+Cada integrante incorpora los DTOs de sus entidades en Domain. Brahan incorpora los modelos y contratos compartidos de Domain, contexto, repositorio, UnitOfWork, servicios técnicos y configuración común. Diego incorpora autenticación y coordina sus contratos de seguridad. Los DTOs compartidos están en HelpDesk.Domain/Dtos/Common; los de autenticación en HelpDesk.Domain/Dtos/Autenticacion. Los DTOs pertenecen a Domain, como en Lab11; Application los utiliza mediante su referencia al proyecto Domain. Common ya no contiene DTOs.
 
 ## Cómo se escribe un handler
 

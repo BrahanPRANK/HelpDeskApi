@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.CargaTecnicos;
-using HelpDesk.Application.Dtos.CargaTecnicos;
+using HelpDesk.Domain.Dtos.CargaTecnicos;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

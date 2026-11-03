@@ -1,5 +1,5 @@
 using HelpDesk.Application.UseCases.ArticulosConocimiento;
-using HelpDesk.Application.Dtos.ArticulosConocimiento;
+using HelpDesk.Domain.Dtos.ArticulosConocimiento;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
