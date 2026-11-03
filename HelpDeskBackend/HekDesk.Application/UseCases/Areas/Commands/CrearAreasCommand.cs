@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,14 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Areas;
 
-public record CrearAreasCommand(AreasInputDto Datos) : IRequest<ResponseDto<AreasResponseDto>>;
+public class CrearAreasCommand : IRequest<ResponseDto<AreasResponseDto>>
+{
+    public Guid IdSede { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class CrearAreasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearAreasCommandHandler> _logger) : IRequestHandler<CrearAreasCommand, ResponseDto<AreasResponseDto>>
 {
@@ -17,15 +25,15 @@ internal sealed class CrearAreasCommandHandler(IUnitOfWork _unitOfWork, AccessRu
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Areas()
             {
                 IdArea = Guid.NewGuid(),
-                IdSede = input.IdSede,
-                Nombre = input.Nombre,
-                Activo = input.Activo
+                IdSede = request.IdSede,
+                Nombre = request.Nombre,
+                Activo = request.Activo
             };
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Areas>().AddAsync(entity);

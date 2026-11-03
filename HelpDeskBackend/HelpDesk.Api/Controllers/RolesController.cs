@@ -15,13 +15,18 @@ public sealed class RolesController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid idRol)
     { var result = await mediator.Send(new ObtenerRolesQuery([idRol])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] RolesInputDto datos)
-    { var result = await mediator.Send(new CrearRolesCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearRolesCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idRol:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idRol, [FromBody] RolesInputDto datos)
-    { var result = await mediator.Send(new ActualizarRolesCommand([idRol], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idRol, [FromBody] ActualizarRolesCommand datos)
+    {
+        datos.Keys = [idRol];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpDelete("{idRol:guid}")]
     public async Task<IActionResult> Eliminar(Guid idRol)
-    { var result = await mediator.Send(new EliminarRolesCommand([idRol])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new EliminarRolesCommand { Keys = [idRol] }); return StatusCode(result.StatusCode, result); }
 
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,19 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Adjuntos;
 
-public record CrearAdjuntosCommand(AdjuntosInputDto Datos) : IRequest<ResponseDto<AdjuntosResponseDto>>;
+public class CrearAdjuntosCommand : IRequest<ResponseDto<AdjuntosResponseDto>>
+{
+    public Guid IdTicket { get; set; }
+    public Guid? IdComentario { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string NombreArchivo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string TipoArchivo { get; set; } = "";
+    public long TamanoBytes { get; set; }
+    public bool EsInterno { get; set; }
+}
 
 internal sealed class CrearAdjuntosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearAdjuntosCommandHandler> _logger) : IRequestHandler<CrearAdjuntosCommand, ResponseDto<AdjuntosResponseDto>>
 {
@@ -17,18 +30,18 @@ internal sealed class CrearAdjuntosCommandHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Adjuntos()
             {
                 IdAdjunto = Guid.NewGuid(),
-                IdTicket = input.IdTicket,
-                IdComentario = input.IdComentario,
-                NombreArchivo = input.NombreArchivo,
-                TipoArchivo = input.TipoArchivo,
-                TamanoBytes = input.TamanoBytes,
-                EsInterno = input.EsInterno,
+                IdTicket = request.IdTicket,
+                IdComentario = request.IdComentario,
+                NombreArchivo = request.NombreArchivo,
+                TipoArchivo = request.TipoArchivo,
+                TamanoBytes = request.TamanoBytes,
+                EsInterno = request.EsInterno,
                 Fecha = DateTime.UtcNow
             };
             var attachedTicket = await Required<global::HelpDesk.Domain.Models.Tickets>(entity.IdTicket);

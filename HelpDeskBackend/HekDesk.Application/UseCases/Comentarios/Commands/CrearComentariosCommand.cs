@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,14 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Comentarios;
 
-public record CrearComentariosCommand(ComentariosInputDto Datos) : IRequest<ResponseDto<ComentariosResponseDto>>;
+public class CrearComentariosCommand : IRequest<ResponseDto<ComentariosResponseDto>>
+{
+    public Guid IdTicket { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Mensaje { get; set; } = "";
+    public bool EsInterno { get; set; }
+}
 
 internal sealed class CrearComentariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearComentariosCommandHandler> _logger) : IRequestHandler<CrearComentariosCommand, ResponseDto<ComentariosResponseDto>>
 {
@@ -17,15 +25,15 @@ internal sealed class CrearComentariosCommandHandler(IUnitOfWork _unitOfWork, Ac
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             if (!access.Admin) access.Permission("comentarios.responder");
             var entity = new global::HelpDesk.Domain.Models.Comentarios()
             {
                 IdComentario = Guid.NewGuid(),
-                IdTicket = input.IdTicket,
-                Mensaje = input.Mensaje,
-                EsInterno = input.EsInterno,
+                IdTicket = request.IdTicket,
+                Mensaje = request.Mensaje,
+                EsInterno = request.EsInterno,
                 Fecha = DateTime.UtcNow
             };
             var ticket = await Required<global::HelpDesk.Domain.Models.Tickets>(entity.IdTicket);

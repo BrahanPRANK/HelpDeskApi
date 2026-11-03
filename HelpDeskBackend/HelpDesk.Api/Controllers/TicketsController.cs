@@ -15,10 +15,15 @@ public sealed class TicketsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid idTicket)
     { var result = await mediator.Send(new ObtenerTicketsQuery([idTicket])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] TicketsInputDto datos)
-    { var result = await mediator.Send(new CrearTicketsCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearTicketsCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idTicket:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idTicket, [FromBody] TicketsInputDto datos)
-    { var result = await mediator.Send(new ActualizarTicketsCommand([idTicket], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idTicket, [FromBody] ActualizarTicketsCommand datos)
+    {
+        datos.Keys = [idTicket];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
 
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.CambiosTickets;
 
-public record CrearCambiosTicketsCommand(CambiosTicketsInputDto Datos) : IRequest<ResponseDto<CambiosTicketsResponseDto>>;
+public class CrearCambiosTicketsCommand : IRequest<ResponseDto<CambiosTicketsResponseDto>>
+{
+    public Guid IdCambio { get; set; }
+    public Guid IdTicket { get; set; }
+}
 
 internal sealed class CrearCambiosTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearCambiosTicketsCommandHandler> _logger) : IRequestHandler<CrearCambiosTicketsCommand, ResponseDto<CambiosTicketsResponseDto>>
 {
@@ -17,10 +22,10 @@ internal sealed class CrearCambiosTicketsCommandHandler(IUnitOfWork _unitOfWork,
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
-            var entity = new Dictionary<string, object>() { ["IdCambio"] = input.IdCambio, ["IdTicket"] = input.IdTicket };
+            var entity = new Dictionary<string, object>() { ["IdCambio"] = request.IdCambio, ["IdTicket"] = request.IdTicket };
 
             await _unitOfWork.Repository<Dictionary<string, object>>("CambiosTickets").AddAsync(entity);
             await _unitOfWork.Complete();

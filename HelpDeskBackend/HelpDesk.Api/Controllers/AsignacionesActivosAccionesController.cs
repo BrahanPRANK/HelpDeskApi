@@ -10,9 +10,11 @@ namespace HelpDesk.Api.Controllers;
 public sealed class AsignacionesActivosAccionesController(IMediator mediator) : ControllerBase
 {
     [HttpPost("{id:guid}/devolver")]
-    public async Task<IActionResult> DevolverActivo(Guid id, AccionDto datos)
+    public async Task<IActionResult> DevolverActivo(Guid id, DevolverActivoCommand datos)
     {
-        var result = await mediator.Send(new DevolverActivoCommand(id, datos));
+        datos.Id = id;
+
+        var result = await mediator.Send(datos);
         return StatusCode(result.StatusCode, result);
     }
 

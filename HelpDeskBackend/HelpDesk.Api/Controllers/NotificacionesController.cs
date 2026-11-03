@@ -15,10 +15,15 @@ public sealed class NotificacionesController(IMediator mediator) : ControllerBas
     public async Task<IActionResult> Get(Guid idNotificacion)
     { var result = await mediator.Send(new ObtenerNotificacionesQuery([idNotificacion])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] NotificacionesInputDto datos)
-    { var result = await mediator.Send(new CrearNotificacionesCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearNotificacionesCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idNotificacion:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idNotificacion, [FromBody] NotificacionesInputDto datos)
-    { var result = await mediator.Send(new ActualizarNotificacionesCommand([idNotificacion], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idNotificacion, [FromBody] ActualizarNotificacionesCommand datos)
+    {
+        datos.Keys = [idNotificacion];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
 
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,23 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Notificaciones;
 
-public record CrearNotificacionesCommand(NotificacionesInputDto Datos) : IRequest<ResponseDto<NotificacionesResponseDto>>;
+public class CrearNotificacionesCommand : IRequest<ResponseDto<NotificacionesResponseDto>>
+{
+    public Guid IdUsuario { get; set; }
+    public Guid? IdTicket { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Titulo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Mensaje { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string ClaveEvento { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string TipoEvento { get; set; } = "";
+}
 
 internal sealed class CrearNotificacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearNotificacionesCommandHandler> _logger) : IRequestHandler<CrearNotificacionesCommand, ResponseDto<NotificacionesResponseDto>>
 {
@@ -17,18 +34,18 @@ internal sealed class CrearNotificacionesCommandHandler(IUnitOfWork _unitOfWork,
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Notificaciones()
             {
                 IdNotificacion = Guid.NewGuid(),
-                IdUsuario = input.IdUsuario,
-                IdTicket = input.IdTicket,
-                Titulo = input.Titulo,
-                Mensaje = input.Mensaje,
-                ClaveEvento = input.ClaveEvento,
-                TipoEvento = input.TipoEvento,
+                IdUsuario = request.IdUsuario,
+                IdTicket = request.IdTicket,
+                Titulo = request.Titulo,
+                Mensaje = request.Mensaje,
+                ClaveEvento = request.ClaveEvento,
+                TipoEvento = request.TipoEvento,
                 FechaCreacion = DateTime.UtcNow
             };
 

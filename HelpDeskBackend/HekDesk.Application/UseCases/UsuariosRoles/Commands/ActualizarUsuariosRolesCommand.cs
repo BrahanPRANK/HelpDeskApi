@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,14 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.UsuariosRoles;
 
-public record ActualizarUsuariosRolesCommand(object[] Keys, UsuariosRolesInputDto Datos) : IRequest<ResponseDto<UsuariosRolesResponseDto>>;
+public class ActualizarUsuariosRolesCommand : IRequest<ResponseDto<UsuariosRolesResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    public Guid IdUsuario { get; set; }
+    public Guid IdRol { get; set; }
+}
 
 internal sealed class ActualizarUsuariosRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarUsuariosRolesCommandHandler> _logger) : IRequestHandler<ActualizarUsuariosRolesCommand, ResponseDto<UsuariosRolesResponseDto>>
 {
@@ -17,8 +26,8 @@ internal sealed class ActualizarUsuariosRolesCommandHandler(IUnitOfWork _unitOfW
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");

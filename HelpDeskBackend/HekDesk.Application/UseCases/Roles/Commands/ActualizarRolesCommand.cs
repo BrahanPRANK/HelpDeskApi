@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,16 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Roles;
 
-public record ActualizarRolesCommand(object[] Keys, RolesInputDto Datos) : IRequest<ResponseDto<RolesResponseDto>>;
+public class ActualizarRolesCommand : IRequest<ResponseDto<RolesResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public string? Descripcion { get; set; }
+}
 
 internal sealed class ActualizarRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarRolesCommandHandler> _logger) : IRequestHandler<ActualizarRolesCommand, ResponseDto<RolesResponseDto>>
 {
@@ -17,16 +28,16 @@ internal sealed class ActualizarRolesCommandHandler(IUnitOfWork _unitOfWork, Acc
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             if (new[] { "administrador", "empleado", "tecnico", "coordinador", "aprobador" }.Contains(entity.Nombre))
-                Validation.Require(input.Nombre == entity.Nombre, "No se renombra un rol base.", 409);
-            entity.Nombre = input.Nombre;
-            entity.Descripcion = input.Descripcion;
+                Validation.Require(request.Nombre == entity.Nombre, "No se renombra un rol base.", 409);
+            entity.Nombre = request.Nombre;
+            entity.Descripcion = request.Descripcion;
 
             await _unitOfWork.Complete();
             return new(200, new RolesResponseDto

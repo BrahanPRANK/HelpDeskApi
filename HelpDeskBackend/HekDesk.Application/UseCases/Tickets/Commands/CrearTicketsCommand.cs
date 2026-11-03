@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,7 +11,23 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Tickets;
 
-public record CrearTicketsCommand(TicketsInputDto Datos) : IRequest<ResponseDto<TicketsResponseDto>>;
+public class CrearTicketsCommand : IRequest<ResponseDto<TicketsResponseDto>>
+{
+    public Guid IdServicio { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Asunto { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Descripcion { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Tipo { get; set; } = "incidente";
+    [Required]
+    [StringLength(10000)]
+    public string Prioridad { get; set; } = "media";
+    public int? Version { get; set; }
+}
 
 internal sealed class CrearTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearTicketsCommandHandler> _logger) : IRequestHandler<CrearTicketsCommand, ResponseDto<TicketsResponseDto>>
 {
@@ -18,17 +35,17 @@ internal sealed class CrearTicketsCommandHandler(IUnitOfWork _unitOfWork, Access
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             if (!access.Admin) access.Permission("tickets.crear");
             var entity = new global::HelpDesk.Domain.Models.Tickets()
             {
                 IdTicket = Guid.NewGuid(),
-                IdServicio = input.IdServicio,
-                Asunto = input.Asunto,
-                Descripcion = input.Descripcion,
-                Tipo = input.Tipo,
-                Prioridad = input.Prioridad,
+                IdServicio = request.IdServicio,
+                Asunto = request.Asunto,
+                Descripcion = request.Descripcion,
+                Tipo = request.Tipo,
+                Prioridad = request.Prioridad,
                 FechaCreacion = DateTime.UtcNow,
                 FechaActualizacion = DateTime.UtcNow,
                 FechaLimiteRespuesta = DateTime.UtcNow,

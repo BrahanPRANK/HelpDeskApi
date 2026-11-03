@@ -15,13 +15,18 @@ public sealed class PreferenciasNotificacionesController(IMediator mediator) : C
     public async Task<IActionResult> Get(Guid idUsuario, string tipoEvento)
     { var result = await mediator.Send(new ObtenerPreferenciasNotificacionesQuery([idUsuario, tipoEvento])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] PreferenciasNotificacionesInputDto datos)
-    { var result = await mediator.Send(new CrearPreferenciasNotificacionesCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearPreferenciasNotificacionesCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idUsuario:guid}/{tipoEvento}")]
-    public async Task<IActionResult> Actualizar(Guid idUsuario, string tipoEvento, [FromBody] PreferenciasNotificacionesInputDto datos)
-    { var result = await mediator.Send(new ActualizarPreferenciasNotificacionesCommand([idUsuario, tipoEvento], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idUsuario, string tipoEvento, [FromBody] ActualizarPreferenciasNotificacionesCommand datos)
+    {
+        datos.Keys = [idUsuario, tipoEvento];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpDelete("{idUsuario:guid}/{tipoEvento}")]
     public async Task<IActionResult> Eliminar(Guid idUsuario, string tipoEvento)
-    { var result = await mediator.Send(new EliminarPreferenciasNotificacionesCommand([idUsuario, tipoEvento])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new EliminarPreferenciasNotificacionesCommand { Keys = [idUsuario, tipoEvento] }); return StatusCode(result.StatusCode, result); }
 
 }

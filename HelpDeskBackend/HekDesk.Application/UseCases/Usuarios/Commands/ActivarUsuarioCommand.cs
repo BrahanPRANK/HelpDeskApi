@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -8,7 +10,14 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Usuarios.Commands;
 
-public record ActivarUsuarioCommand(Guid Id, AccionDto Datos) : IRequest<ResponseDto<AccionResultadoDto>>;
+public class ActivarUsuarioCommand : IRequest<ResponseDto<AccionResultadoDto>>
+{
+    [JsonIgnore]
+    public Guid Id { get; set; }
+
+    [StringLength(4000)]
+    public string Motivo { get; set; } = string.Empty;
+}
 
 internal sealed class ActivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActivarUsuarioCommandHandler> _logger)
     : IRequestHandler<ActivarUsuarioCommand, ResponseDto<AccionResultadoDto>>
@@ -17,7 +26,7 @@ internal sealed class ActivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, Acce
     {
         try
         {
-            Validation.Check(r.Datos);
+            Validation.Check(r);
             var result = "completado";
             access.Permission("usuarios.administrar");
             var user = await Required<global::HelpDesk.Domain.Models.Usuarios>(r.Id);

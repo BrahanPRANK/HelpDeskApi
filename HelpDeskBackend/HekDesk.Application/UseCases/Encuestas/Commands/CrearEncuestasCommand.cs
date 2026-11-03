@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Encuestas;
 
-public record CrearEncuestasCommand(EncuestasInputDto Datos) : IRequest<ResponseDto<EncuestasResponseDto>>;
+public class CrearEncuestasCommand : IRequest<ResponseDto<EncuestasResponseDto>>
+{
+    public Guid IdTicket { get; set; }
+    public short Calificacion { get; set; }
+    public string? Comentario { get; set; }
+}
 
 internal sealed class CrearEncuestasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearEncuestasCommandHandler> _logger) : IRequestHandler<CrearEncuestasCommand, ResponseDto<EncuestasResponseDto>>
 {
@@ -17,15 +23,15 @@ internal sealed class CrearEncuestasCommandHandler(IUnitOfWork _unitOfWork, Acce
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             if (!access.Admin) access.Permission("encuestas.responder_propias");
             var entity = new global::HelpDesk.Domain.Models.Encuestas()
             {
                 IdEncuesta = Guid.NewGuid(),
-                IdTicket = input.IdTicket,
-                Calificacion = input.Calificacion,
-                Comentario = input.Comentario,
+                IdTicket = request.IdTicket,
+                Calificacion = request.Calificacion,
+                Comentario = request.Comentario,
                 FechaRespuesta = DateTime.UtcNow
             };
             var evaluated = await Required<global::HelpDesk.Domain.Models.Tickets>(entity.IdTicket);

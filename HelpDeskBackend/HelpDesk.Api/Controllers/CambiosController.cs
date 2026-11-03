@@ -15,10 +15,15 @@ public sealed class CambiosController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid idCambio)
     { var result = await mediator.Send(new ObtenerCambiosQuery([idCambio])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] CambiosInputDto datos)
-    { var result = await mediator.Send(new CrearCambiosCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearCambiosCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idCambio:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idCambio, [FromBody] CambiosInputDto datos)
-    { var result = await mediator.Send(new ActualizarCambiosCommand([idCambio], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idCambio, [FromBody] ActualizarCambiosCommand datos)
+    {
+        datos.Keys = [idCambio];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
 
 }

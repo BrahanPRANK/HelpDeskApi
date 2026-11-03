@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,15 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.PreferenciasNotificaciones;
 
-public record CrearPreferenciasNotificacionesCommand(PreferenciasNotificacionesInputDto Datos) : IRequest<ResponseDto<PreferenciasNotificacionesResponseDto>>;
+public class CrearPreferenciasNotificacionesCommand : IRequest<ResponseDto<PreferenciasNotificacionesResponseDto>>
+{
+    public Guid IdUsuario { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string TipoEvento { get; set; } = "";
+    public bool RecibirEnSistema { get; set; }
+    public bool RecibirPorCorreo { get; set; }
+}
 
 internal sealed class CrearPreferenciasNotificacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearPreferenciasNotificacionesCommandHandler> _logger) : IRequestHandler<CrearPreferenciasNotificacionesCommand, ResponseDto<PreferenciasNotificacionesResponseDto>>
 {
@@ -17,15 +26,15 @@ internal sealed class CrearPreferenciasNotificacionesCommandHandler(IUnitOfWork 
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             if (!access.Admin) access.Permission("notificaciones.propias");
             var entity = new global::HelpDesk.Domain.Models.PreferenciasNotificaciones()
             {
-                IdUsuario = input.IdUsuario,
-                TipoEvento = input.TipoEvento,
-                RecibirEnSistema = input.RecibirEnSistema,
-                RecibirPorCorreo = input.RecibirPorCorreo
+                IdUsuario = request.IdUsuario,
+                TipoEvento = request.TipoEvento,
+                RecibirEnSistema = request.RecibirEnSistema,
+                RecibirPorCorreo = request.RecibirPorCorreo
             };
             Validation.Require(access.Admin || entity.IdUsuario == actor.Id, "Solo puede modificar preferencias propias.", 403);
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PreferenciasNotificaciones>().AddAsync(entity);

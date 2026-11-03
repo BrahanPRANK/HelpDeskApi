@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,25 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Usuarios;
 
-public record CrearUsuariosCommand(UsuariosInputDto Datos) : IRequest<ResponseDto<UsuariosResponseDto>>;
+public class CrearUsuariosCommand : IRequest<ResponseDto<UsuariosResponseDto>>
+{
+    public Guid? IdArea { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Nombres { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Apellidos { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string NombreUsuario { get; set; } = "";
+    [Required, EmailAddress, StringLength(254)]
+    public string Correo { get; set; } = "";
+    public string? Telefono { get; set; }
+    public bool Activo { get; set; } = true;
+    [StringLength(128, MinimumLength = 10)]
+    public string? Clave { get; set; }
+}
 
 internal sealed class CrearUsuariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, IPasswordService passwords, ILogger<CrearUsuariosCommandHandler> _logger) : IRequestHandler<CrearUsuariosCommand, ResponseDto<UsuariosResponseDto>>
 {
@@ -17,22 +36,22 @@ internal sealed class CrearUsuariosCommandHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Usuarios()
             {
                 IdUsuario = Guid.NewGuid(),
-                IdArea = input.IdArea,
-                Nombres = input.Nombres,
-                Apellidos = input.Apellidos,
-                NombreUsuario = input.NombreUsuario,
-                Correo = input.Correo,
-                Telefono = input.Telefono,
-                Activo = input.Activo,
+                IdArea = request.IdArea,
+                Nombres = request.Nombres,
+                Apellidos = request.Apellidos,
+                NombreUsuario = request.NombreUsuario,
+                Correo = request.Correo,
+                Telefono = request.Telefono,
+                Activo = request.Activo,
                 FechaRegistro = DateTime.UtcNow
             };
-            var userInput = input;
+            var userInput = request;
             entity.NombreUsuario = entity.NombreUsuario.Trim();
             entity.Correo = entity.Correo.Trim().ToLowerInvariant();
             Validation.Require(!string.IsNullOrWhiteSpace(userInput.Clave), "Clave es obligatoria al crear un usuario.");

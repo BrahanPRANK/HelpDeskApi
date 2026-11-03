@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using HelpDesk.Domain.Dtos.Autenticacion;
 using Microsoft.EntityFrameworkCore;
@@ -12,19 +13,31 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.Security;
 
-public record RegistrarCommand(RegistroDto Datos) : IRequest<ResponseDto<UsuarioRegistradoDto>>;
+public class RegistrarCommand : IRequest<ResponseDto<UsuarioRegistradoDto>>
+{
+    [Required, StringLength(100)]
+    public string Nombres { get; set; } = string.Empty;
+    [Required, StringLength(150)]
+    public string Apellidos { get; set; } = string.Empty;
+    [Required, StringLength(100)]
+    public string NombreUsuario { get; set; } = string.Empty;
+    [Required, EmailAddress, StringLength(254)]
+    public string Correo { get; set; } = string.Empty;
+    [Required, StringLength(128, MinimumLength = 10)]
+    public string Clave { get; set; } = string.Empty;
+}
 internal sealed class RegistrarCommandHandler(IUnitOfWork _unitOfWork, IPasswordService passwords, ILogger<RegistrarCommandHandler> _logger) : IRequestHandler<RegistrarCommand, ResponseDto<UsuarioRegistradoDto>>
 {
     public async Task<ResponseDto<UsuarioRegistradoDto>> Handle(RegistrarCommand request, CancellationToken ct)
     {
         try
         {
-            var input = request.Datos;
 
-            Validation.Check(input);
+
+            Validation.Check(request);
             var employee = (await (_unitOfWork.Repository<Roles>().Query().Where(x => x.Nombre == "empleado")).ToListAsync()).SingleOrDefault()
             ?? throw new BusinessException(409, "Falta el rol empleado del catalogo inicial.");
-            var user = MakeUser(input);
+            var user = MakeUser(request);
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().AddAsync(user);
             await _unitOfWork.Repository<UsuariosRoles>().AddAsync(new UsuariosRoles
             {
@@ -47,7 +60,7 @@ internal sealed class RegistrarCommandHandler(IUnitOfWork _unitOfWork, IPassword
             return new(500, default, "No se pudo completar la operacion.");
         }
     }
-    private Usuarios MakeUser(RegistroDto x) => new()
+    private Usuarios MakeUser(RegistrarCommand x) => new()
     {
         IdUsuario = Guid.NewGuid(),
         Nombres = x.Nombres.Trim(),

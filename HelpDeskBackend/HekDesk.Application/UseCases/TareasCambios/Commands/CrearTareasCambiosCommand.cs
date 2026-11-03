@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,19 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.TareasCambios;
 
-public record CrearTareasCambiosCommand(TareasCambiosInputDto Datos) : IRequest<ResponseDto<TareasCambiosResponseDto>>;
+public class CrearTareasCambiosCommand : IRequest<ResponseDto<TareasCambiosResponseDto>>
+{
+    public Guid IdCambio { get; set; }
+    public Guid? IdResponsable { get; set; }
+    public short Orden { get; set; } = 1;
+    [Required]
+    [StringLength(10000)]
+    public string Titulo { get; set; } = "";
+    public string? Descripcion { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Estado { get; set; } = "pendiente";
+}
 
 internal sealed class CrearTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearTareasCambiosCommandHandler> _logger) : IRequestHandler<CrearTareasCambiosCommand, ResponseDto<TareasCambiosResponseDto>>
 {
@@ -17,18 +30,18 @@ internal sealed class CrearTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.TareasCambios()
             {
                 IdTareaCambio = Guid.NewGuid(),
-                IdCambio = input.IdCambio,
-                IdResponsable = input.IdResponsable,
-                Orden = input.Orden,
-                Titulo = input.Titulo,
-                Descripcion = input.Descripcion,
-                Estado = input.Estado,
+                IdCambio = request.IdCambio,
+                IdResponsable = request.IdResponsable,
+                Orden = request.Orden,
+                Titulo = request.Titulo,
+                Descripcion = request.Descripcion,
+                Estado = request.Estado,
                 FechaCreacion = DateTime.UtcNow
             };
             access.EnsureRead(await Required<global::HelpDesk.Domain.Models.Cambios>(entity.IdCambio));

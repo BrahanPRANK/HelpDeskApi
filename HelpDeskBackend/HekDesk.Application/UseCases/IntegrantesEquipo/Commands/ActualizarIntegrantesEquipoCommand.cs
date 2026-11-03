@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,17 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.IntegrantesEquipo;
 
-public record ActualizarIntegrantesEquipoCommand(object[] Keys, IntegrantesEquipoInputDto Datos) : IRequest<ResponseDto<IntegrantesEquipoResponseDto>>;
+public class ActualizarIntegrantesEquipoCommand : IRequest<ResponseDto<IntegrantesEquipoResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    public Guid IdEquipo { get; set; }
+    public Guid IdUsuario { get; set; }
+    public bool EsCoordinador { get; set; }
+    public bool Disponible { get; set; } = true;
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class ActualizarIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarIntegrantesEquipoCommandHandler> _logger) : IRequestHandler<ActualizarIntegrantesEquipoCommand, ResponseDto<IntegrantesEquipoResponseDto>>
 {
@@ -17,16 +29,16 @@ internal sealed class ActualizarIntegrantesEquipoCommandHandler(IUnitOfWork _uni
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.IntegrantesEquipo>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
-            entity.EsCoordinador = input.EsCoordinador;
-            entity.Disponible = input.Disponible;
-            entity.Activo = input.Activo;
+            entity.EsCoordinador = request.EsCoordinador;
+            entity.Disponible = request.Disponible;
+            entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
             return new(200, new IntegrantesEquipoResponseDto

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,18 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.PoliticasAtencion;
 
-public record ActualizarPoliticasAtencionCommand(object[] Keys, PoliticasAtencionInputDto Datos) : IRequest<ResponseDto<PoliticasAtencionResponseDto>>;
+public class ActualizarPoliticasAtencionCommand : IRequest<ResponseDto<PoliticasAtencionResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    [Required]
+    [StringLength(10000)]
+    public string Prioridad { get; set; } = "media";
+    public int MinutosPrimeraRespuesta { get; set; }
+    public int MinutosResolucion { get; set; }
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class ActualizarPoliticasAtencionCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarPoliticasAtencionCommandHandler> _logger) : IRequestHandler<ActualizarPoliticasAtencionCommand, ResponseDto<PoliticasAtencionResponseDto>>
 {
@@ -17,17 +30,17 @@ internal sealed class ActualizarPoliticasAtencionCommandHandler(IUnitOfWork _uni
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PoliticasAtencion>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
-            entity.Prioridad = input.Prioridad;
-            entity.MinutosPrimeraRespuesta = input.MinutosPrimeraRespuesta;
-            entity.MinutosResolucion = input.MinutosResolucion;
-            entity.Activo = input.Activo;
+            entity.Prioridad = request.Prioridad;
+            entity.MinutosPrimeraRespuesta = request.MinutosPrimeraRespuesta;
+            entity.MinutosResolucion = request.MinutosResolucion;
+            entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
             return new(200, new PoliticasAtencionResponseDto

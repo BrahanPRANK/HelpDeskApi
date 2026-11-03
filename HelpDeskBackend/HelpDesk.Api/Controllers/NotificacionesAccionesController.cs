@@ -10,9 +10,11 @@ namespace HelpDesk.Api.Controllers;
 public sealed class NotificacionesAccionesController(IMediator mediator) : ControllerBase
 {
     [HttpPost("{id:guid}/marcar-leida")]
-    public async Task<IActionResult> MarcarNotificacionLeida(Guid id, AccionDto datos)
+    public async Task<IActionResult> MarcarNotificacionLeida(Guid id, MarcarNotificacionLeidaCommand datos)
     {
-        var result = await mediator.Send(new MarcarNotificacionLeidaCommand(id, datos));
+        datos.Id = id;
+
+        var result = await mediator.Send(datos);
         return StatusCode(result.StatusCode, result);
     }
 

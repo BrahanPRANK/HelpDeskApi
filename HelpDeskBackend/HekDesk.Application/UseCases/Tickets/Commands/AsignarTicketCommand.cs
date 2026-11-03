@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,7 +12,18 @@ using MediatR;
 using HelpDesk.Domain.Dtos.Tickets;
 namespace HelpDesk.Application.UseCases.Tickets.Commands;
 
-public record AsignarTicketCommand(Guid IdTicket, AccionTicketDto Datos) : IRequest<ResponseDto<TicketsResponseDto>>;
+public class AsignarTicketCommand : IRequest<ResponseDto<TicketsResponseDto>>
+{
+    [JsonIgnore]
+    public Guid IdTicket { get; set; }
+
+    [Range(1, int.MaxValue)]
+    public int Version { get; set; }
+    [Required, StringLength(4000)]
+    public string Motivo { get; set; } = string.Empty;
+    public Guid? IdEquipo { get; set; }
+    public Guid? IdTecnico { get; set; }
+}
 
 internal sealed class AsignarTicketCommandHandler(IUnitOfWork _unitOfWork, ICurrentUser actor, AccessRules access, ILogger<AsignarTicketCommandHandler> _logger)
     : IRequestHandler<AsignarTicketCommand, ResponseDto<TicketsResponseDto>>
@@ -19,16 +32,16 @@ internal sealed class AsignarTicketCommandHandler(IUnitOfWork _unitOfWork, ICurr
     {
         try
         {
-            Validation.Check(request.Datos);
+            Validation.Check(request);
             var t = await Required<global::HelpDesk.Domain.Models.Tickets>(request.IdTicket);
             access.EnsureRead(t);
-            Validation.Require(t.Version == request.Datos.Version, "El ticket cambio; consulte su version actual.", 409);
+            Validation.Require(t.Version == request.Version, "El ticket cambio; consulte su version actual.", 409);
             var before = t.Estado;
             var now = DateTime.UtcNow;
             access.Permission("asignaciones.administrar");
             Validation.Require(t.Estado == "nuevo", "Solo se asigna un ticket nuevo en esta primera version.", 409);
-            var team = request.Datos.IdEquipo ?? t.IdEquipoAsignado;
-            var tech = request.Datos.IdTecnico ?? throw new BusinessException(400, "Indique idTecnico.");
+            var team = request.IdEquipo ?? t.IdEquipoAsignado;
+            var tech = request.IdTecnico ?? throw new BusinessException(400, "Indique idTecnico.");
             if (!access.Admin)
                 Validation.Require(_unitOfWork.Repository<global::HelpDesk.Domain.Models.IntegrantesEquipo>().Query().Any(m => m.IdEquipo == team && m.IdUsuario == actor.Id && m.Activo && m.EsCoordinador), "No coordina el equipo destino.", 403);
             Validation.Require(_unitOfWork.Repository<global::HelpDesk.Domain.Models.EquiposSoporte>().Query().Any(e => e.IdEquipo == team && e.Activo), "Equipo inactivo.");
@@ -54,11 +67,11 @@ internal sealed class AsignarTicketCommandHandler(IUnitOfWork _unitOfWork, ICurr
             asignacion.FechaAsignacion = now;
             asignacion.IdEquipo = team;
             asignacion.IdTecnico = tech;
-            asignacion.Motivo = request.Datos.Motivo;
+            asignacion.Motivo = request.Motivo;
             t.IdEquipoAsignado = team;
             t.IdTecnicoAsignado = tech;
             t.Estado = "asignado";
-            await History(t, "asignar", before, t.Estado, request.Datos.Motivo);
+            await History(t, "asignar", before, t.Estado, request.Motivo);
             t.Version++;
             t.FechaActualizacion = now;
             await _unitOfWork.Complete();

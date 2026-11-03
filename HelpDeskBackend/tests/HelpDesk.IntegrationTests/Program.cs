@@ -71,7 +71,7 @@ try
     }
     var swagger=await client.GetStringAsync("/swagger/v1/swagger.json");
     var spec=JsonNode.Parse(swagger)!;
-    if(!swagger.Contains("Bearer")||!swagger.Contains("SedesInputDto"))throw new Exception("Swagger contracts/security missing.");checks++;
+    if(!swagger.Contains("Bearer")||!swagger.Contains("CrearSedesCommand"))throw new Exception("Swagger contracts/security missing.");checks++;
     await Request(HttpMethod.Get,"/api/Sedes",null,401);
     var adminToken=await Login("admin_test",adminPassword);
     await Request(HttpMethod.Post,"/api/auth/login",new{nombreUsuario="admin_test",clave="incorrecta"},401);

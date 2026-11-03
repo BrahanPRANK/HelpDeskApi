@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,7 +12,28 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Usuarios;
 
-public record ActualizarUsuariosCommand(object[] Keys, UsuariosInputDto Datos) : IRequest<ResponseDto<UsuariosResponseDto>>;
+public class ActualizarUsuariosCommand : IRequest<ResponseDto<UsuariosResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    public Guid? IdArea { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Nombres { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Apellidos { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string NombreUsuario { get; set; } = "";
+    [Required, EmailAddress, StringLength(254)]
+    public string Correo { get; set; } = "";
+    public string? Telefono { get; set; }
+    public bool Activo { get; set; } = true;
+    [StringLength(128, MinimumLength = 10)]
+    public string? Clave { get; set; }
+}
 
 internal sealed class ActualizarUsuariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, IPasswordService passwords, ILogger<ActualizarUsuariosCommandHandler> _logger) : IRequestHandler<ActualizarUsuariosCommand, ResponseDto<UsuariosResponseDto>>
 {
@@ -18,21 +41,21 @@ internal sealed class ActualizarUsuariosCommandHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            if (!input.Activo) await EnsureNotLastAdmin(entity.IdUsuario);
-            entity.IdArea = input.IdArea;
-            entity.Nombres = input.Nombres;
-            entity.Apellidos = input.Apellidos;
-            entity.NombreUsuario = input.NombreUsuario;
-            entity.Correo = input.Correo;
-            entity.Telefono = input.Telefono;
-            entity.Activo = input.Activo;
-            var userInput = input;
+            if (!request.Activo) await EnsureNotLastAdmin(entity.IdUsuario);
+            entity.IdArea = request.IdArea;
+            entity.Nombres = request.Nombres;
+            entity.Apellidos = request.Apellidos;
+            entity.NombreUsuario = request.NombreUsuario;
+            entity.Correo = request.Correo;
+            entity.Telefono = request.Telefono;
+            entity.Activo = request.Activo;
+            var userInput = request;
             entity.NombreUsuario = entity.NombreUsuario.Trim();
             entity.Correo = entity.Correo.Trim().ToLowerInvariant();
 

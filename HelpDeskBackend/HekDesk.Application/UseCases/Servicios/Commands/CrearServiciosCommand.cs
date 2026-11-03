@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,19 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Servicios;
 
-public record CrearServiciosCommand(ServiciosInputDto Datos) : IRequest<ResponseDto<ServiciosResponseDto>>;
+public class CrearServiciosCommand : IRequest<ResponseDto<ServiciosResponseDto>>
+{
+    public Guid IdEquipoResponsable { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public Guid IdCategoriaServicio { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Descripcion { get; set; } = "";
+    public bool RequiereAprobacion { get; set; }
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class CrearServiciosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearServiciosCommandHandler> _logger) : IRequestHandler<CrearServiciosCommand, ResponseDto<ServiciosResponseDto>>
 {
@@ -17,18 +30,18 @@ internal sealed class CrearServiciosCommandHandler(IUnitOfWork _unitOfWork, Acce
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Servicios()
             {
                 IdServicio = Guid.NewGuid(),
-                IdEquipoResponsable = input.IdEquipoResponsable,
-                Nombre = input.Nombre,
-                IdCategoriaServicio = input.IdCategoriaServicio,
-                Descripcion = input.Descripcion,
-                RequiereAprobacion = input.RequiereAprobacion,
-                Activo = input.Activo
+                IdEquipoResponsable = request.IdEquipoResponsable,
+                Nombre = request.Nombre,
+                IdCategoriaServicio = request.IdCategoriaServicio,
+                Descripcion = request.Descripcion,
+                RequiereAprobacion = request.RequiereAprobacion,
+                Activo = request.Activo
             };
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Servicios>().AddAsync(entity);

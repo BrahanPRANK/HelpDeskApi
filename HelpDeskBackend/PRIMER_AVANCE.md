@@ -4,12 +4,30 @@ Consultar primero la instalación en [DISTRIBUCION_EQUIPO.md](DISTRIBUCION_EQUIP
 
 ## Qué copiar por entidad
 
-1. `HelpDesk.Domain/Dtos/{Entidad}/`: cada clase de entrada o salida tiene su archivo.
+1. `HelpDesk.Domain/Dtos/{Entidad}/`: cada DTO de salida tiene su archivo. Los datos de entrada y sus validaciones están directamente en el Command.
 2. `HekDesk.Application/UseCases/{Entidad}/Commands/` y `Queries/`.
 3. Su controlador y, si existe, el controlador de acciones indicado en el reparto.
 4. Adaptar los nombres de los proyectos del equipo. No reemplazar Program ni la configuración compartida sin coordinar con Brahan.
 
 Cada integrante incorpora los DTOs de sus entidades en Domain. Brahan incorpora los modelos y contratos compartidos de Domain, contexto, repositorio, UnitOfWork, servicios técnicos y configuración común. Diego incorpora autenticación y coordina sus contratos de seguridad. Los DTOs compartidos están en HelpDesk.Domain/Dtos/Common; los de autenticación en HelpDesk.Domain/Dtos/Autenticacion. Los DTOs pertenecen a Domain, como en Lab11; Application los utiliza mediante su referencia al proyecto Domain. Common ya no contiene DTOs.
+
+## Datos de entrada directamente en el Command
+
+Como en Lab11, cada Command es una clase que implementa IRequest y declara los campos que necesita. Ejemplo:
+
+```csharp
+public class CrearRolesCommand : IRequest<ResponseDto<RolesResponseDto>>
+{
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public string? Descripcion { get; set; }
+}
+```
+
+El controlador recibe el Command y lo envía a MediatR. En actualizaciones y acciones con una clave en la URL, el controlador asigna esa clave antes de enviar la solicitud; la propiedad se marca JsonIgnore para que el cuerpo no pueda reemplazarla. El handler valida el propio request y devuelve el DTO de salida.
+
+RegistroDto se conserva exclusivamente como entrada del alta inicial de administrador por consola. Los Commands de registro y login tienen sus propiedades directamente.
 
 ## Cómo se escribe un handler
 
@@ -22,7 +40,7 @@ var rol = await _unitOfWork.Repository<Roles>().GetByIdAsync(request.Keys);
 if (rol is null)
     throw new BusinessException(404, "Registro no encontrado.");
 
-rol.Descripcion = request.Datos.Descripcion;
+rol.Descripcion = request.Descripcion;
 await _unitOfWork.Complete();
 ```
 
@@ -30,7 +48,7 @@ El ejemplo es un fragmento del cuerpo del handler: conservar también validació
 
 ## Inventario vigente
 
-La entrega tiene **91 Commands, 75 Queries y 89 archivos de DTOs**. El total de comandos incluye el CRUD de las 36 tablas donde corresponde, más las acciones básicas; no significa que deban escribirse todos para cada entidad.
+La entrega tiene **91 Commands, 75 Queries y 47 archivos de DTOs**. El total de comandos incluye el CRUD de las 36 tablas donde corresponde, más las acciones básicas; no significa que deban escribirse todos para cada entidad.
 
 | Entidad | Commands incluidos | Queries |
 |---|---|---|

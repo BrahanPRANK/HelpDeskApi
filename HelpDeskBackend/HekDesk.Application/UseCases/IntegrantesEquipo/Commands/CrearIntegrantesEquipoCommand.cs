@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,14 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.IntegrantesEquipo;
 
-public record CrearIntegrantesEquipoCommand(IntegrantesEquipoInputDto Datos) : IRequest<ResponseDto<IntegrantesEquipoResponseDto>>;
+public class CrearIntegrantesEquipoCommand : IRequest<ResponseDto<IntegrantesEquipoResponseDto>>
+{
+    public Guid IdEquipo { get; set; }
+    public Guid IdUsuario { get; set; }
+    public bool EsCoordinador { get; set; }
+    public bool Disponible { get; set; } = true;
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class CrearIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearIntegrantesEquipoCommandHandler> _logger) : IRequestHandler<CrearIntegrantesEquipoCommand, ResponseDto<IntegrantesEquipoResponseDto>>
 {
@@ -17,16 +25,16 @@ internal sealed class CrearIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWo
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.IntegrantesEquipo()
             {
-                IdEquipo = input.IdEquipo,
-                IdUsuario = input.IdUsuario,
-                EsCoordinador = input.EsCoordinador,
-                Disponible = input.Disponible,
-                Activo = input.Activo
+                IdEquipo = request.IdEquipo,
+                IdUsuario = request.IdUsuario,
+                EsCoordinador = request.EsCoordinador,
+                Disponible = request.Disponible,
+                Activo = request.Activo
             };
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.IntegrantesEquipo>().AddAsync(entity);

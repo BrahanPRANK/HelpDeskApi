@@ -10,16 +10,20 @@ namespace HelpDesk.Api.Controllers;
 public sealed class AprobacionesAccionesController(IMediator mediator) : ControllerBase
 {
     [HttpPost("{id:guid}/aprobar")]
-    public async Task<IActionResult> AprobarSolicitud(Guid id, AccionDto datos)
+    public async Task<IActionResult> AprobarSolicitud(Guid id, AprobarSolicitudCommand datos)
     {
-        var result = await mediator.Send(new AprobarSolicitudCommand(id, datos));
+        datos.Id = id;
+
+        var result = await mediator.Send(datos);
         return StatusCode(result.StatusCode, result);
     }
 
     [HttpPost("{id:guid}/rechazar")]
-    public async Task<IActionResult> RechazarSolicitud(Guid id, AccionDto datos)
+    public async Task<IActionResult> RechazarSolicitud(Guid id, RechazarSolicitudCommand datos)
     {
-        var result = await mediator.Send(new RechazarSolicitudCommand(id, datos));
+        datos.Id = id;
+
+        var result = await mediator.Send(datos);
         return StatusCode(result.StatusCode, result);
     }
 

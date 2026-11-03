@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -9,7 +11,14 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Aprobaciones.Commands;
 
-public record AprobarSolicitudCommand(Guid Id, AccionDto Datos) : IRequest<ResponseDto<AccionResultadoDto>>;
+public class AprobarSolicitudCommand : IRequest<ResponseDto<AccionResultadoDto>>
+{
+    [JsonIgnore]
+    public Guid Id { get; set; }
+
+    [StringLength(4000)]
+    public string Motivo { get; set; } = string.Empty;
+}
 
 internal sealed class AprobarSolicitudCommandHandler(IUnitOfWork _unitOfWork, ICurrentUser actor, AccessRules access, ILogger<AprobarSolicitudCommandHandler> _logger)
     : IRequestHandler<AprobarSolicitudCommand, ResponseDto<AccionResultadoDto>>
@@ -18,7 +27,7 @@ internal sealed class AprobarSolicitudCommandHandler(IUnitOfWork _unitOfWork, IC
     {
         try
         {
-            Validation.Check(r.Datos);
+            Validation.Check(r);
             var result = "completado";
             access.Permission("aprobaciones.decidir");
             var a = await Required<global::HelpDesk.Domain.Models.Aprobaciones>(r.Id);
@@ -26,10 +35,10 @@ internal sealed class AprobarSolicitudCommandHandler(IUnitOfWork _unitOfWork, IC
             Validation.Require(a.Estado == "pendiente", "Ya fue decidida.", 409);
             var previous = await (_unitOfWork.Repository<global::HelpDesk.Domain.Models.Aprobaciones>().Query().Where(x => x.IdTicket == a.IdTicket && x.IdCambio == a.IdCambio && x.Orden < a.Orden)).ToListAsync();
             Validation.Require(previous.All(x => x.Estado == "aprobado"), "Complete los pasos anteriores en orden.", 409);
-            Validation.Require(!string.IsNullOrWhiteSpace(r.Datos.Motivo), "Indique el motivo de la decision.");
+            Validation.Require(!string.IsNullOrWhiteSpace(r.Motivo), "Indique el motivo de la decision.");
             a.Estado = "aprobado";
             a.FechaDecision = DateTime.UtcNow;
-            a.ComentarioDecision = r.Datos.Motivo;
+            a.ComentarioDecision = r.Motivo;
             result = a.Estado;
             await _unitOfWork.Complete();
             return new(200, new(r.Id, result));

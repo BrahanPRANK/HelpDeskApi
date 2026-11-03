@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,13 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Roles;
 
-public record CrearRolesCommand(RolesInputDto Datos) : IRequest<ResponseDto<RolesResponseDto>>;
+public class CrearRolesCommand : IRequest<ResponseDto<RolesResponseDto>>
+{
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public string? Descripcion { get; set; }
+}
 
 internal sealed class CrearRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearRolesCommandHandler> _logger) : IRequestHandler<CrearRolesCommand, ResponseDto<RolesResponseDto>>
 {
@@ -17,14 +24,14 @@ internal sealed class CrearRolesCommandHandler(IUnitOfWork _unitOfWork, AccessRu
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Roles()
             {
                 IdRol = Guid.NewGuid(),
-                Nombre = input.Nombre,
-                Descripcion = input.Descripcion
+                Nombre = request.Nombre,
+                Descripcion = request.Descripcion
             };
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().AddAsync(entity);

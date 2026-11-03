@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,7 +12,18 @@ using MediatR;
 using HelpDesk.Domain.Dtos.Tickets;
 namespace HelpDesk.Application.UseCases.Tickets.Commands;
 
-public record IniciarTicketCommand(Guid IdTicket, AccionTicketDto Datos) : IRequest<ResponseDto<TicketsResponseDto>>;
+public class IniciarTicketCommand : IRequest<ResponseDto<TicketsResponseDto>>
+{
+    [JsonIgnore]
+    public Guid IdTicket { get; set; }
+
+    [Range(1, int.MaxValue)]
+    public int Version { get; set; }
+    [Required, StringLength(4000)]
+    public string Motivo { get; set; } = string.Empty;
+    public Guid? IdEquipo { get; set; }
+    public Guid? IdTecnico { get; set; }
+}
 
 internal sealed class IniciarTicketCommandHandler(IUnitOfWork _unitOfWork, ICurrentUser actor, AccessRules access, ILogger<IniciarTicketCommandHandler> _logger)
     : IRequestHandler<IniciarTicketCommand, ResponseDto<TicketsResponseDto>>
@@ -19,17 +32,17 @@ internal sealed class IniciarTicketCommandHandler(IUnitOfWork _unitOfWork, ICurr
     {
         try
         {
-            Validation.Check(request.Datos);
+            Validation.Check(request);
             var t = await Required<global::HelpDesk.Domain.Models.Tickets>(request.IdTicket);
             access.EnsureRead(t);
-            Validation.Require(t.Version == request.Datos.Version, "El ticket cambio; consulte su version actual.", 409);
+            Validation.Require(t.Version == request.Version, "El ticket cambio; consulte su version actual.", 409);
             var before = t.Estado;
             var now = DateTime.UtcNow;
             access.EnsureWork(t);
             Validation.Require(t.Estado == "asignado", "Debe estar asignado.", 409);
             t.Estado = "en_atencion";
             t.FechaPrimeraRespuesta ??= now;
-            await History(t, "iniciar", before, t.Estado, request.Datos.Motivo);
+            await History(t, "iniciar", before, t.Estado, request.Motivo);
             t.Version++;
             t.FechaActualizacion = now;
             await _unitOfWork.Complete();

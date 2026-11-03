@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,7 +12,27 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Activos;
 
-public record ActualizarActivosCommand(object[] Keys, ActivosInputDto Datos) : IRequest<ResponseDto<ActivosResponseDto>>;
+public class ActualizarActivosCommand : IRequest<ResponseDto<ActivosResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    public Guid IdSede { get; set; }
+    public Guid? IdArea { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string CodigoPatrimonial { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public Guid IdTipoActivo { get; set; }
+    public string? NumeroSerie { get; set; }
+    public string? Marca { get; set; }
+    public string? Modelo { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Estado { get; set; } = "disponible";
+}
 
 internal sealed class ActualizarActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarActivosCommandHandler> _logger) : IRequestHandler<ActualizarActivosCommand, ResponseDto<ActivosResponseDto>>
 {
@@ -18,22 +40,22 @@ internal sealed class ActualizarActivosCommandHandler(IUnitOfWork _unitOfWork, A
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Activos>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
-            entity.IdSede = input.IdSede;
-            entity.IdArea = input.IdArea;
-            entity.CodigoPatrimonial = input.CodigoPatrimonial;
-            entity.Nombre = input.Nombre;
-            entity.IdTipoActivo = input.IdTipoActivo;
-            entity.NumeroSerie = input.NumeroSerie;
-            entity.Marca = input.Marca;
-            entity.Modelo = input.Modelo;
-            entity.Estado = input.Estado;
+            entity.IdSede = request.IdSede;
+            entity.IdArea = request.IdArea;
+            entity.CodigoPatrimonial = request.CodigoPatrimonial;
+            entity.Nombre = request.Nombre;
+            entity.IdTipoActivo = request.IdTipoActivo;
+            entity.NumeroSerie = request.NumeroSerie;
+            entity.Marca = request.Marca;
+            entity.Modelo = request.Modelo;
+            entity.Estado = request.Estado;
             var assigned = await (_unitOfWork.Repository<global::HelpDesk.Domain.Models.AsignacionesActivos>().Query().Where(x => x.IdActivo == entity.IdActivo && x.FechaDevolucion == null)).CountAsync();
             Validation.Require((assigned > 0) == (entity.Estado == "asignado"), "Cambie la asignacion con asignar/devolver; el estado debe coincidir.", 409);
             await _unitOfWork.Complete();

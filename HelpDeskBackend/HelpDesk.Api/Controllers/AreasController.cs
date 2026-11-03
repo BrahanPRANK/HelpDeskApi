@@ -15,13 +15,18 @@ public sealed class AreasController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid idArea)
     { var result = await mediator.Send(new ObtenerAreasQuery([idArea])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] AreasInputDto datos)
-    { var result = await mediator.Send(new CrearAreasCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearAreasCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idArea:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idArea, [FromBody] AreasInputDto datos)
-    { var result = await mediator.Send(new ActualizarAreasCommand([idArea], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idArea, [FromBody] ActualizarAreasCommand datos)
+    {
+        datos.Keys = [idArea];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpDelete("{idArea:guid}")]
     public async Task<IActionResult> Eliminar(Guid idArea)
-    { var result = await mediator.Send(new EliminarAreasCommand([idArea])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new EliminarAreasCommand { Keys = [idArea] }); return StatusCode(result.StatusCode, result); }
 
 }

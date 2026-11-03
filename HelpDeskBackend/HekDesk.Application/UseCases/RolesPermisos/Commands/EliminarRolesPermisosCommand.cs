@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.RolesPermisos;
 
-public record EliminarRolesPermisosCommand(object[] Keys) : IRequest<ResponseDto<OperacionDto>>;
+public class EliminarRolesPermisosCommand : IRequest<ResponseDto<OperacionDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+}
 
 internal sealed class EliminarRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<EliminarRolesPermisosCommandHandler> _logger) : IRequestHandler<EliminarRolesPermisosCommand, ResponseDto<OperacionDto>>
 {

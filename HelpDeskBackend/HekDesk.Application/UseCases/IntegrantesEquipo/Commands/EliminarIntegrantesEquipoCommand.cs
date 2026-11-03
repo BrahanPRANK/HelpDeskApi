@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,7 +11,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.IntegrantesEquipo;
 
-public record EliminarIntegrantesEquipoCommand(object[] Keys) : IRequest<ResponseDto<OperacionDto>>;
+public class EliminarIntegrantesEquipoCommand : IRequest<ResponseDto<OperacionDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+}
 
 internal sealed class EliminarIntegrantesEquipoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<EliminarIntegrantesEquipoCommandHandler> _logger) : IRequestHandler<EliminarIntegrantesEquipoCommand, ResponseDto<OperacionDto>>
 {

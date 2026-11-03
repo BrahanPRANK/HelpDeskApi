@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,18 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Permisos;
 
-public record CrearPermisosCommand(PermisosInputDto Datos) : IRequest<ResponseDto<PermisosResponseDto>>;
+public class CrearPermisosCommand : IRequest<ResponseDto<PermisosResponseDto>>
+{
+    [Required]
+    [StringLength(10000)]
+    public string Codigo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Modulo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Descripcion { get; set; } = "";
+}
 
 internal sealed class CrearPermisosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearPermisosCommandHandler> _logger) : IRequestHandler<CrearPermisosCommand, ResponseDto<PermisosResponseDto>>
 {
@@ -17,15 +29,15 @@ internal sealed class CrearPermisosCommandHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Permisos()
             {
                 IdPermiso = Guid.NewGuid(),
-                Codigo = input.Codigo,
-                Modulo = input.Modulo,
-                Descripcion = input.Descripcion
+                Codigo = request.Codigo,
+                Modulo = request.Modulo,
+                Descripcion = request.Descripcion
             };
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Permisos>().AddAsync(entity);

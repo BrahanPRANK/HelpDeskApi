@@ -15,7 +15,9 @@ public sealed class EncuestasController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid idEncuesta)
     { var result = await mediator.Send(new ObtenerEncuestasQuery([idEncuesta])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] EncuestasInputDto datos)
-    { var result = await mediator.Send(new CrearEncuestasCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearEncuestasCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
 
 }

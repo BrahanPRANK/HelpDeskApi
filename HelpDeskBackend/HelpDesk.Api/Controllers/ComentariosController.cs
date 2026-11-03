@@ -15,10 +15,15 @@ public sealed class ComentariosController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid idComentario)
     { var result = await mediator.Send(new ObtenerComentariosQuery([idComentario])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] ComentariosInputDto datos)
-    { var result = await mediator.Send(new CrearComentariosCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearComentariosCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idComentario:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idComentario, [FromBody] ComentariosInputDto datos)
-    { var result = await mediator.Send(new ActualizarComentariosCommand([idComentario], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idComentario, [FromBody] ActualizarComentariosCommand datos)
+    {
+        datos.Keys = [idComentario];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
 
 }

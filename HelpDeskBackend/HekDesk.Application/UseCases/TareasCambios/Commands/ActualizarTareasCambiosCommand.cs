@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,22 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.TareasCambios;
 
-public record ActualizarTareasCambiosCommand(object[] Keys, TareasCambiosInputDto Datos) : IRequest<ResponseDto<TareasCambiosResponseDto>>;
+public class ActualizarTareasCambiosCommand : IRequest<ResponseDto<TareasCambiosResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    public Guid IdCambio { get; set; }
+    public Guid? IdResponsable { get; set; }
+    public short Orden { get; set; } = 1;
+    [Required]
+    [StringLength(10000)]
+    public string Titulo { get; set; } = "";
+    public string? Descripcion { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Estado { get; set; } = "pendiente";
+}
 
 internal sealed class ActualizarTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarTareasCambiosCommandHandler> _logger) : IRequestHandler<ActualizarTareasCambiosCommand, ResponseDto<TareasCambiosResponseDto>>
 {
@@ -17,19 +34,19 @@ internal sealed class ActualizarTareasCambiosCommandHandler(IUnitOfWork _unitOfW
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TareasCambios>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
-            entity.IdCambio = input.IdCambio;
-            entity.IdResponsable = input.IdResponsable;
-            entity.Orden = input.Orden;
-            entity.Titulo = input.Titulo;
-            entity.Descripcion = input.Descripcion;
-            entity.Estado = input.Estado;
+            entity.IdCambio = request.IdCambio;
+            entity.IdResponsable = request.IdResponsable;
+            entity.Orden = request.Orden;
+            entity.Titulo = request.Titulo;
+            entity.Descripcion = request.Descripcion;
+            entity.Estado = request.Estado;
             access.EnsureRead(await Required<global::HelpDesk.Domain.Models.Cambios>(entity.IdCambio));
             entity.FechaFinalizacion = entity.Estado == "completada" ? DateTime.UtcNow : null;
             await _unitOfWork.Complete();

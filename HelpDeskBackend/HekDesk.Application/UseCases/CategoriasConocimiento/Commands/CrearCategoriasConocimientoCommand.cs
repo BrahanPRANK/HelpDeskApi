@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,14 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.CategoriasConocimiento;
 
-public record CrearCategoriasConocimientoCommand(CategoriasConocimientoInputDto Datos) : IRequest<ResponseDto<CategoriasConocimientoResponseDto>>;
+public class CrearCategoriasConocimientoCommand : IRequest<ResponseDto<CategoriasConocimientoResponseDto>>
+{
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public string? Descripcion { get; set; }
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class CrearCategoriasConocimientoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearCategoriasConocimientoCommandHandler> _logger) : IRequestHandler<CrearCategoriasConocimientoCommand, ResponseDto<CategoriasConocimientoResponseDto>>
 {
@@ -17,15 +25,15 @@ internal sealed class CrearCategoriasConocimientoCommandHandler(IUnitOfWork _uni
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.CategoriasConocimiento()
             {
                 IdCategoriaConocimiento = Guid.NewGuid(),
-                Nombre = input.Nombre,
-                Descripcion = input.Descripcion,
-                Activo = input.Activo
+                Nombre = request.Nombre,
+                Descripcion = request.Descripcion,
+                Activo = request.Activo
             };
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.CategoriasConocimiento>().AddAsync(entity);

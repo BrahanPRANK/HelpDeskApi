@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.RolesPermisos;
 
-public record CrearRolesPermisosCommand(RolesPermisosInputDto Datos) : IRequest<ResponseDto<RolesPermisosResponseDto>>;
+public class CrearRolesPermisosCommand : IRequest<ResponseDto<RolesPermisosResponseDto>>
+{
+    public Guid IdRol { get; set; }
+    public Guid IdPermiso { get; set; }
+}
 
 internal sealed class CrearRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearRolesPermisosCommandHandler> _logger) : IRequestHandler<CrearRolesPermisosCommand, ResponseDto<RolesPermisosResponseDto>>
 {
@@ -17,10 +22,10 @@ internal sealed class CrearRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
-            var entity = new Dictionary<string, object>() { ["IdRol"] = input.IdRol, ["IdPermiso"] = input.IdPermiso };
+            var entity = new Dictionary<string, object>() { ["IdRol"] = request.IdRol, ["IdPermiso"] = request.IdPermiso };
 
             await _unitOfWork.Repository<Dictionary<string, object>>("RolesPermisos").AddAsync(entity);
             await _unitOfWork.Complete();

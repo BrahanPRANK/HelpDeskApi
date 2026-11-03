@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,14 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.EquiposSoporte;
 
-public record CrearEquiposSoporteCommand(EquiposSoporteInputDto Datos) : IRequest<ResponseDto<EquiposSoporteResponseDto>>;
+public class CrearEquiposSoporteCommand : IRequest<ResponseDto<EquiposSoporteResponseDto>>
+{
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public string? Descripcion { get; set; }
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class CrearEquiposSoporteCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearEquiposSoporteCommandHandler> _logger) : IRequestHandler<CrearEquiposSoporteCommand, ResponseDto<EquiposSoporteResponseDto>>
 {
@@ -17,15 +25,15 @@ internal sealed class CrearEquiposSoporteCommandHandler(IUnitOfWork _unitOfWork,
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.EquiposSoporte()
             {
                 IdEquipo = Guid.NewGuid(),
-                Nombre = input.Nombre,
-                Descripcion = input.Descripcion,
-                Activo = input.Activo
+                Nombre = request.Nombre,
+                Descripcion = request.Descripcion,
+                Activo = request.Activo
             };
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.EquiposSoporte>().AddAsync(entity);

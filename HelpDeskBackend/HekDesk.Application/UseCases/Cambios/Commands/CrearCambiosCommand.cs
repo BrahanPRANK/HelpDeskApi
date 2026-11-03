@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,28 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Cambios;
 
-public record CrearCambiosCommand(CambiosInputDto Datos) : IRequest<ResponseDto<CambiosResponseDto>>;
+public class CrearCambiosCommand : IRequest<ResponseDto<CambiosResponseDto>>
+{
+    public Guid IdResponsable { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Titulo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Descripcion { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Riesgo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string PlanEjecucion { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string PlanReversion { get; set; } = "";
+    public bool RequiereAprobacion { get; set; }
+    public DateTime? FechaProgramada { get; set; }
+    public string? Resultado { get; set; }
+}
 
 internal sealed class CrearCambiosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearCambiosCommandHandler> _logger) : IRequestHandler<CrearCambiosCommand, ResponseDto<CambiosResponseDto>>
 {
@@ -17,21 +39,21 @@ internal sealed class CrearCambiosCommandHandler(IUnitOfWork _unitOfWork, Access
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Cambios()
             {
                 IdCambio = Guid.NewGuid(),
-                IdResponsable = input.IdResponsable,
-                Titulo = input.Titulo,
-                Descripcion = input.Descripcion,
-                Riesgo = input.Riesgo,
-                PlanEjecucion = input.PlanEjecucion,
-                PlanReversion = input.PlanReversion,
-                RequiereAprobacion = input.RequiereAprobacion,
-                FechaProgramada = input.FechaProgramada,
-                Resultado = input.Resultado,
+                IdResponsable = request.IdResponsable,
+                Titulo = request.Titulo,
+                Descripcion = request.Descripcion,
+                Riesgo = request.Riesgo,
+                PlanEjecucion = request.PlanEjecucion,
+                PlanReversion = request.PlanReversion,
+                RequiereAprobacion = request.RequiereAprobacion,
+                FechaProgramada = request.FechaProgramada,
+                Resultado = request.Resultado,
                 FechaCreacion = DateTime.UtcNow,
                 Estado = "borrador"
             };

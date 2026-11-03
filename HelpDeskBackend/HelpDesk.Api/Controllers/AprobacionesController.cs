@@ -15,10 +15,15 @@ public sealed class AprobacionesController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid idAprobacion)
     { var result = await mediator.Send(new ObtenerAprobacionesQuery([idAprobacion])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] AprobacionesInputDto datos)
-    { var result = await mediator.Send(new CrearAprobacionesCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearAprobacionesCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idAprobacion:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idAprobacion, [FromBody] AprobacionesInputDto datos)
-    { var result = await mediator.Send(new ActualizarAprobacionesCommand([idAprobacion], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idAprobacion, [FromBody] ActualizarAprobacionesCommand datos)
+    {
+        datos.Keys = [idAprobacion];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
 
 }

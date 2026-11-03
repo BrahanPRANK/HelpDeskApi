@@ -10,16 +10,20 @@ namespace HelpDesk.Api.Controllers;
 public sealed class UsuariosAccionesController(IMediator mediator) : ControllerBase
 {
     [HttpPost("{id:guid}/activar")]
-    public async Task<IActionResult> ActivarUsuario(Guid id, AccionDto datos)
+    public async Task<IActionResult> ActivarUsuario(Guid id, ActivarUsuarioCommand datos)
     {
-        var result = await mediator.Send(new ActivarUsuarioCommand(id, datos));
+        datos.Id = id;
+
+        var result = await mediator.Send(datos);
         return StatusCode(result.StatusCode, result);
     }
 
     [HttpPost("{id:guid}/desactivar")]
-    public async Task<IActionResult> DesactivarUsuario(Guid id, AccionDto datos)
+    public async Task<IActionResult> DesactivarUsuario(Guid id, DesactivarUsuarioCommand datos)
     {
-        var result = await mediator.Send(new DesactivarUsuarioCommand(id, datos));
+        datos.Id = id;
+
+        var result = await mediator.Send(datos);
         return StatusCode(result.StatusCode, result);
     }
 

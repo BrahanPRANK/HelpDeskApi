@@ -9,16 +9,20 @@ namespace HelpDesk.Api.Controllers;
 public sealed class TicketsAccionesController(IMediator mediator) : ControllerBase
 {
     [HttpPost("{id:guid}/asignar")]
-    public async Task<IActionResult> AsignarTicket(Guid id, AccionTicketDto datos)
+    public async Task<IActionResult> AsignarTicket(Guid id, AsignarTicketCommand datos)
     {
-        var result = await mediator.Send(new AsignarTicketCommand(id, datos));
+        datos.IdTicket = id;
+
+        var result = await mediator.Send(datos);
         return StatusCode(result.StatusCode, result);
     }
 
     [HttpPost("{id:guid}/iniciar")]
-    public async Task<IActionResult> IniciarTicket(Guid id, AccionTicketDto datos)
+    public async Task<IActionResult> IniciarTicket(Guid id, IniciarTicketCommand datos)
     {
-        var result = await mediator.Send(new IniciarTicketCommand(id, datos));
+        datos.IdTicket = id;
+
+        var result = await mediator.Send(datos);
         return StatusCode(result.StatusCode, result);
     }
 
@@ -27,16 +31,20 @@ public sealed class TicketsAccionesController(IMediator mediator) : ControllerBa
 
 
     [HttpPost("{id:guid}/resolver")]
-    public async Task<IActionResult> ResolverTicket(Guid id, AccionTicketDto datos)
+    public async Task<IActionResult> ResolverTicket(Guid id, ResolverTicketCommand datos)
     {
-        var result = await mediator.Send(new ResolverTicketCommand(id, datos));
+        datos.IdTicket = id;
+
+        var result = await mediator.Send(datos);
         return StatusCode(result.StatusCode, result);
     }
 
     [HttpPost("{id:guid}/cerrar")]
-    public async Task<IActionResult> CerrarTicket(Guid id, AccionTicketDto datos)
+    public async Task<IActionResult> CerrarTicket(Guid id, CerrarTicketCommand datos)
     {
-        var result = await mediator.Send(new CerrarTicketCommand(id, datos));
+        datos.IdTicket = id;
+
+        var result = await mediator.Send(datos);
         return StatusCode(result.StatusCode, result);
     }
 

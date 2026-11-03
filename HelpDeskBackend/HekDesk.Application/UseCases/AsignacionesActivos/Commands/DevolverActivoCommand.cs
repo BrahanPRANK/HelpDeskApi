@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -8,7 +10,14 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.AsignacionesActivos.Commands;
 
-public record DevolverActivoCommand(Guid Id, AccionDto Datos) : IRequest<ResponseDto<AccionResultadoDto>>;
+public class DevolverActivoCommand : IRequest<ResponseDto<AccionResultadoDto>>
+{
+    [JsonIgnore]
+    public Guid Id { get; set; }
+
+    [StringLength(4000)]
+    public string Motivo { get; set; } = string.Empty;
+}
 
 internal sealed class DevolverActivoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<DevolverActivoCommandHandler> _logger)
     : IRequestHandler<DevolverActivoCommand, ResponseDto<AccionResultadoDto>>
@@ -17,7 +26,7 @@ internal sealed class DevolverActivoCommandHandler(IUnitOfWork _unitOfWork, Acce
     {
         try
         {
-            Validation.Check(r.Datos);
+            Validation.Check(r);
             var result = "completado";
             access.Permission("activos.administrar");
             var assignment = await Required<global::HelpDesk.Domain.Models.AsignacionesActivos>(r.Id);

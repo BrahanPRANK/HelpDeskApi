@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,22 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Problemas;
 
-public record CrearProblemasCommand(ProblemasInputDto Datos) : IRequest<ResponseDto<ProblemasResponseDto>>;
+public class CrearProblemasCommand : IRequest<ResponseDto<ProblemasResponseDto>>
+{
+    public Guid IdResponsable { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Titulo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Descripcion { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Estado { get; set; } = "abierto";
+    public string? CausaRaiz { get; set; }
+    public string? SolucionTemporal { get; set; }
+    public string? SolucionDefinitiva { get; set; }
+}
 
 internal sealed class CrearProblemasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearProblemasCommandHandler> _logger) : IRequestHandler<CrearProblemasCommand, ResponseDto<ProblemasResponseDto>>
 {
@@ -17,19 +33,19 @@ internal sealed class CrearProblemasCommandHandler(IUnitOfWork _unitOfWork, Acce
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Problemas()
             {
                 IdProblema = Guid.NewGuid(),
-                IdResponsable = input.IdResponsable,
-                Titulo = input.Titulo,
-                Descripcion = input.Descripcion,
-                Estado = input.Estado,
-                CausaRaiz = input.CausaRaiz,
-                SolucionTemporal = input.SolucionTemporal,
-                SolucionDefinitiva = input.SolucionDefinitiva,
+                IdResponsable = request.IdResponsable,
+                Titulo = request.Titulo,
+                Descripcion = request.Descripcion,
+                Estado = request.Estado,
+                CausaRaiz = request.CausaRaiz,
+                SolucionTemporal = request.SolucionTemporal,
+                SolucionDefinitiva = request.SolucionDefinitiva,
                 FechaCreacion = DateTime.UtcNow
             };
 

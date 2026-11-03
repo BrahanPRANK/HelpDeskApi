@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,26 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Tickets;
 
-public record ActualizarTicketsCommand(object[] Keys, TicketsInputDto Datos) : IRequest<ResponseDto<TicketsResponseDto>>;
+public class ActualizarTicketsCommand : IRequest<ResponseDto<TicketsResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    public Guid IdServicio { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Asunto { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Descripcion { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Tipo { get; set; } = "incidente";
+    [Required]
+    [StringLength(10000)]
+    public string Prioridad { get; set; } = "media";
+    public int? Version { get; set; }
+}
 
 internal sealed class ActualizarTicketsCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<ActualizarTicketsCommandHandler> _logger) : IRequestHandler<ActualizarTicketsCommand, ResponseDto<TicketsResponseDto>>
 {
@@ -17,18 +38,18 @@ internal sealed class ActualizarTicketsCommandHandler(IUnitOfWork _unitOfWork, A
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             if (!access.Admin) access.Permission("tickets.crear");
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Tickets>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            Validation.Require(input.Version == entity.Version, "La version del ticket cambio; vuelva a consultarlo.", 409);
+            Validation.Require(request.Version == entity.Version, "La version del ticket cambio; vuelva a consultarlo.", 409);
             Validation.Require(entity.Estado == "nuevo" && (access.Admin || entity.IdSolicitante == actor.Id), "Solo se edita el texto de un ticket propio nuevo.", 403);
-            Validation.Require(input.IdServicio == entity.IdServicio && input.Prioridad == entity.Prioridad && input.Tipo == entity.Tipo,
+            Validation.Require(request.IdServicio == entity.IdServicio && request.Prioridad == entity.Prioridad && request.Tipo == entity.Tipo,
             "Este PUT solo cambia asunto y descripcion; servicio, prioridad y tipo se conservan.");
-            entity.Asunto = input.Asunto;
-            entity.Descripcion = input.Descripcion;
+            entity.Asunto = request.Asunto;
+            entity.Descripcion = request.Descripcion;
 
             entity.Version++;
             entity.FechaActualizacion = DateTime.UtcNow;

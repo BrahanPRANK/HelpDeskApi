@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,17 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Comentarios;
 
-public record ActualizarComentariosCommand(object[] Keys, ComentariosInputDto Datos) : IRequest<ResponseDto<ComentariosResponseDto>>;
+public class ActualizarComentariosCommand : IRequest<ResponseDto<ComentariosResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    public Guid IdTicket { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Mensaje { get; set; } = "";
+    public bool EsInterno { get; set; }
+}
 
 internal sealed class ActualizarComentariosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<ActualizarComentariosCommandHandler> _logger) : IRequestHandler<ActualizarComentariosCommand, ResponseDto<ComentariosResponseDto>>
 {
@@ -17,16 +29,16 @@ internal sealed class ActualizarComentariosCommandHandler(IUnitOfWork _unitOfWor
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Comentarios>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
-            entity.IdTicket = input.IdTicket;
-            entity.Mensaje = input.Mensaje;
-            entity.EsInterno = input.EsInterno;
+            entity.IdTicket = request.IdTicket;
+            entity.Mensaje = request.Mensaje;
+            entity.EsInterno = request.EsInterno;
             var ticket = await Required<global::HelpDesk.Domain.Models.Tickets>(entity.IdTicket);
             access.EnsureRead(ticket);
             if (entity.EsInterno) access.Permission("comentarios.internos");

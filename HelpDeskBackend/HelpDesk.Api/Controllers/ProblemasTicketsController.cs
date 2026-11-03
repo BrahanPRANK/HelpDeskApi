@@ -15,10 +15,12 @@ public sealed class ProblemasTicketsController(IMediator mediator) : ControllerB
     public async Task<IActionResult> Get(Guid idProblema, Guid idTicket)
     { var result = await mediator.Send(new ObtenerProblemasTicketsQuery([idProblema, idTicket])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] ProblemasTicketsInputDto datos)
-    { var result = await mediator.Send(new CrearProblemasTicketsCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearProblemasTicketsCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpDelete("{idProblema:guid}/{idTicket:guid}")]
     public async Task<IActionResult> Eliminar(Guid idProblema, Guid idTicket)
-    { var result = await mediator.Send(new EliminarProblemasTicketsCommand([idProblema, idTicket])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new EliminarProblemasTicketsCommand { Keys = [idProblema, idTicket] }); return StatusCode(result.StatusCode, result); }
 
 }

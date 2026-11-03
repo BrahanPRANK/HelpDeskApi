@@ -15,7 +15,9 @@ public sealed class AsignacionesActivosController(IMediator mediator) : Controll
     public async Task<IActionResult> Get(Guid idAsignacion)
     { var result = await mediator.Send(new ObtenerAsignacionesActivosQuery([idAsignacion])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] AsignacionesActivosInputDto datos)
-    { var result = await mediator.Send(new CrearAsignacionesActivosCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearAsignacionesActivosCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
 
 }

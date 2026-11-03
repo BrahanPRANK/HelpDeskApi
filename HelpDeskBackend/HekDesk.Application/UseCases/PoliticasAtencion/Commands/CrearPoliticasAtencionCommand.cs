@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,15 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.PoliticasAtencion;
 
-public record CrearPoliticasAtencionCommand(PoliticasAtencionInputDto Datos) : IRequest<ResponseDto<PoliticasAtencionResponseDto>>;
+public class CrearPoliticasAtencionCommand : IRequest<ResponseDto<PoliticasAtencionResponseDto>>
+{
+    [Required]
+    [StringLength(10000)]
+    public string Prioridad { get; set; } = "media";
+    public int MinutosPrimeraRespuesta { get; set; }
+    public int MinutosResolucion { get; set; }
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class CrearPoliticasAtencionCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearPoliticasAtencionCommandHandler> _logger) : IRequestHandler<CrearPoliticasAtencionCommand, ResponseDto<PoliticasAtencionResponseDto>>
 {
@@ -17,16 +26,16 @@ internal sealed class CrearPoliticasAtencionCommandHandler(IUnitOfWork _unitOfWo
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.PoliticasAtencion()
             {
                 IdPolitica = Guid.NewGuid(),
-                Prioridad = input.Prioridad,
-                MinutosPrimeraRespuesta = input.MinutosPrimeraRespuesta,
-                MinutosResolucion = input.MinutosResolucion,
-                Activo = input.Activo
+                Prioridad = request.Prioridad,
+                MinutosPrimeraRespuesta = request.MinutosPrimeraRespuesta,
+                MinutosResolucion = request.MinutosResolucion,
+                Activo = request.Activo
             };
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PoliticasAtencion>().AddAsync(entity);

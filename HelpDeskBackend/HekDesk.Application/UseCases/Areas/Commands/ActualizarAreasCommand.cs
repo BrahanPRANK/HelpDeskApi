@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,17 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Areas;
 
-public record ActualizarAreasCommand(object[] Keys, AreasInputDto Datos) : IRequest<ResponseDto<AreasResponseDto>>;
+public class ActualizarAreasCommand : IRequest<ResponseDto<AreasResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    public Guid IdSede { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class ActualizarAreasCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarAreasCommandHandler> _logger) : IRequestHandler<ActualizarAreasCommand, ResponseDto<AreasResponseDto>>
 {
@@ -17,16 +29,16 @@ internal sealed class ActualizarAreasCommandHandler(IUnitOfWork _unitOfWork, Acc
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Areas>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
-            entity.IdSede = input.IdSede;
-            entity.Nombre = input.Nombre;
-            entity.Activo = input.Activo;
+            entity.IdSede = request.IdSede;
+            entity.Nombre = request.Nombre;
+            entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
             return new(200, new AreasResponseDto

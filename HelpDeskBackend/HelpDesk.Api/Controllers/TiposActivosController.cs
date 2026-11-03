@@ -15,13 +15,18 @@ public sealed class TiposActivosController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid idTipoActivo)
     { var result = await mediator.Send(new ObtenerTiposActivosQuery([idTipoActivo])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] TiposActivosInputDto datos)
-    { var result = await mediator.Send(new CrearTiposActivosCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearTiposActivosCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idTipoActivo:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idTipoActivo, [FromBody] TiposActivosInputDto datos)
-    { var result = await mediator.Send(new ActualizarTiposActivosCommand([idTipoActivo], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idTipoActivo, [FromBody] ActualizarTiposActivosCommand datos)
+    {
+        datos.Keys = [idTipoActivo];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpDelete("{idTipoActivo:guid}")]
     public async Task<IActionResult> Eliminar(Guid idTipoActivo)
-    { var result = await mediator.Send(new EliminarTiposActivosCommand([idTipoActivo])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new EliminarTiposActivosCommand { Keys = [idTipoActivo] }); return StatusCode(result.StatusCode, result); }
 
 }

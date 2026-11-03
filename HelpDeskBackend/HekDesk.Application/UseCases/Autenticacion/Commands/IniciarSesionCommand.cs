@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using HelpDesk.Domain.Dtos.Autenticacion;
 using Microsoft.EntityFrameworkCore;
@@ -12,19 +13,25 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.Security;
 
-public record IniciarSesionCommand(LoginDto Datos) : IRequest<ResponseDto<SesionDto>>;
+public class IniciarSesionCommand : IRequest<ResponseDto<SesionDto>>
+{
+    [Required, StringLength(100)]
+    public string NombreUsuario { get; set; } = string.Empty;
+    [Required, StringLength(128)]
+    public string Clave { get; set; } = string.Empty;
+}
 internal sealed class IniciarSesionCommandHandler(IUnitOfWork _unitOfWork, IPasswordService passwords, ITokenService tokens, ILogger<IniciarSesionCommandHandler> _logger) : IRequestHandler<IniciarSesionCommand, ResponseDto<SesionDto>>
 {
     public async Task<ResponseDto<SesionDto>> Handle(IniciarSesionCommand request, CancellationToken ct)
     {
         try
         {
-            var input = request.Datos;
 
-            Validation.Check(input);
-            var username = input.NombreUsuario.Trim().ToLowerInvariant();
+
+            Validation.Check(request);
+            var username = request.NombreUsuario.Trim().ToLowerInvariant();
             var user = (await (_unitOfWork.Repository<Usuarios>().Query().Where(x => x.NombreUsuario.ToLower() == username)).ToListAsync()).SingleOrDefault();
-            if (user is null || !user.Activo || !passwords.Verify(user.ClaveHash, input.Clave))
+            if (user is null || !user.Activo || !passwords.Verify(user.ClaveHash, request.Clave))
                 throw new BusinessException(401, "Credenciales incorrectas.");
             var roleIds = _unitOfWork.Repository<UsuariosRoles>().Query().Where(x => x.IdUsuario == user.IdUsuario).Select(x => x.IdRol);
             var roles = await (_unitOfWork.Repository<Roles>().Query().Where(x => roleIds.Contains(x.IdRol)).Select(x => x.Nombre)).ToListAsync();

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.TicketsActivos;
 
-public record CrearTicketsActivosCommand(TicketsActivosInputDto Datos) : IRequest<ResponseDto<TicketsActivosResponseDto>>;
+public class CrearTicketsActivosCommand : IRequest<ResponseDto<TicketsActivosResponseDto>>
+{
+    public Guid IdTicket { get; set; }
+    public Guid IdActivo { get; set; }
+}
 
 internal sealed class CrearTicketsActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearTicketsActivosCommandHandler> _logger) : IRequestHandler<CrearTicketsActivosCommand, ResponseDto<TicketsActivosResponseDto>>
 {
@@ -17,10 +22,10 @@ internal sealed class CrearTicketsActivosCommandHandler(IUnitOfWork _unitOfWork,
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
-            var entity = new Dictionary<string, object>() { ["IdTicket"] = input.IdTicket, ["IdActivo"] = input.IdActivo };
+            var entity = new Dictionary<string, object>() { ["IdTicket"] = request.IdTicket, ["IdActivo"] = request.IdActivo };
 
             await _unitOfWork.Repository<Dictionary<string, object>>("TicketsActivos").AddAsync(entity);
             await _unitOfWork.Complete();

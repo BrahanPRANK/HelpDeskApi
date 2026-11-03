@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,17 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.ArticulosConocimiento;
 
-public record CrearArticulosConocimientoCommand(ArticulosConocimientoInputDto Datos) : IRequest<ResponseDto<ArticulosConocimientoResponseDto>>;
+public class CrearArticulosConocimientoCommand : IRequest<ResponseDto<ArticulosConocimientoResponseDto>>
+{
+    public Guid IdCategoriaConocimiento { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Titulo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Contenido { get; set; } = "";
+    public bool EsInterno { get; set; }
+}
 
 internal sealed class CrearArticulosConocimientoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearArticulosConocimientoCommandHandler> _logger) : IRequestHandler<CrearArticulosConocimientoCommand, ResponseDto<ArticulosConocimientoResponseDto>>
 {
@@ -17,16 +28,16 @@ internal sealed class CrearArticulosConocimientoCommandHandler(IUnitOfWork _unit
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.ArticulosConocimiento()
             {
                 IdArticulo = Guid.NewGuid(),
-                IdCategoriaConocimiento = input.IdCategoriaConocimiento,
-                Titulo = input.Titulo,
-                Contenido = input.Contenido,
-                EsInterno = input.EsInterno,
+                IdCategoriaConocimiento = request.IdCategoriaConocimiento,
+                Titulo = request.Titulo,
+                Contenido = request.Contenido,
+                EsInterno = request.EsInterno,
                 FechaCreacion = DateTime.UtcNow,
                 Estado = "borrador"
             };

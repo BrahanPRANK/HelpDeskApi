@@ -15,13 +15,18 @@ public sealed class CategoriasServiciosController(IMediator mediator) : Controll
     public async Task<IActionResult> Get(Guid idCategoriaServicio)
     { var result = await mediator.Send(new ObtenerCategoriasServiciosQuery([idCategoriaServicio])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] CategoriasServiciosInputDto datos)
-    { var result = await mediator.Send(new CrearCategoriasServiciosCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearCategoriasServiciosCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idCategoriaServicio:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idCategoriaServicio, [FromBody] CategoriasServiciosInputDto datos)
-    { var result = await mediator.Send(new ActualizarCategoriasServiciosCommand([idCategoriaServicio], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idCategoriaServicio, [FromBody] ActualizarCategoriasServiciosCommand datos)
+    {
+        datos.Keys = [idCategoriaServicio];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpDelete("{idCategoriaServicio:guid}")]
     public async Task<IActionResult> Eliminar(Guid idCategoriaServicio)
-    { var result = await mediator.Send(new EliminarCategoriasServiciosCommand([idCategoriaServicio])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new EliminarCategoriasServiciosCommand { Keys = [idCategoriaServicio] }); return StatusCode(result.StatusCode, result); }
 
 }

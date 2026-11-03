@@ -15,13 +15,18 @@ public sealed class ActivosController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid idActivo)
     { var result = await mediator.Send(new ObtenerActivosQuery([idActivo])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] ActivosInputDto datos)
-    { var result = await mediator.Send(new CrearActivosCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearActivosCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idActivo:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idActivo, [FromBody] ActivosInputDto datos)
-    { var result = await mediator.Send(new ActualizarActivosCommand([idActivo], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idActivo, [FromBody] ActualizarActivosCommand datos)
+    {
+        datos.Keys = [idActivo];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpDelete("{idActivo:guid}")]
     public async Task<IActionResult> Eliminar(Guid idActivo)
-    { var result = await mediator.Send(new EliminarActivosCommand([idActivo])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new EliminarActivosCommand { Keys = [idActivo] }); return StatusCode(result.StatusCode, result); }
 
 }

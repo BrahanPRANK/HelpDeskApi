@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,17 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.CategoriasConocimiento;
 
-public record ActualizarCategoriasConocimientoCommand(object[] Keys, CategoriasConocimientoInputDto Datos) : IRequest<ResponseDto<CategoriasConocimientoResponseDto>>;
+public class ActualizarCategoriasConocimientoCommand : IRequest<ResponseDto<CategoriasConocimientoResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public string? Descripcion { get; set; }
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class ActualizarCategoriasConocimientoCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarCategoriasConocimientoCommandHandler> _logger) : IRequestHandler<ActualizarCategoriasConocimientoCommand, ResponseDto<CategoriasConocimientoResponseDto>>
 {
@@ -17,16 +29,16 @@ internal sealed class ActualizarCategoriasConocimientoCommandHandler(IUnitOfWork
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.CategoriasConocimiento>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
-            entity.Nombre = input.Nombre;
-            entity.Descripcion = input.Descripcion;
-            entity.Activo = input.Activo;
+            entity.Nombre = request.Nombre;
+            entity.Descripcion = request.Descripcion;
+            entity.Activo = request.Activo;
 
             await _unitOfWork.Complete();
             return new(200, new CategoriasConocimientoResponseDto

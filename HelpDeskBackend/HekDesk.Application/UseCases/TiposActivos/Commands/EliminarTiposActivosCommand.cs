@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.TiposActivos;
 
-public record EliminarTiposActivosCommand(object[] Keys) : IRequest<ResponseDto<OperacionDto>>;
+public class EliminarTiposActivosCommand : IRequest<ResponseDto<OperacionDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+}
 
 internal sealed class EliminarTiposActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<EliminarTiposActivosCommandHandler> _logger) : IRequestHandler<EliminarTiposActivosCommand, ResponseDto<OperacionDto>>
 {

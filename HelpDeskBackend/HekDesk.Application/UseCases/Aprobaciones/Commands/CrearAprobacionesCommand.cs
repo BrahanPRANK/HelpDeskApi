@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,17 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Aprobaciones;
 
-public record CrearAprobacionesCommand(AprobacionesInputDto Datos) : IRequest<ResponseDto<AprobacionesResponseDto>>;
+public class CrearAprobacionesCommand : IRequest<ResponseDto<AprobacionesResponseDto>>
+{
+    public Guid? IdTicket { get; set; }
+    public Guid? IdCambio { get; set; }
+    public Guid IdAprobador { get; set; }
+    public short Orden { get; set; } = 1;
+    [Required]
+    [StringLength(10000)]
+    public string Motivo { get; set; } = "";
+    public string? ComentarioDecision { get; set; }
+}
 
 internal sealed class CrearAprobacionesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearAprobacionesCommandHandler> _logger) : IRequestHandler<CrearAprobacionesCommand, ResponseDto<AprobacionesResponseDto>>
 {
@@ -17,18 +28,18 @@ internal sealed class CrearAprobacionesCommandHandler(IUnitOfWork _unitOfWork, A
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Aprobaciones()
             {
                 IdAprobacion = Guid.NewGuid(),
-                IdTicket = input.IdTicket,
-                IdCambio = input.IdCambio,
-                IdAprobador = input.IdAprobador,
-                Orden = input.Orden,
-                Motivo = input.Motivo,
-                ComentarioDecision = input.ComentarioDecision,
+                IdTicket = request.IdTicket,
+                IdCambio = request.IdCambio,
+                IdAprobador = request.IdAprobador,
+                Orden = request.Orden,
+                Motivo = request.Motivo,
+                ComentarioDecision = request.ComentarioDecision,
                 FechaSolicitud = DateTime.UtcNow,
                 Estado = "pendiente"
             };

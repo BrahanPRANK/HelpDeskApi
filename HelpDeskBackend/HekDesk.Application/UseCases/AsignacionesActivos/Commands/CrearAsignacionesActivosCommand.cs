@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.AsignacionesActivos;
 
-public record CrearAsignacionesActivosCommand(AsignacionesActivosInputDto Datos) : IRequest<ResponseDto<AsignacionesActivosResponseDto>>;
+public class CrearAsignacionesActivosCommand : IRequest<ResponseDto<AsignacionesActivosResponseDto>>
+{
+    public Guid IdActivo { get; set; }
+    public Guid IdUsuarioResponsable { get; set; }
+    public string? Observaciones { get; set; }
+}
 
 internal sealed class CrearAsignacionesActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearAsignacionesActivosCommandHandler> _logger) : IRequestHandler<CrearAsignacionesActivosCommand, ResponseDto<AsignacionesActivosResponseDto>>
 {
@@ -17,15 +23,15 @@ internal sealed class CrearAsignacionesActivosCommandHandler(IUnitOfWork _unitOf
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.AsignacionesActivos()
             {
                 IdAsignacion = Guid.NewGuid(),
-                IdActivo = input.IdActivo,
-                IdUsuarioResponsable = input.IdUsuarioResponsable,
-                Observaciones = input.Observaciones,
+                IdActivo = request.IdActivo,
+                IdUsuarioResponsable = request.IdUsuarioResponsable,
+                Observaciones = request.Observaciones,
                 FechaAsignacion = DateTime.UtcNow
             };
             var asset = await Required<global::HelpDesk.Domain.Models.Activos>(entity.IdActivo);

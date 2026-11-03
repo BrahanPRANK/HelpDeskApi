@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,24 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Activos;
 
-public record CrearActivosCommand(ActivosInputDto Datos) : IRequest<ResponseDto<ActivosResponseDto>>;
+public class CrearActivosCommand : IRequest<ResponseDto<ActivosResponseDto>>
+{
+    public Guid IdSede { get; set; }
+    public Guid? IdArea { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string CodigoPatrimonial { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public Guid IdTipoActivo { get; set; }
+    public string? NumeroSerie { get; set; }
+    public string? Marca { get; set; }
+    public string? Modelo { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string Estado { get; set; } = "disponible";
+}
 
 internal sealed class CrearActivosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearActivosCommandHandler> _logger) : IRequestHandler<CrearActivosCommand, ResponseDto<ActivosResponseDto>>
 {
@@ -17,21 +35,21 @@ internal sealed class CrearActivosCommandHandler(IUnitOfWork _unitOfWork, Access
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Activos()
             {
                 IdActivo = Guid.NewGuid(),
-                IdSede = input.IdSede,
-                IdArea = input.IdArea,
-                CodigoPatrimonial = input.CodigoPatrimonial,
-                Nombre = input.Nombre,
-                IdTipoActivo = input.IdTipoActivo,
-                NumeroSerie = input.NumeroSerie,
-                Marca = input.Marca,
-                Modelo = input.Modelo,
-                Estado = input.Estado,
+                IdSede = request.IdSede,
+                IdArea = request.IdArea,
+                CodigoPatrimonial = request.CodigoPatrimonial,
+                Nombre = request.Nombre,
+                IdTipoActivo = request.IdTipoActivo,
+                NumeroSerie = request.NumeroSerie,
+                Marca = request.Marca,
+                Modelo = request.Modelo,
+                Estado = request.Estado,
                 FechaRegistro = DateTime.UtcNow
             };
             Validation.Require(entity.Estado != "asignado", "Primero registre el activo y despues su asignacion.");

@@ -15,13 +15,18 @@ public sealed class IntegrantesEquipoController(IMediator mediator) : Controller
     public async Task<IActionResult> Get(Guid idEquipo, Guid idUsuario)
     { var result = await mediator.Send(new ObtenerIntegrantesEquipoQuery([idEquipo, idUsuario])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] IntegrantesEquipoInputDto datos)
-    { var result = await mediator.Send(new CrearIntegrantesEquipoCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearIntegrantesEquipoCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpPut("{idEquipo:guid}/{idUsuario:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idEquipo, Guid idUsuario, [FromBody] IntegrantesEquipoInputDto datos)
-    { var result = await mediator.Send(new ActualizarIntegrantesEquipoCommand([idEquipo, idUsuario], datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idEquipo, Guid idUsuario, [FromBody] ActualizarIntegrantesEquipoCommand datos)
+    {
+        datos.Keys = [idEquipo, idUsuario];
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpDelete("{idEquipo:guid}/{idUsuario:guid}")]
     public async Task<IActionResult> Eliminar(Guid idEquipo, Guid idUsuario)
-    { var result = await mediator.Send(new EliminarIntegrantesEquipoCommand([idEquipo, idUsuario])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new EliminarIntegrantesEquipoCommand { Keys = [idEquipo, idUsuario] }); return StatusCode(result.StatusCode, result); }
 
 }

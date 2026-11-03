@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,14 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Sedes;
 
-public record CrearSedesCommand(SedesInputDto Datos) : IRequest<ResponseDto<SedesResponseDto>>;
+public class CrearSedesCommand : IRequest<ResponseDto<SedesResponseDto>>
+{
+    [Required]
+    [StringLength(10000)]
+    public string Nombre { get; set; } = "";
+    public string? Direccion { get; set; }
+    public bool Activo { get; set; } = true;
+}
 
 internal sealed class CrearSedesCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<CrearSedesCommandHandler> _logger) : IRequestHandler<CrearSedesCommand, ResponseDto<SedesResponseDto>>
 {
@@ -17,15 +25,15 @@ internal sealed class CrearSedesCommandHandler(IUnitOfWork _unitOfWork, AccessRu
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.Sedes()
             {
                 IdSede = Guid.NewGuid(),
-                Nombre = input.Nombre,
-                Direccion = input.Direccion,
-                Activo = input.Activo
+                Nombre = request.Nombre,
+                Direccion = request.Direccion,
+                Activo = request.Activo
             };
 
             await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Sedes>().AddAsync(entity);

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,22 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Adjuntos;
 
-public record ActualizarAdjuntosCommand(object[] Keys, AdjuntosInputDto Datos) : IRequest<ResponseDto<AdjuntosResponseDto>>;
+public class ActualizarAdjuntosCommand : IRequest<ResponseDto<AdjuntosResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    public Guid IdTicket { get; set; }
+    public Guid? IdComentario { get; set; }
+    [Required]
+    [StringLength(10000)]
+    public string NombreArchivo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string TipoArchivo { get; set; } = "";
+    public long TamanoBytes { get; set; }
+    public bool EsInterno { get; set; }
+}
 
 internal sealed class ActualizarAdjuntosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<ActualizarAdjuntosCommandHandler> _logger) : IRequestHandler<ActualizarAdjuntosCommand, ResponseDto<AdjuntosResponseDto>>
 {
@@ -17,19 +34,19 @@ internal sealed class ActualizarAdjuntosCommandHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Adjuntos>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
-            entity.IdTicket = input.IdTicket;
-            entity.IdComentario = input.IdComentario;
-            entity.NombreArchivo = input.NombreArchivo;
-            entity.TipoArchivo = input.TipoArchivo;
-            entity.TamanoBytes = input.TamanoBytes;
-            entity.EsInterno = input.EsInterno;
+            entity.IdTicket = request.IdTicket;
+            entity.IdComentario = request.IdComentario;
+            entity.NombreArchivo = request.NombreArchivo;
+            entity.TipoArchivo = request.TipoArchivo;
+            entity.TamanoBytes = request.TamanoBytes;
+            entity.EsInterno = request.EsInterno;
             var attachedTicket = await Required<global::HelpDesk.Domain.Models.Tickets>(entity.IdTicket);
             access.EnsureRead(attachedTicket);
             if (entity.EsInterno) access.Permission("comentarios.internos");

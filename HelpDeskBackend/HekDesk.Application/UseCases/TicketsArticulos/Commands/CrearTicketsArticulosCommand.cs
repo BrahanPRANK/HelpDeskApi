@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +10,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.TicketsArticulos;
 
-public record CrearTicketsArticulosCommand(TicketsArticulosInputDto Datos) : IRequest<ResponseDto<TicketsArticulosResponseDto>>;
+public class CrearTicketsArticulosCommand : IRequest<ResponseDto<TicketsArticulosResponseDto>>
+{
+    public Guid IdTicket { get; set; }
+    public Guid IdArticulo { get; set; }
+    public Guid IdUsuario { get; set; }
+}
 
 internal sealed class CrearTicketsArticulosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ICurrentUser actor, ILogger<CrearTicketsArticulosCommandHandler> _logger) : IRequestHandler<CrearTicketsArticulosCommand, ResponseDto<TicketsArticulosResponseDto>>
 {
@@ -17,14 +23,14 @@ internal sealed class CrearTicketsArticulosCommandHandler(IUnitOfWork _unitOfWor
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = new global::HelpDesk.Domain.Models.TicketsArticulos()
             {
-                IdTicket = input.IdTicket,
-                IdArticulo = input.IdArticulo,
-                IdUsuario = input.IdUsuario,
+                IdTicket = request.IdTicket,
+                IdArticulo = request.IdArticulo,
+                IdUsuario = request.IdUsuario,
                 FechaVinculacion = DateTime.UtcNow
             };
             entity.IdUsuario = actor.Id;

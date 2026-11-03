@@ -15,10 +15,12 @@ public sealed class RolesPermisosController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid idRol, Guid idPermiso)
     { var result = await mediator.Send(new ObtenerRolesPermisosQuery([idRol, idPermiso])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] RolesPermisosInputDto datos)
-    { var result = await mediator.Send(new CrearRolesPermisosCommand(datos)); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CrearRolesPermisosCommand datos)
+    {
+        var result = await mediator.Send(datos); return StatusCode(result.StatusCode, result);
+    }
     [HttpDelete("{idRol:guid}/{idPermiso:guid}")]
     public async Task<IActionResult> Eliminar(Guid idRol, Guid idPermiso)
-    { var result = await mediator.Send(new EliminarRolesPermisosCommand([idRol, idPermiso])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new EliminarRolesPermisosCommand { Keys = [idRol, idPermiso] }); return StatusCode(result.StatusCode, result); }
 
 }

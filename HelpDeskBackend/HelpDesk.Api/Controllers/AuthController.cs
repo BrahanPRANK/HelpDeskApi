@@ -10,14 +10,20 @@ namespace HelpDesk.Api.Controllers;
 public sealed class AuthController(IMediator mediator) : ControllerBase
 {
     [HttpPost("registro"), AllowAnonymous, EnableRateLimiting("auth")]
-    public async Task<IActionResult> Register(RegistroDto datos)
-    { var r = await mediator.Send(new RegistrarCommand(datos)); return StatusCode(r.StatusCode, r); }
+    public async Task<IActionResult> Register(RegistrarCommand datos)
+    {
+        var r = await mediator.Send(datos); return StatusCode(r.StatusCode, r);
+    }
     [HttpPost("login"), AllowAnonymous, EnableRateLimiting("auth")]
-    public async Task<IActionResult> Login(LoginDto datos)
-    { var r = await mediator.Send(new IniciarSesionCommand(datos)); return StatusCode(r.StatusCode, r); }
+    public async Task<IActionResult> Login(IniciarSesionCommand datos)
+    {
+        var r = await mediator.Send(datos); return StatusCode(r.StatusCode, r);
+    }
     [HttpPost("cambiar-clave"), Authorize]
-    public async Task<IActionResult> ChangePassword(CambioClaveDto datos)
-    { var r = await mediator.Send(new CambiarClaveCommand(datos)); return StatusCode(r.StatusCode, r); }
+    public async Task<IActionResult> ChangePassword(CambiarClaveCommand datos)
+    {
+        var r = await mediator.Send(datos); return StatusCode(r.StatusCode, r);
+    }
 
 
 }

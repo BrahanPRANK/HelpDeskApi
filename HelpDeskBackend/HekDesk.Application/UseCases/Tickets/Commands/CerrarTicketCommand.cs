@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
@@ -10,7 +12,18 @@ using MediatR;
 using HelpDesk.Domain.Dtos.Tickets;
 namespace HelpDesk.Application.UseCases.Tickets.Commands;
 
-public record CerrarTicketCommand(Guid IdTicket, AccionTicketDto Datos) : IRequest<ResponseDto<TicketsResponseDto>>;
+public class CerrarTicketCommand : IRequest<ResponseDto<TicketsResponseDto>>
+{
+    [JsonIgnore]
+    public Guid IdTicket { get; set; }
+
+    [Range(1, int.MaxValue)]
+    public int Version { get; set; }
+    [Required, StringLength(4000)]
+    public string Motivo { get; set; } = string.Empty;
+    public Guid? IdEquipo { get; set; }
+    public Guid? IdTecnico { get; set; }
+}
 
 internal sealed class CerrarTicketCommandHandler(IUnitOfWork _unitOfWork, ICurrentUser actor, AccessRules access, ILogger<CerrarTicketCommandHandler> _logger)
     : IRequestHandler<CerrarTicketCommand, ResponseDto<TicketsResponseDto>>
@@ -19,10 +32,10 @@ internal sealed class CerrarTicketCommandHandler(IUnitOfWork _unitOfWork, ICurre
     {
         try
         {
-            Validation.Check(request.Datos);
+            Validation.Check(request);
             var t = await Required<global::HelpDesk.Domain.Models.Tickets>(request.IdTicket);
             access.EnsureRead(t);
-            Validation.Require(t.Version == request.Datos.Version, "El ticket cambio; consulte su version actual.", 409);
+            Validation.Require(t.Version == request.Version, "El ticket cambio; consulte su version actual.", 409);
             var before = t.Estado;
             var now = DateTime.UtcNow;
             Validation.Require(t.IdSolicitante == actor.Id, "Solo el solicitante confirma el cierre.", 403);
@@ -33,7 +46,7 @@ internal sealed class CerrarTicketCommandHandler(IUnitOfWork _unitOfWork, ICurre
             var asignacion = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.AsignacionesTickets>()
                 .Query().SingleOrDefaultAsync(x => x.IdTicket == t.IdTicket && x.FechaFin == null);
             if (asignacion is not null) asignacion.FechaFin = now;
-            await History(t, "cerrar", before, t.Estado, request.Datos.Motivo);
+            await History(t, "cerrar", before, t.Estado, request.Motivo);
             t.Version++;
             t.FechaActualizacion = now;
             await _unitOfWork.Complete();

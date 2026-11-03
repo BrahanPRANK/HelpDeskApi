@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
@@ -9,7 +11,21 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Permisos;
 
-public record ActualizarPermisosCommand(object[] Keys, PermisosInputDto Datos) : IRequest<ResponseDto<PermisosResponseDto>>;
+public class ActualizarPermisosCommand : IRequest<ResponseDto<PermisosResponseDto>>
+{
+    [JsonIgnore]
+    public object[] Keys { get; set; } = [];
+
+    [Required]
+    [StringLength(10000)]
+    public string Codigo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Modulo { get; set; } = "";
+    [Required]
+    [StringLength(10000)]
+    public string Descripcion { get; set; } = "";
+}
 
 internal sealed class ActualizarPermisosCommandHandler(IUnitOfWork _unitOfWork, AccessRules access, ILogger<ActualizarPermisosCommandHandler> _logger) : IRequestHandler<ActualizarPermisosCommand, ResponseDto<PermisosResponseDto>>
 {
@@ -17,16 +33,16 @@ internal sealed class ActualizarPermisosCommandHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var input = request.Datos;
-            Validation.Check(input);
+
+            Validation.Check(request);
             Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
             var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Permisos>().GetByIdAsync(request.Keys)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
-            entity.Codigo = input.Codigo;
-            entity.Modulo = input.Modulo;
-            entity.Descripcion = input.Descripcion;
+            entity.Codigo = request.Codigo;
+            entity.Modulo = request.Modulo;
+            entity.Descripcion = request.Descripcion;
 
             await _unitOfWork.Complete();
             return new(200, new PermisosResponseDto
