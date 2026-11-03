@@ -1,24 +1,19 @@
-# Distribución del proyecto HelpDesk entre seis integrantes
+# Distribución completa del primer avance de HelpDesk
 
-**Actualización:** 3 de noviembre de 2026. **Alcance:** 36 tablas, 2 vistas, autenticación y reportes.
+**Equipo de seis integrantes. Actualización: 3 de noviembre de 2026.** La distribución por entidades se mantiene. Este documento también asigna todos los archivos compartidos y auxiliares de la primera versión para que ninguno quede sin responsable.
 
-Este es el reparto vigente. Sustituye al de ocho integrantes. El equipo actual es Diego Medina, Gianfranco Paolo, Fernando Aquima, Stiven Yerai, Ederson Vilca y Brahan Quispe. Las responsabilidades que quedaron libres se redistribuyen a continuación.
+**Plantilla de referencia:** [BrahanPRANK/HelpDeskApi](https://github.com/BrahanPRANK/HelpDeskApi). **Repositorio de trabajo del equipo:** [brahanquispedev/HelpDeskApi](https://github.com/brahanquispedev/HelpDeskApi). Los compañeros incorporan sus archivos manualmente, mediante commits separados por entidad; no deben subir la plantilla entera de una sola vez.
 
-**Aclaración sobre servicios:** Brahan se encarga de los servicios técnicos de `HelpDesk.Infrastructure/Services` y sus interfaces de Domain. La entidad de negocio `Servicios` (catálogo de atenciones) corresponde a Ederson. Son responsabilidades distintas.
+## Qué ya hizo Brahan y qué se entrega al final
 
-**Repositorio de este documento:** plantilla completa `BrahanPRANK/HelpDeskApi`. El repositorio de trabajo del equipo es `brahanquispedev/HelpDeskApi`; esta simplificación se publica únicamente en la plantilla.
+La revisión corresponde a la copia local del repositorio del equipo, rama `feature/brahan-avance`, commit `06fd3b0`. Los archivos que hoy existen allí son avance de Brahan; todavía no se atribuyen aportes a otros integrantes. Esta revisión no afirma que todos esos commits ya estén integrados en main.
 
-## Primera entrega simplificada — 3 de noviembre de 2026
+- Brahan ya incorporó estructura, scaffolding, puertos de Domain, repositorios, UnitOfWork, servicios JWT/hash, configuración de Infrastructure, Common, AccessRules y DTOs compartidos.
+- También incorporó los casos de uso y DTOs de respuesta de Tickets y AsignacionesTickets. Sus controladores siguen pendientes.
+- Los DTOs `TicketsResponseDto` y `AsignacionesTicketsResponseDto` **ya están subidos** en Domain. No es necesario esperar al final para agregarlos: un handler que los utiliza los necesita para compilar. Al trabajar una entidad, incorporar primero su DTO o incluir DTO y casos de uso en el mismo commit.
+- Aún faltan los módulos de los compañeros, sus controladores y la integración de la API. Program.cs del equipo conserva WeatherForecast y requiere la integración final que hace Brahan.
 
-Esta plantilla se adapta al estilo del laboratorio 11. El reparto de entidades entre seis integrantes se mantiene; cada uno incorpora solamente los archivos del alcance actual. Las funciones que se describían antes como publicación de artículos, recuperación de contraseña, programación de cambios y reapertura de tickets quedan para una segunda entrega.
-
-- Los casos de uso están en `HekDesk.Application/UseCases/{Entidad}/Commands` y `Queries`.
-- Todos los DTOs están en `HelpDesk.Domain/Dtos/{Entidad}/`, uno por archivo. Los compartidos están en `Dtos/Common/` y los de acceso en `Dtos/Autenticacion/`.
-- Los handlers contienen su lógica y `try/catch`. `CancellationToken` solo se declara en `Handle` para cumplir la interfaz de MediatR; no se utiliza ni se pasa al repositorio.
-- `IUnitOfWork` ofrece `Repository<T>()` y `Complete()`. Los repositorios exponen operaciones básicas; cada escritura se confirma desde el handler. No hay auditoría automática dentro de UnitOfWork.
-- Se conserva el flujo de tickets: crear → asignar → iniciar → resolver → cerrar. No se implementa reasignación en esta entrega.
-
-El inventario exacto de archivos que corresponde copiar está en [PRIMER_AVANCE.md](PRIMER_AVANCE.md). La instalación sigue en los pasos siguientes.
+La meta es incorporar **todos los archivos versionados de esta primera versión**, incluidos proyectos, configuraciones de ejemplo, scripts, pruebas y documentación. Bin, obj, configuración personal del IDE, contraseñas y User Secrets no forman parte de esa entrega. La base sigue siendo de **36 tablas y 2 vistas**; repartir más archivos no agrega tablas.
 
 ## Guía inicial: instalar y ejecutar el proyecto en otra computadora
 
@@ -297,285 +292,475 @@ Referencias oficiales para ampliar: [herramientas y scaffolding de EF Core](http
 
 ---
 
-## Resumen de responsables
+---
 
-| Integrante | Grupo | Entidades / recursos |
+## Distribución por entidades
+
+| Integrante | Entidades o recursos a incorporar | Responsabilidad adicional |
 |---|---|---|
-| Diego Medina | Autenticación, usuarios y acceso | `Usuarios`, `Roles`, `UsuariosRoles`, `Permisos`, `RolesPermisos`, `RecuperacionesClave` |
-| Gianfranco Paolo | Cambios, aprobaciones y problemas recurrentes | `Cambios`, `CambiosTickets`, `TareasCambios`, `Aprobaciones`, `Problemas`, `ProblemasTickets` |
-| Fernando Aquima | Inventario y evidencias de atención | `Activos`, `TiposActivos`, `AsignacionesActivos`, `TicketsActivos`, `Comentarios`, `Adjuntos` |
-| Stiven Yerai | Organización, equipos y notificaciones | `Sedes`, `Areas`, `EquiposSoporte`, `IntegrantesEquipo`, `Notificaciones`, `PreferenciasNotificaciones`, `EnviosNotificaciones` |
-| Ederson Vilca | Servicios, calidad y conocimiento | `Servicios`, `CategoriasServicios`, `PoliticasAtencion`, `Encuestas`, `ArticulosConocimiento`, `CategoriasConocimiento`, `TicketsArticulos` |
-| Brahan Quispe | Tickets, servicios técnicos, persistencia e integración | `Tickets`, `AsignacionesTickets`, `HistorialTickets`, `CargaTecnicos`, `ResumenTickets`, `Auditoria` |
+| Diego Medina | `Usuarios`, `Roles`, `UsuariosRoles`, `Permisos`, `RolesPermisos`, `RecuperacionesClave` | Autenticación, AuthService de alta inicial, CurrentUser de API y script de administrador. Consume la seguridad compartida ya subida por Brahan. |
+| Gianfranco Paolo | `Cambios`, `CambiosTickets`, `TareasCambios`, `Aprobaciones`, `Problemas`, `ProblemasTickets` | Decisiones de aprobaciones y tareas de cambios; ciclo avanzado de cambios queda fuera de esta versión. |
+| Fernando Aquima | `Activos`, `TiposActivos`, `AsignacionesActivos`, `TicketsActivos`, `Comentarios`, `Adjuntos` | Devolución de activos y visibilidad de comentarios/adjuntos. |
+| Stiven Yerai | `Sedes`, `Areas`, `EquiposSoporte`, `IntegrantesEquipo`, `Notificaciones`, `PreferenciasNotificaciones`, `EnviosNotificaciones` | Avisos propios, lectura y preferencias. Los envíos se consultan; no se añade un proveedor de correo. |
+| Ederson Vilca | `Servicios`, `CategoriasServicios`, `PoliticasAtencion`, `Encuestas`, `ArticulosConocimiento`, `CategoriasConocimiento`, `TicketsArticulos` | Catálogo de servicios, políticas, encuestas y conocimiento en borrador. |
+| Brahan Quispe | `Tickets`, `AsignacionesTickets`, `HistorialTickets`, `CargaTecnicos`, `ResumenTickets`, `Auditoria` | Reportes, DTOs compartidos, Domain común, Infrastructure, configuración, Program, middleware, scaffolding, pruebas y documentación. |
 
-Cada tabla o vista tiene un solo responsable funcional. `CargaTecnicos` y `ResumenTickets` se consultan; no tienen CRUD. `Autenticacion` corresponde a Diego y `Reportes` a Brahan.
+Cada dueño de entidad incorpora sus Commands, Queries, DTOs de respuesta y todos sus controladores, incluido el controlador de acciones si existe. Los modelos generados, puertos, repositorios y servicios técnicos tienen un único responsable de subida: Brahan. El dueño funcional revisa su entidad, pero no vuelve a subir esos archivos comunes como aporte propio.
 
-## Qué archivos debe subir cada integrante
+**Servicios no significa una sola cosa:** `Infrastructure/Services` son JWT y hash, a cargo de Brahan. El recurso de negocio `Servicios`, su DTO y sus casos de uso corresponden a Ederson.
 
-Por cada entidad asignada, el responsable incorpora al repositorio de trabajo:
+**Archivos compartidos ya realizados por Brahan:** Common/Validation.cs, Security/AccessRules.cs, Dtos/Common y los tres DTOs de Dtos/Autenticacion. Diego los consume y coordina cambios; no tiene que volver a copiarlos como si estuvieran pendientes. Sus Commands de registro, login y cambio de clave contienen directamente los datos de entrada.
 
-1. `Application/UseCases/{Entidad}/`: comandos, consultas y handlers de su entidad. Además, subir `Domain/Dtos/{Entidad}/`, un DTO por archivo.
-2. Los controladores CRUD y de acciones correspondientes en el proyecto API.
-3. Pruebas y ejemplos de peticiones que demuestren su parte.
-4. Ajustes de modelo necesarios, coordinados con Brahan; los modelos generados ya pertenecen a la base común.
+## Qué subir por cada entidad
 
-En esta plantilla Application se llama `HekDesk.Application` y la API `HelpDesk.Api`. En la estructura del equipo del Escritorio se llaman `HelpDesk.Application` y `HelpDeskApi`. Adaptar las rutas, namespaces y referencias al proyecto destino; no reemplazar su solución completa con la de la plantilla.
+1. `HelpDesk.Domain/Dtos/{Entidad}/`: sus DTOs de respuesta, uno por archivo.
+2. `HekDesk.Application/UseCases/{Entidad}/Commands/` y `Queries/`: solamente los archivos existentes de la primera versión. Las entidades de solo consulta no requieren inventar Commands.
+3. `HelpDesk.Api/Controllers/{Entidad}Controller.cs` y su controlador de acciones, cuando aparezca en el inventario.
+4. Compilar, probar su parte y hacer un commit identificable de esa entidad. Si otra entidad aún falta, incorporar primero sus dependencias compartidas y coordinar la integración.
 
-Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y coordina Brahan. Los otros integrantes los consumen mediante interfaces; no crean copias de Unit of Work por entidad.
+Ejemplos de mensajes: `feat: agregar DTO y casos de uso de Sedes`, `feat: agregar controlador de Sedes`, `feat: agregar aprobaciones`. No mezclar todas las entidades de una persona en un único commit. Las acciones pertenecen a su entidad; no cuentan como nuevas tablas.
 
-## Detalle por integrante
+La definición de los DTOs está en Domain y su construcción en el handler. Los Commands y las Queries que reciben datos declaran sus propiedades directamente. Mantener el estilo actual: try/catch, Complete() para las escrituras, sin ILogger y CancellationToken solamente declarado en Handle. No recuperar los Commands avanzados retirados de la plantilla.
 
-### 1. Diego Medina — Autenticación, usuarios y acceso
+## Archivos compartidos y quién termina cada parte
 
-**Rama sugerida:** `feature/diego-seguridad`.
-
-**Responsabilidad funcional:**
-
-- Registro e inicio de sesión y cambio de contraseña. Recuperación queda para una segunda versión.
-- Administración de cuentas, roles y permisos; conservar un administrador activo.
-- Consumir las interfaces de contraseña y JWT; coordinar con Brahan sus implementaciones de Infrastructure.
-
-**Carpetas y controladores en la plantilla:**
-
-| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+| Archivos o grupo | Responsable | Situación y acción |
 |---|---|---|
-| `Usuarios` | `HekDesk.Application/UseCases/Usuarios/` | `UsuariosController.cs`, `UsuariosAccionesController.cs` | `Usuarios.cs` |
-| `Roles` | `HekDesk.Application/UseCases/Roles/` | `RolesController.cs` | `Roles.cs` |
-| `UsuariosRoles` | `HekDesk.Application/UseCases/UsuariosRoles/` | `UsuariosRolesController.cs` | `UsuariosRoles.cs` |
-| `Permisos` | `HekDesk.Application/UseCases/Permisos/` | `PermisosController.cs` | `Permisos.cs` |
-| `RolesPermisos` | `HekDesk.Application/UseCases/RolesPermisos/` | `RolesPermisosController.cs` | Relación dentro del contexto; sin clase propia |
-| `RecuperacionesClave` | `HekDesk.Application/UseCases/RecuperacionesClave/` | `RecuperacionesClaveController.cs` | `RecuperacionesClave.cs` |
+| Domain/Models, excepciones y puertos | Brahan | Base ya incorporada. Revisar diferencias del scaffolding, sin borrar modelos existentes. |
+| Infrastructure/Repositories, Services y Configuration | Brahan | Ya incorporados. Conservar una sola implementación para todos. |
+| Infrastructure/Data/HelpDeskDbContext.cs y .Custom.cs | Brahan | Ya incorporados; preservar la corrección de relaciones. |
+| Application/Common y Security/AccessRules.cs | Brahan | Ya incorporados. |
+| Domain/Dtos/Common y Domain/Dtos/Autenticacion | Brahan | Ya incorporados; los usa el resto del equipo. |
+| Application/Security/AuthService.cs | Diego | Pendiente: inicialización del administrador desde consola. |
+| API/Security/CurrentUser.cs y Controllers/AuthController.cs | Diego | Pendientes: adaptar identidad y exponer acceso por HTTP. |
+| scripts/Crear-Administrador.ps1 | Diego | Pendiente; coordinar su llamada desde Program con Brahan. |
+| Application/Configuration/ApplicationServicesExtensions.cs | Brahan | Pendiente; integrar MediatR y los servicios de Application cuando existan sus clases. |
+| API/Program.cs y Middleware/ExceptionMiddleware.cs | Brahan | Pendientes: DI, conexión, JWT, autorizaciones, middleware, Swagger y controladores. |
+| .csproj, solución, appsettings de ejemplo, launchSettings y archivo HTTP | Brahan | Existen bases; adaptar las referencias y configuración de la plantilla a los nombres del equipo. |
+| SQL y scripts/Actualizar-Modelo.ps1 | Brahan | Completar los archivos compartidos para instalación y regeneración. No cambiar las 36 tablas por copiar archivos. |
+| tests/HelpDesk.IntegrationTests y resources.json | Brahan | Incorporar la suite y coordinar la prueba integrada; cada compañero demuestra su módulo. |
+| .gitignore, .gitattributes, README y todos los MD | Brahan | Revisar o incorporar los que falten; también están asignados en el inventario. |
 
-**Además sube:**
+Los archivos Class1.cs que aún existan son restos de estructura, no módulos adicionales. Brahan los revisa al integrar; no requieren crear una funcionalidad ni un commit ficticio.
 
-- `HekDesk.Application/UseCases/Autenticacion/Commands/`.
-- `HelpDesk.Domain/Dtos/Autenticacion/` y `HekDesk.Application/Security/AuthService.cs` (alta inicial por consola).
-- `HelpDesk.Api/Controllers/AuthController.cs` y `HelpDesk.Api/Security/CurrentUser.cs`.
-- `HekDesk.Application/Security/AccessRules.cs` y `scripts/Crear-Administrador.ps1`, coordinando su integración.
-- Diego define y prueba el flujo de acceso. Brahan sube las implementaciones técnicas `PasswordService`, `JwtService` y sus interfaces; no se duplican esos archivos.
+## Orden para incorporar toda la versión
 
-**Debe demostrar:**
+1. Usar la base común ya subida por Brahan y actualizar la rama de cada integrante desde la base acordada.
+2. Stiven incorpora primero Sedes, Areas, EquiposSoporte e IntegrantesEquipo; Diego incorpora usuarios, roles, permisos y autenticación. Ederson incorpora categorías, políticas y servicios. Coordinar pruebas cuando estas dependencias estén disponibles.
+3. Cada integrante incorpora sus entidades restantes, con DTOs, casos de uso y controladores en commits identificables. Brahan completa sus DTOs/controladores y los recursos que le faltan: HistorialTickets, CargaTecnicos, ResumenTickets, Auditoria y Reportes.
+4. Brahan integra Program, registro de servicios, configuración de ejemplo y middleware. Diego aporta CurrentUser y AuthService. No se sustituye Program en cada rama de entidad.
+5. Incorporar SQL, scripts, pruebas y documentos pendientes según el inventario. Revisar las diferencias en archivos que ya existen, en vez de sobrescribirlos automáticamente.
+6. Revisar los PR por entidad e integrarlos; compilar la solución final y probar login → crear ticket → asignar → iniciar → resolver → cerrar, además de los módulos de cada integrante.
 
-- Registro solo como empleado, login correcto e incorrecto.
-- Denegar cambios de roles por un empleado y comprobar cuenta inactiva.
-- Cambiar la contraseña con la clave actual e invalidar el token de sesión anterior.
+**La API final no se considera completa solo porque se copiaron los casos de uso.** Deben estar presentes y conectados DTOs, controladores, registros DI, configuración y los archivos auxiliares de instalación/pruebas.
 
-### 2. Gianfranco Paolo — Cambios, aprobaciones y problemas recurrentes
+## Nombres de los proyectos al copiar
 
-**Rama sugerida:** `feature/gianfranco-cambios`.
+| Plantilla BrahanPRANK | Proyecto del equipo brahanquispedev |
+|---|---|
+| `HelpDeskBackend/` | `HelpDeskApi/` |
+| `HekDesk.Application/` | `HelpDesk.Application/` |
+| `HelpDesk.Api/` | `HelpDeskApi/` |
+| `HelpDeskBackend.sln` | `HelpDeskApi.sln` |
+| `InfrastructureServicesExtensions.cs` | Actualmente `InfrastuctureServicesExtensions.cs`; su clase es InfrastructureServicesExtensions. Coordinar cualquier cambio de nombre. |
 
-**Responsabilidad funcional:**
+Los namespaces de código siguen siendo HelpDesk.Application, HelpDesk.Domain y HelpDesk.Infrastructure según cada archivo. No renombrar namespaces basándose solo en el error tipográfico de la carpeta HekDesk. Conservar el UserSecretsId y las rutas de los proyectos del equipo; no copiar contraseñas de otra computadora.
 
-- Crear, consultar y actualizar cambios en borrador y sus tareas. La programación, ejecución y finalización quedan para v2.
-- Decidir aprobaciones en orden y por el aprobador asignado.
-- Investigar fallas recurrentes, documentar causa raíz y relacionar incidentes con problemas.
+## Inventario exhaustivo: ningún archivo sin responsable
 
-**Carpetas y controladores en la plantilla:**
+Este inventario incluye cada archivo versionado de la plantilla al realizar esta revisión. No incluye archivos generados ignorados por Git. Una fila tiene un único responsable de incorporación. El responsable de un archivo no implica que lo haya escrito ya: la tabla distingue el avance existente.
 
-| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+Estados comparados contra la copia local del equipo:
+
+- **Coincide:** el archivo está en su destino y su contenido coincide al normalizar finales de línea y BOM. No requiere otro commit vacío.
+- **Existe: revisar:** ya existe un archivo en el destino, pero difiere. Brahan hizo la base existente; el responsable coordina su adaptación. No significa que esté ausente o incorrecto.
+- **Pendiente:** todavía no se encontró el archivo en el destino esperado.
+
+La columna Destino usa los nombres del proyecto del equipo. Los modelos/proyectos ya creados deben revisarse, no recrearse. El estado de configuración no confirma conectividad con PostgreSQL ni que el módulo funcione por HTTP.
+
+**Cobertura: 340 archivos de plantilla, todos asignados una sola vez.** Comparación local: 76 coinciden, 7 existen con diferencias y 257 están pendientes.
+
+| Responsable | Archivos asignados |
+|---|---|
+| Diego Medina | 47 |
+| Gianfranco Paolo | 40 |
+| Fernando Aquima | 40 |
+| Stiven Yerai | 47 |
+| Ederson Vilca | 47 |
+| Brahan Quispe | 119 |
+
+### Inventario de Diego Medina
+
+| Archivo de plantilla | Destino en el equipo | Estado |
 |---|---|---|
-| `Cambios` | `HekDesk.Application/UseCases/Cambios/` | `CambiosController.cs` | `Cambios.cs` |
-| `CambiosTickets` | `HekDesk.Application/UseCases/CambiosTickets/` | `CambiosTicketsController.cs` | Relación dentro del contexto; sin clase propia |
-| `TareasCambios` | `HekDesk.Application/UseCases/TareasCambios/` | `TareasCambiosController.cs` | `TareasCambios.cs` |
-| `Aprobaciones` | `HekDesk.Application/UseCases/Aprobaciones/` | `AprobacionesController.cs`, `AprobacionesAccionesController.cs` | `Aprobaciones.cs` |
-| `Problemas` | `HekDesk.Application/UseCases/Problemas/` | `ProblemasController.cs` | `Problemas.cs` |
-| `ProblemasTickets` | `HekDesk.Application/UseCases/ProblemasTickets/` | `ProblemasTicketsController.cs` | Relación dentro del contexto; sin clase propia |
+| `HelpDeskBackend/HekDesk.Application/Security/AuthService.cs` | `HelpDeskApi/HelpDesk.Application/Security/AuthService.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Autenticacion/Commands/CambiarClaveCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Autenticacion/Commands/CambiarClaveCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Autenticacion/Commands/IniciarSesionCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Autenticacion/Commands/IniciarSesionCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Autenticacion/Commands/RegistrarCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Autenticacion/Commands/RegistrarCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Permisos/Commands/ActualizarPermisosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Permisos/Commands/ActualizarPermisosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Permisos/Commands/CrearPermisosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Permisos/Commands/CrearPermisosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Permisos/Commands/EliminarPermisosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Permisos/Commands/EliminarPermisosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Permisos/Queries/ListarPermisosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Permisos/Queries/ListarPermisosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Permisos/Queries/ObtenerPermisosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Permisos/Queries/ObtenerPermisosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/RecuperacionesClave/Queries/ListarRecuperacionesClaveQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/RecuperacionesClave/Queries/ListarRecuperacionesClaveQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/RecuperacionesClave/Queries/ObtenerRecuperacionesClaveQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/RecuperacionesClave/Queries/ObtenerRecuperacionesClaveQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Roles/Commands/ActualizarRolesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Roles/Commands/ActualizarRolesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Roles/Commands/CrearRolesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Roles/Commands/CrearRolesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Roles/Commands/EliminarRolesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Roles/Commands/EliminarRolesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Roles/Queries/ListarRolesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Roles/Queries/ListarRolesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Roles/Queries/ObtenerRolesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Roles/Queries/ObtenerRolesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/RolesPermisos/Commands/CrearRolesPermisosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/RolesPermisos/Commands/CrearRolesPermisosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/RolesPermisos/Commands/EliminarRolesPermisosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/RolesPermisos/Commands/EliminarRolesPermisosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/RolesPermisos/Queries/ListarRolesPermisosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/RolesPermisos/Queries/ListarRolesPermisosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/RolesPermisos/Queries/ObtenerRolesPermisosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/RolesPermisos/Queries/ObtenerRolesPermisosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Usuarios/Commands/ActivarUsuarioCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Usuarios/Commands/ActivarUsuarioCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Usuarios/Commands/ActualizarUsuariosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Usuarios/Commands/ActualizarUsuariosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Usuarios/Commands/CrearUsuariosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Usuarios/Commands/CrearUsuariosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Usuarios/Commands/DesactivarUsuarioCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Usuarios/Commands/DesactivarUsuarioCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Usuarios/Queries/ListarUsuariosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Usuarios/Queries/ListarUsuariosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Usuarios/Queries/ObtenerUsuariosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Usuarios/Queries/ObtenerUsuariosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/UsuariosRoles/Commands/ActualizarUsuariosRolesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/UsuariosRoles/Commands/ActualizarUsuariosRolesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/UsuariosRoles/Commands/CrearUsuariosRolesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/UsuariosRoles/Commands/CrearUsuariosRolesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/UsuariosRoles/Commands/EliminarUsuariosRolesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/UsuariosRoles/Commands/EliminarUsuariosRolesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/UsuariosRoles/Queries/ListarUsuariosRolesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/UsuariosRoles/Queries/ListarUsuariosRolesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/UsuariosRoles/Queries/ObtenerUsuariosRolesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/UsuariosRoles/Queries/ObtenerUsuariosRolesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/AuthController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/AuthController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/PermisosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/PermisosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/RecuperacionesClaveController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/RecuperacionesClaveController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/RolesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/RolesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/RolesPermisosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/RolesPermisosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/UsuariosAccionesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/UsuariosAccionesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/UsuariosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/UsuariosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/UsuariosRolesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/UsuariosRolesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Security/CurrentUser.cs` | `HelpDeskApi/HelpDeskApi/Security/CurrentUser.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Permisos/PermisosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Permisos/PermisosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/RecuperacionesClave/RecuperacionesClaveResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/RecuperacionesClave/RecuperacionesClaveResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Roles/RolesResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Roles/RolesResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/RolesPermisos/RolesPermisosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/RolesPermisos/RolesPermisosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Usuarios/UsuariosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Usuarios/UsuariosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/UsuariosRoles/UsuariosRolesResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/UsuariosRoles/UsuariosRolesResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/scripts/Crear-Administrador.ps1` | `HelpDeskApi/scripts/Crear-Administrador.ps1` | Pendiente |
 
-**Debe demostrar:**
+### Inventario de Gianfranco Paolo
 
-- Crear y consultar cambios en borrador y actualizar sus tareas; el ciclo de ejecución se implementará en v2.
-- Rechazar una segunda decisión sobre una aprobación resuelta.
-- Exigir causa y solución al resolver un problema.
-
-### 3. Fernando Aquima — Inventario y evidencias de atención
-
-**Rama sugerida:** `feature/fernando-activos-evidencias`.
-
-**Responsabilidad funcional:**
-
-- Registrar y clasificar bienes tecnológicos, asignarlos y recibir devoluciones.
-- Relacionar activos con tickets.
-- Gestionar mensajes y metadatos de evidencias asociadas; aplicar visibilidad pública o interna.
-
-**Carpetas y controladores en la plantilla:**
-
-| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+| Archivo de plantilla | Destino en el equipo | Estado |
 |---|---|---|
-| `Activos` | `HekDesk.Application/UseCases/Activos/` | `ActivosController.cs` | `Activos.cs` |
-| `TiposActivos` | `HekDesk.Application/UseCases/TiposActivos/` | `TiposActivosController.cs` | `TiposActivos.cs` |
-| `AsignacionesActivos` | `HekDesk.Application/UseCases/AsignacionesActivos/` | `AsignacionesActivosController.cs`, `AsignacionesActivosAccionesController.cs` | `AsignacionesActivos.cs` |
-| `TicketsActivos` | `HekDesk.Application/UseCases/TicketsActivos/` | `TicketsActivosController.cs` | Relación dentro del contexto; sin clase propia |
-| `Comentarios` | `HekDesk.Application/UseCases/Comentarios/` | `ComentariosController.cs` | `Comentarios.cs` |
-| `Adjuntos` | `HekDesk.Application/UseCases/Adjuntos/` | `AdjuntosController.cs` | `Adjuntos.cs` |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Aprobaciones/Commands/ActualizarAprobacionesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Aprobaciones/Commands/ActualizarAprobacionesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Aprobaciones/Commands/AprobarSolicitudCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Aprobaciones/Commands/AprobarSolicitudCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Aprobaciones/Commands/CrearAprobacionesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Aprobaciones/Commands/CrearAprobacionesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Aprobaciones/Commands/RechazarSolicitudCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Aprobaciones/Commands/RechazarSolicitudCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Aprobaciones/Queries/ListarAprobacionesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Aprobaciones/Queries/ListarAprobacionesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Aprobaciones/Queries/ObtenerAprobacionesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Aprobaciones/Queries/ObtenerAprobacionesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Cambios/Commands/ActualizarCambiosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Cambios/Commands/ActualizarCambiosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Cambios/Commands/CrearCambiosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Cambios/Commands/CrearCambiosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Cambios/Queries/ListarCambiosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Cambios/Queries/ListarCambiosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Cambios/Queries/ObtenerCambiosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Cambios/Queries/ObtenerCambiosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CambiosTickets/Commands/CrearCambiosTicketsCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CambiosTickets/Commands/CrearCambiosTicketsCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CambiosTickets/Commands/EliminarCambiosTicketsCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CambiosTickets/Commands/EliminarCambiosTicketsCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CambiosTickets/Queries/ListarCambiosTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CambiosTickets/Queries/ListarCambiosTicketsQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CambiosTickets/Queries/ObtenerCambiosTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CambiosTickets/Queries/ObtenerCambiosTicketsQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Problemas/Commands/ActualizarProblemasCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Problemas/Commands/ActualizarProblemasCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Problemas/Commands/CrearProblemasCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Problemas/Commands/CrearProblemasCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Problemas/Queries/ListarProblemasQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Problemas/Queries/ListarProblemasQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Problemas/Queries/ObtenerProblemasQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Problemas/Queries/ObtenerProblemasQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/ProblemasTickets/Commands/CrearProblemasTicketsCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/ProblemasTickets/Commands/CrearProblemasTicketsCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/ProblemasTickets/Commands/EliminarProblemasTicketsCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/ProblemasTickets/Commands/EliminarProblemasTicketsCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/ProblemasTickets/Queries/ListarProblemasTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/ProblemasTickets/Queries/ListarProblemasTicketsQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/ProblemasTickets/Queries/ObtenerProblemasTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/ProblemasTickets/Queries/ObtenerProblemasTicketsQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TareasCambios/Commands/ActualizarTareasCambiosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TareasCambios/Commands/ActualizarTareasCambiosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TareasCambios/Commands/CrearTareasCambiosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TareasCambios/Commands/CrearTareasCambiosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TareasCambios/Commands/EliminarTareasCambiosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TareasCambios/Commands/EliminarTareasCambiosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TareasCambios/Queries/ListarTareasCambiosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TareasCambios/Queries/ListarTareasCambiosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TareasCambios/Queries/ObtenerTareasCambiosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TareasCambios/Queries/ObtenerTareasCambiosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/AprobacionesAccionesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/AprobacionesAccionesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/AprobacionesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/AprobacionesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/CambiosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/CambiosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/CambiosTicketsController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/CambiosTicketsController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/ProblemasController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/ProblemasController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/ProblemasTicketsController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/ProblemasTicketsController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/TareasCambiosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/TareasCambiosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Aprobaciones/AprobacionesResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Aprobaciones/AprobacionesResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Cambios/CambiosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Cambios/CambiosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/CambiosTickets/CambiosTicketsResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/CambiosTickets/CambiosTicketsResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Problemas/ProblemasResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Problemas/ProblemasResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/ProblemasTickets/ProblemasTicketsResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/ProblemasTickets/ProblemasTicketsResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/TareasCambios/TareasCambiosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/TareasCambios/TareasCambiosResponseDto.cs` | Pendiente |
 
-**Debe demostrar:**
+### Inventario de Fernando Aquima
 
-- Asignar, devolver y volver a asignar un activo conservando el historial.
-- Rechazar dos asignaciones vigentes de un activo.
-- Impedir que el solicitante consulte comentarios o adjuntos internos.
-
-### 4. Stiven Yerai — Organización, equipos y notificaciones
-
-**Rama sugerida:** `feature/stiven-organizacion-avisos`.
-
-**Responsabilidad funcional:**
-
-- Configurar locales, departamentos, grupos de soporte e integrantes.
-- Gestionar avisos destinados a usuarios, lectura y preferencias.
-- Consultar el seguimiento de envíos; los reintentos y el proveedor de correo real quedan para v2.
-
-**Carpetas y controladores en la plantilla:**
-
-| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+| Archivo de plantilla | Destino en el equipo | Estado |
 |---|---|---|
-| `Sedes` | `HekDesk.Application/UseCases/Sedes/` | `SedesController.cs` | `Sedes.cs` |
-| `Areas` | `HekDesk.Application/UseCases/Areas/` | `AreasController.cs` | `Areas.cs` |
-| `EquiposSoporte` | `HekDesk.Application/UseCases/EquiposSoporte/` | `EquiposSoporteController.cs` | `EquiposSoporte.cs` |
-| `IntegrantesEquipo` | `HekDesk.Application/UseCases/IntegrantesEquipo/` | `IntegrantesEquipoController.cs` | `IntegrantesEquipo.cs` |
-| `Notificaciones` | `HekDesk.Application/UseCases/Notificaciones/` | `NotificacionesController.cs`, `NotificacionesAccionesController.cs` | `Notificaciones.cs` |
-| `PreferenciasNotificaciones` | `HekDesk.Application/UseCases/PreferenciasNotificaciones/` | `PreferenciasNotificacionesController.cs` | `PreferenciasNotificaciones.cs` |
-| `EnviosNotificaciones` | `HekDesk.Application/UseCases/EnviosNotificaciones/` | `EnviosNotificacionesController.cs` | `EnviosNotificaciones.cs` |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Activos/Commands/ActualizarActivosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Activos/Commands/ActualizarActivosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Activos/Commands/CrearActivosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Activos/Commands/CrearActivosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Activos/Commands/EliminarActivosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Activos/Commands/EliminarActivosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Activos/Queries/ListarActivosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Activos/Queries/ListarActivosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Activos/Queries/ObtenerActivosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Activos/Queries/ObtenerActivosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Adjuntos/Commands/ActualizarAdjuntosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Adjuntos/Commands/ActualizarAdjuntosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Adjuntos/Commands/CrearAdjuntosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Adjuntos/Commands/CrearAdjuntosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Adjuntos/Commands/EliminarAdjuntosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Adjuntos/Commands/EliminarAdjuntosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Adjuntos/Queries/ListarAdjuntosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Adjuntos/Queries/ListarAdjuntosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Adjuntos/Queries/ObtenerAdjuntosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Adjuntos/Queries/ObtenerAdjuntosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/AsignacionesActivos/Commands/CrearAsignacionesActivosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/AsignacionesActivos/Commands/CrearAsignacionesActivosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/AsignacionesActivos/Commands/DevolverActivoCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/AsignacionesActivos/Commands/DevolverActivoCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/AsignacionesActivos/Queries/ListarAsignacionesActivosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/AsignacionesActivos/Queries/ListarAsignacionesActivosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/AsignacionesActivos/Queries/ObtenerAsignacionesActivosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/AsignacionesActivos/Queries/ObtenerAsignacionesActivosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Comentarios/Commands/ActualizarComentariosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Comentarios/Commands/ActualizarComentariosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Comentarios/Commands/CrearComentariosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Comentarios/Commands/CrearComentariosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Comentarios/Queries/ListarComentariosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Comentarios/Queries/ListarComentariosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Comentarios/Queries/ObtenerComentariosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Comentarios/Queries/ObtenerComentariosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TicketsActivos/Commands/CrearTicketsActivosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TicketsActivos/Commands/CrearTicketsActivosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TicketsActivos/Commands/EliminarTicketsActivosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TicketsActivos/Commands/EliminarTicketsActivosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TicketsActivos/Queries/ListarTicketsActivosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TicketsActivos/Queries/ListarTicketsActivosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TicketsActivos/Queries/ObtenerTicketsActivosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TicketsActivos/Queries/ObtenerTicketsActivosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TiposActivos/Commands/ActualizarTiposActivosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TiposActivos/Commands/ActualizarTiposActivosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TiposActivos/Commands/CrearTiposActivosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TiposActivos/Commands/CrearTiposActivosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TiposActivos/Commands/EliminarTiposActivosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TiposActivos/Commands/EliminarTiposActivosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TiposActivos/Queries/ListarTiposActivosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TiposActivos/Queries/ListarTiposActivosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TiposActivos/Queries/ObtenerTiposActivosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TiposActivos/Queries/ObtenerTiposActivosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/ActivosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/ActivosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/AdjuntosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/AdjuntosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/AsignacionesActivosAccionesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/AsignacionesActivosAccionesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/AsignacionesActivosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/AsignacionesActivosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/ComentariosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/ComentariosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/TicketsActivosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/TicketsActivosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/TiposActivosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/TiposActivosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Activos/ActivosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Activos/ActivosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Adjuntos/AdjuntosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Adjuntos/AdjuntosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/AsignacionesActivos/AsignacionesActivosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/AsignacionesActivos/AsignacionesActivosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Comentarios/ComentariosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Comentarios/ComentariosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/TicketsActivos/TicketsActivosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/TicketsActivos/TicketsActivosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/TiposActivos/TiposActivosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/TiposActivos/TiposActivosResponseDto.cs` | Pendiente |
 
-**Debe demostrar:**
+### Inventario de Stiven Yerai
 
-- Crear sede, área y equipo; revisar pertenencia y disponibilidad de técnicos.
-- Mostrar y marcar como leídos solo los avisos del destinatario.
-- Consultar envíos existentes y verificar las preferencias del destinatario; los reintentos quedan para v2.
-
-### 5. Ederson Vilca — Servicios, calidad y conocimiento
-
-**Rama sugerida:** `feature/ederson-servicios-conocimiento`.
-
-**Responsabilidad funcional:**
-
-- Administrar el catálogo de servicios y los compromisos de respuesta y resolución.
-- Evaluar la atención con encuestas y controlar quién puede responderlas.
-- Crear y clasificar artículos en borrador. La publicación y las relaciones con artículos publicados quedan para v2.
-
-**Carpetas y controladores en la plantilla:**
-
-| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+| Archivo de plantilla | Destino en el equipo | Estado |
 |---|---|---|
-| `Servicios` | `HekDesk.Application/UseCases/Servicios/` | `ServiciosController.cs` | `Servicios.cs` |
-| `CategoriasServicios` | `HekDesk.Application/UseCases/CategoriasServicios/` | `CategoriasServiciosController.cs` | `CategoriasServicios.cs` |
-| `PoliticasAtencion` | `HekDesk.Application/UseCases/PoliticasAtencion/` | `PoliticasAtencionController.cs` | `PoliticasAtencion.cs` |
-| `Encuestas` | `HekDesk.Application/UseCases/Encuestas/` | `EncuestasController.cs` | `Encuestas.cs` |
-| `ArticulosConocimiento` | `HekDesk.Application/UseCases/ArticulosConocimiento/` | `ArticulosConocimientoController.cs` | `ArticulosConocimiento.cs` |
-| `CategoriasConocimiento` | `HekDesk.Application/UseCases/CategoriasConocimiento/` | `CategoriasConocimientoController.cs` | `CategoriasConocimiento.cs` |
-| `TicketsArticulos` | `HekDesk.Application/UseCases/TicketsArticulos/` | `TicketsArticulosController.cs` | `TicketsArticulos.cs` |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Areas/Commands/ActualizarAreasCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Areas/Commands/ActualizarAreasCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Areas/Commands/CrearAreasCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Areas/Commands/CrearAreasCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Areas/Commands/EliminarAreasCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Areas/Commands/EliminarAreasCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Areas/Queries/ListarAreasQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Areas/Queries/ListarAreasQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Areas/Queries/ObtenerAreasQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Areas/Queries/ObtenerAreasQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/EnviosNotificaciones/Queries/ListarEnviosNotificacionesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/EnviosNotificaciones/Queries/ListarEnviosNotificacionesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/EnviosNotificaciones/Queries/ObtenerEnviosNotificacionesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/EnviosNotificaciones/Queries/ObtenerEnviosNotificacionesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/EquiposSoporte/Commands/ActualizarEquiposSoporteCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/EquiposSoporte/Commands/ActualizarEquiposSoporteCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/EquiposSoporte/Commands/CrearEquiposSoporteCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/EquiposSoporte/Commands/CrearEquiposSoporteCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/EquiposSoporte/Commands/EliminarEquiposSoporteCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/EquiposSoporte/Commands/EliminarEquiposSoporteCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/EquiposSoporte/Queries/ListarEquiposSoporteQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/EquiposSoporte/Queries/ListarEquiposSoporteQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/EquiposSoporte/Queries/ObtenerEquiposSoporteQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/EquiposSoporte/Queries/ObtenerEquiposSoporteQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/IntegrantesEquipo/Commands/ActualizarIntegrantesEquipoCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/IntegrantesEquipo/Commands/ActualizarIntegrantesEquipoCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/IntegrantesEquipo/Commands/CrearIntegrantesEquipoCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/IntegrantesEquipo/Commands/CrearIntegrantesEquipoCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/IntegrantesEquipo/Commands/EliminarIntegrantesEquipoCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/IntegrantesEquipo/Commands/EliminarIntegrantesEquipoCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/IntegrantesEquipo/Queries/ListarIntegrantesEquipoQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/IntegrantesEquipo/Queries/ListarIntegrantesEquipoQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/IntegrantesEquipo/Queries/ObtenerIntegrantesEquipoQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/IntegrantesEquipo/Queries/ObtenerIntegrantesEquipoQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Notificaciones/Commands/ActualizarNotificacionesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Notificaciones/Commands/ActualizarNotificacionesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Notificaciones/Commands/CrearNotificacionesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Notificaciones/Commands/CrearNotificacionesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Notificaciones/Commands/MarcarNotificacionLeidaCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Notificaciones/Commands/MarcarNotificacionLeidaCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Notificaciones/Queries/ListarNotificacionesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Notificaciones/Queries/ListarNotificacionesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Notificaciones/Queries/ObtenerNotificacionesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Notificaciones/Queries/ObtenerNotificacionesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/PreferenciasNotificaciones/Commands/ActualizarPreferenciasNotificacionesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/PreferenciasNotificaciones/Commands/ActualizarPreferenciasNotificacionesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/PreferenciasNotificaciones/Commands/CrearPreferenciasNotificacionesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/PreferenciasNotificaciones/Commands/CrearPreferenciasNotificacionesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/PreferenciasNotificaciones/Commands/EliminarPreferenciasNotificacionesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/PreferenciasNotificaciones/Commands/EliminarPreferenciasNotificacionesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/PreferenciasNotificaciones/Queries/ListarPreferenciasNotificacionesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/PreferenciasNotificaciones/Queries/ListarPreferenciasNotificacionesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/PreferenciasNotificaciones/Queries/ObtenerPreferenciasNotificacionesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/PreferenciasNotificaciones/Queries/ObtenerPreferenciasNotificacionesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Sedes/Commands/ActualizarSedesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Sedes/Commands/ActualizarSedesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Sedes/Commands/CrearSedesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Sedes/Commands/CrearSedesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Sedes/Commands/EliminarSedesCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Sedes/Commands/EliminarSedesCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Sedes/Queries/ListarSedesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Sedes/Queries/ListarSedesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Sedes/Queries/ObtenerSedesQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Sedes/Queries/ObtenerSedesQuery.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/AreasController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/AreasController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/EnviosNotificacionesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/EnviosNotificacionesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/EquiposSoporteController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/EquiposSoporteController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/IntegrantesEquipoController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/IntegrantesEquipoController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/NotificacionesAccionesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/NotificacionesAccionesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/NotificacionesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/NotificacionesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/PreferenciasNotificacionesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/PreferenciasNotificacionesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/SedesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/SedesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Areas/AreasResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Areas/AreasResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/EnviosNotificaciones/EnviosNotificacionesResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/EnviosNotificaciones/EnviosNotificacionesResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/EquiposSoporte/EquiposSoporteResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/EquiposSoporte/EquiposSoporteResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/IntegrantesEquipo/IntegrantesEquipoResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/IntegrantesEquipo/IntegrantesEquipoResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Notificaciones/NotificacionesResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Notificaciones/NotificacionesResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/PreferenciasNotificaciones/PreferenciasNotificacionesResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/PreferenciasNotificaciones/PreferenciasNotificacionesResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Sedes/SedesResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Sedes/SedesResponseDto.cs` | Pendiente |
 
-**Debe demostrar:**
+### Inventario de Ederson Vilca
 
-- Crear un servicio de un equipo válido y una política por prioridad.
-- Aceptar una encuesta propia al cierre y rechazar duplicados.
-- Crear y editar un artículo en borrador y comprobar que otro empleado no pueda verlo. La publicación y asociación operativa quedan para v2.
-
-### 6. Brahan Quispe — Tickets, servicios técnicos, persistencia e integración
-
-**Rama sugerida:** `feature/brahan-tickets-infraestructura`.
-
-**Responsabilidad funcional:**
-
-- Implementar el ciclo de atención, asignaciones, historial y control de versión de tickets.
-- Gestionar reportes operativos y auditoría.
-- Implementar y subir servicios técnicos de Infrastructure, repositorios, Unit of Work y sus contratos en Domain.
-- Coordinar configuración, registro de dependencias, middleware, scaffolding e integración general.
-
-**Carpetas y controladores en la plantilla:**
-
-| Entidad | Casos de uso completos | Controladores | Modelo de referencia |
+| Archivo de plantilla | Destino en el equipo | Estado |
 |---|---|---|
-| `Tickets` | `HekDesk.Application/UseCases/Tickets/` | `TicketsController.cs`, `TicketsAccionesController.cs` | `Tickets.cs` |
-| `AsignacionesTickets` | `HekDesk.Application/UseCases/AsignacionesTickets/` | `AsignacionesTicketsController.cs` | `AsignacionesTickets.cs` |
-| `HistorialTickets` | `HekDesk.Application/UseCases/HistorialTickets/` | `HistorialTicketsController.cs` | `HistorialTickets.cs` |
-| `CargaTecnicos` | `HekDesk.Application/UseCases/CargaTecnicos/` | `CargaTecnicosController.cs` | `CargaTecnicos.cs` |
-| `ResumenTickets` | `HekDesk.Application/UseCases/ResumenTickets/` | `ResumenTicketsController.cs` | `ResumenTickets.cs` |
-| `Auditoria` | `HekDesk.Application/UseCases/Auditoria/` | `AuditoriaController.cs` | `Auditoria.cs` |
+| `HelpDeskBackend/HekDesk.Application/UseCases/ArticulosConocimiento/Commands/ActualizarArticulosConocimientoCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/ArticulosConocimiento/Commands/ActualizarArticulosConocimientoCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/ArticulosConocimiento/Commands/CrearArticulosConocimientoCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/ArticulosConocimiento/Commands/CrearArticulosConocimientoCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/ArticulosConocimiento/Commands/EliminarArticulosConocimientoCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/ArticulosConocimiento/Commands/EliminarArticulosConocimientoCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/ArticulosConocimiento/Queries/ListarArticulosConocimientoQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/ArticulosConocimiento/Queries/ListarArticulosConocimientoQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/ArticulosConocimiento/Queries/ObtenerArticulosConocimientoQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/ArticulosConocimiento/Queries/ObtenerArticulosConocimientoQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CategoriasConocimiento/Commands/ActualizarCategoriasConocimientoCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CategoriasConocimiento/Commands/ActualizarCategoriasConocimientoCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CategoriasConocimiento/Commands/CrearCategoriasConocimientoCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CategoriasConocimiento/Commands/CrearCategoriasConocimientoCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CategoriasConocimiento/Commands/EliminarCategoriasConocimientoCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CategoriasConocimiento/Commands/EliminarCategoriasConocimientoCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CategoriasConocimiento/Queries/ListarCategoriasConocimientoQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CategoriasConocimiento/Queries/ListarCategoriasConocimientoQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CategoriasConocimiento/Queries/ObtenerCategoriasConocimientoQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CategoriasConocimiento/Queries/ObtenerCategoriasConocimientoQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CategoriasServicios/Commands/ActualizarCategoriasServiciosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CategoriasServicios/Commands/ActualizarCategoriasServiciosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CategoriasServicios/Commands/CrearCategoriasServiciosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CategoriasServicios/Commands/CrearCategoriasServiciosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CategoriasServicios/Commands/EliminarCategoriasServiciosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CategoriasServicios/Commands/EliminarCategoriasServiciosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CategoriasServicios/Queries/ListarCategoriasServiciosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CategoriasServicios/Queries/ListarCategoriasServiciosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CategoriasServicios/Queries/ObtenerCategoriasServiciosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CategoriasServicios/Queries/ObtenerCategoriasServiciosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Encuestas/Commands/CrearEncuestasCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Encuestas/Commands/CrearEncuestasCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Encuestas/Queries/ListarEncuestasQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Encuestas/Queries/ListarEncuestasQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Encuestas/Queries/ObtenerEncuestasQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Encuestas/Queries/ObtenerEncuestasQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/PoliticasAtencion/Commands/ActualizarPoliticasAtencionCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/PoliticasAtencion/Commands/ActualizarPoliticasAtencionCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/PoliticasAtencion/Commands/CrearPoliticasAtencionCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/PoliticasAtencion/Commands/CrearPoliticasAtencionCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/PoliticasAtencion/Commands/EliminarPoliticasAtencionCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/PoliticasAtencion/Commands/EliminarPoliticasAtencionCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/PoliticasAtencion/Queries/ListarPoliticasAtencionQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/PoliticasAtencion/Queries/ListarPoliticasAtencionQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/PoliticasAtencion/Queries/ObtenerPoliticasAtencionQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/PoliticasAtencion/Queries/ObtenerPoliticasAtencionQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Servicios/Commands/ActualizarServiciosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Servicios/Commands/ActualizarServiciosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Servicios/Commands/CrearServiciosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Servicios/Commands/CrearServiciosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Servicios/Commands/EliminarServiciosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Servicios/Commands/EliminarServiciosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Servicios/Queries/ListarServiciosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Servicios/Queries/ListarServiciosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Servicios/Queries/ObtenerServiciosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Servicios/Queries/ObtenerServiciosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TicketsArticulos/Commands/ActualizarTicketsArticulosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TicketsArticulos/Commands/ActualizarTicketsArticulosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TicketsArticulos/Commands/CrearTicketsArticulosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TicketsArticulos/Commands/CrearTicketsArticulosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TicketsArticulos/Commands/EliminarTicketsArticulosCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TicketsArticulos/Commands/EliminarTicketsArticulosCommand.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TicketsArticulos/Queries/ListarTicketsArticulosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TicketsArticulos/Queries/ListarTicketsArticulosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/TicketsArticulos/Queries/ObtenerTicketsArticulosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/TicketsArticulos/Queries/ObtenerTicketsArticulosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/ArticulosConocimientoController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/ArticulosConocimientoController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/CategoriasConocimientoController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/CategoriasConocimientoController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/CategoriasServiciosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/CategoriasServiciosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/EncuestasController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/EncuestasController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/PoliticasAtencionController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/PoliticasAtencionController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/ServiciosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/ServiciosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/TicketsArticulosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/TicketsArticulosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/ArticulosConocimiento/ArticulosConocimientoResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/ArticulosConocimiento/ArticulosConocimientoResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/CategoriasConocimiento/CategoriasConocimientoResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/CategoriasConocimiento/CategoriasConocimientoResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/CategoriasServicios/CategoriasServiciosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/CategoriasServicios/CategoriasServiciosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Encuestas/EncuestasResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Encuestas/EncuestasResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/PoliticasAtencion/PoliticasAtencionResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/PoliticasAtencion/PoliticasAtencionResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Servicios/ServiciosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Servicios/ServiciosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/TicketsArticulos/TicketsArticulosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/TicketsArticulos/TicketsArticulosResponseDto.cs` | Pendiente |
 
-**Además sube y mantiene la base compartida:**
+### Inventario de Brahan Quispe
 
-- `HekDesk.Application/UseCases/Reportes/Queries/` y `HelpDesk.Api/Controllers/ReportesController.cs`.
-- `HelpDesk.Domain/Ports/IGenericRepository.cs`, `IUnitOfWork.cs`, `ICurrentUser.cs`, `IPasswordService.cs`, `ITokenService.cs` y `AccessToken.cs`.
-- `HelpDesk.Domain/Models/` como scaffolding común; cada dueño de entidad revisa los cambios que le afectan.
-- `HelpDesk.Domain/Exceptions/BusinessException.cs`.
-- `HelpDesk.Infrastructure/Repositories/GenericRepository.cs` y `UnitOfWork.cs`.
-- `HelpDesk.Infrastructure/Services/PasswordService.cs` y `JwtService.cs`.
-- `HelpDesk.Infrastructure/Data/HelpDeskDbContext.cs` y `HelpDeskDbContext.Custom.cs`.
-- `HelpDesk.Infrastructure/Configuration/InfrastructureServicesExtensions.cs`.
-- `HekDesk.Application/Configuration/ApplicationServicesExtensions.cs` y los contratos de `Dtos/Common/`, además de las validaciones de `Common/`.
-- `HelpDesk.Api/Program.cs`, `HelpDesk.Api/Middleware/`, solución, referencias y dependencias.
-- `scripts/Actualizar-Modelo.ps1`, SQL, documentación y suite de integración compartida.
-- Si se añade un servicio técnico adicional a Infrastructure, Brahan coordina su implementación, interfaz y registro. El responsable funcional correspondiente aporta sus requisitos y pruebas.
-
-**Debe demostrar:**
-
-- Completar registro, asignación, atención, resolución y cierre de un ticket.
-- Rechazar modificaciones con una versión anterior.
-- Comprobar guardado mediante Complete(), consultas de reportes, JWT y hash junto con Diego. Auditoría conserva sus consultas; el registro automático queda para v2.
-
-## Código compartido: responsabilidad y revisión
-
-| Componente | Responsable de subir / mantener | Coordinación |
+| Archivo de plantilla | Destino en el equipo | Estado |
 |---|---|---|
-| Repositorio genérico e interfaz | Brahan | Todos utilizan `Repository<T>()`. |
-| Unit of Work e interfaz | Brahan | Todos confirman las escrituras con `Complete()`. |
-| Interfaces de servicios en Domain | Brahan | Diego revisa los contratos de seguridad. |
-| JWT y hash en Infrastructure/Services | Brahan | Diego consume los servicios desde autenticación y prueba el acceso. |
-| Usuario actual y reglas de autorización | Diego | Brahan integra con la configuración de la API. |
-| Contexto, modelos y correcciones del scaffolding | Brahan | Cada integrante revisa sus entidades; no regenerar independientemente. |
-| Program, registro DI, middleware y Common | Brahan | Registrar contratos y handlers de todos sin reemplazar cambios ajenos. |
-| SQL, `.sln`, `.csproj`, scripts y pruebas compartidas | Brahan | Los seis aportan escenarios; cambios de esquema coordinados. |
+| `.gitattributes` | `.gitattributes` | Coincide |
+| `.gitignore` | `.gitignore` | Coincide |
+| `001_helpdesk_36_tablas_es.sql` | `001_helpdesk_36_tablas_es.sql` | Pendiente |
+| `DOCUMENTACION_PROYECTO.md` | `DOCUMENTACION_PROYECTO.md` | Pendiente |
+| `HelpDeskBackend/DISTRIBUCION_EQUIPO.md` | `HelpDeskApi/DISTRIBUCION_EQUIPO.md` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/Class1.cs` | `HelpDeskApi/HelpDesk.Application/Class1.cs` | Existe: revisar |
+| `HelpDeskBackend/HekDesk.Application/Common/Validation.cs` | `HelpDeskApi/HelpDesk.Application/Common/Validation.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/Configuration/ApplicationServicesExtensions.cs` | `HelpDeskApi/HelpDesk.Application/Configuration/ApplicationServicesExtensions.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/HekDesk.Application.csproj` | `HelpDeskApi/HelpDesk.Application/HekDesk.Application.csproj` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/Security/AccessRules.cs` | `HelpDeskApi/HelpDesk.Application/Security/AccessRules.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/UseCases/AsignacionesTickets/Queries/ListarAsignacionesTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/AsignacionesTickets/Queries/ListarAsignacionesTicketsQuery.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/UseCases/AsignacionesTickets/Queries/ObtenerAsignacionesTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/AsignacionesTickets/Queries/ObtenerAsignacionesTicketsQuery.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Auditoria/Queries/ListarAuditoriaQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Auditoria/Queries/ListarAuditoriaQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Auditoria/Queries/ObtenerAuditoriaQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Auditoria/Queries/ObtenerAuditoriaQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/CargaTecnicos/Queries/ListarCargaTecnicosQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/CargaTecnicos/Queries/ListarCargaTecnicosQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/HistorialTickets/Queries/ListarHistorialTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/HistorialTickets/Queries/ListarHistorialTicketsQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/HistorialTickets/Queries/ObtenerHistorialTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/HistorialTickets/Queries/ObtenerHistorialTicketsQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Reportes/Queries/IndicadoresQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Reportes/Queries/IndicadoresQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/ResumenTickets/Queries/ListarResumenTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/ResumenTickets/Queries/ListarResumenTicketsQuery.cs` | Pendiente |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Tickets/Commands/ActualizarTicketsCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Tickets/Commands/ActualizarTicketsCommand.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Tickets/Commands/AsignarTicketCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Tickets/Commands/AsignarTicketCommand.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Tickets/Commands/CerrarTicketCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Tickets/Commands/CerrarTicketCommand.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Tickets/Commands/CrearTicketsCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Tickets/Commands/CrearTicketsCommand.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Tickets/Commands/IniciarTicketCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Tickets/Commands/IniciarTicketCommand.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Tickets/Commands/ResolverTicketCommand.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Tickets/Commands/ResolverTicketCommand.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Tickets/Queries/ListarTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Tickets/Queries/ListarTicketsQuery.cs` | Coincide |
+| `HelpDeskBackend/HekDesk.Application/UseCases/Tickets/Queries/ObtenerTicketsQuery.cs` | `HelpDeskApi/HelpDesk.Application/UseCases/Tickets/Queries/ObtenerTicketsQuery.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/AsignacionesTicketsController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/AsignacionesTicketsController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/AuditoriaController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/AuditoriaController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/CargaTecnicosController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/CargaTecnicosController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/HistorialTicketsController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/HistorialTicketsController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/ReportesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/ReportesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/ResumenTicketsController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/ResumenTicketsController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/TicketsAccionesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/TicketsAccionesController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Controllers/TicketsController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/TicketsController.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/HelpDesk.Api.csproj` | `HelpDeskApi/HelpDeskApi/HelpDeskApi.csproj` | Existe: revisar |
+| `HelpDeskBackend/HelpDesk.Api/HelpDeskBackend.http` | `HelpDeskApi/HelpDeskApi/HelpDeskBackend.http` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Middleware/ExceptionMiddleware.cs` | `HelpDeskApi/HelpDeskApi/Middleware/ExceptionMiddleware.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Api/Program.cs` | `HelpDeskApi/HelpDeskApi/Program.cs` | Existe: revisar |
+| `HelpDeskBackend/HelpDesk.Api/Properties/launchSettings.json` | `HelpDeskApi/HelpDeskApi/Properties/launchSettings.json` | Existe: revisar |
+| `HelpDeskBackend/HelpDesk.Api/appsettings.Development.json` | `HelpDeskApi/HelpDeskApi/appsettings.Development.json` | Coincide |
+| `HelpDeskBackend/HelpDesk.Api/appsettings.json` | `HelpDeskApi/HelpDeskApi/appsettings.json` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Class1.cs` | `HelpDeskApi/HelpDesk.Domain/Class1.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/AsignacionesTickets/AsignacionesTicketsResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/AsignacionesTickets/AsignacionesTicketsResponseDto.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Auditoria/AuditoriaResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Auditoria/AuditoriaResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Autenticacion/RegistroDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Autenticacion/RegistroDto.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Autenticacion/SesionDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Autenticacion/SesionDto.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Autenticacion/UsuarioRegistradoDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Autenticacion/UsuarioRegistradoDto.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/CargaTecnicos/CargaTecnicosResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/CargaTecnicos/CargaTecnicosResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Common/AccionResultadoDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Common/AccionResultadoDto.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Common/OperacionDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Common/OperacionDto.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Common/PaginaDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Common/PaginaDto.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Common/ResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Common/ResponseDto.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/HistorialTickets/HistorialTicketsResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/HistorialTickets/HistorialTicketsResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Reportes/IndicadoresDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Reportes/IndicadoresDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/ResumenTickets/ResumenTicketsResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/ResumenTickets/ResumenTicketsResponseDto.cs` | Pendiente |
+| `HelpDeskBackend/HelpDesk.Domain/Dtos/Tickets/TicketsResponseDto.cs` | `HelpDeskApi/HelpDesk.Domain/Dtos/Tickets/TicketsResponseDto.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Exceptions/BusinessException.cs` | `HelpDeskApi/HelpDesk.Domain/Exceptions/BusinessException.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/HelpDesk.Domain.csproj` | `HelpDeskApi/HelpDesk.Domain/HelpDesk.Domain.csproj` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Activos.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Activos.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Adjuntos.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Adjuntos.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Aprobaciones.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Aprobaciones.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Areas.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Areas.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/ArticulosConocimiento.cs` | `HelpDeskApi/HelpDesk.Domain/Models/ArticulosConocimiento.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/AsignacionesActivos.cs` | `HelpDeskApi/HelpDesk.Domain/Models/AsignacionesActivos.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/AsignacionesTickets.cs` | `HelpDeskApi/HelpDesk.Domain/Models/AsignacionesTickets.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Auditoria.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Auditoria.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Cambios.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Cambios.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/CargaTecnicos.cs` | `HelpDeskApi/HelpDesk.Domain/Models/CargaTecnicos.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/CategoriasConocimiento.cs` | `HelpDeskApi/HelpDesk.Domain/Models/CategoriasConocimiento.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/CategoriasServicios.cs` | `HelpDeskApi/HelpDesk.Domain/Models/CategoriasServicios.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Comentarios.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Comentarios.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Encuestas.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Encuestas.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/EnviosNotificaciones.cs` | `HelpDeskApi/HelpDesk.Domain/Models/EnviosNotificaciones.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/EquiposSoporte.cs` | `HelpDeskApi/HelpDesk.Domain/Models/EquiposSoporte.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/HistorialTickets.cs` | `HelpDeskApi/HelpDesk.Domain/Models/HistorialTickets.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/IntegrantesEquipo.cs` | `HelpDeskApi/HelpDesk.Domain/Models/IntegrantesEquipo.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Notificaciones.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Notificaciones.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Permisos.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Permisos.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/PoliticasAtencion.cs` | `HelpDeskApi/HelpDesk.Domain/Models/PoliticasAtencion.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/PreferenciasNotificaciones.cs` | `HelpDeskApi/HelpDesk.Domain/Models/PreferenciasNotificaciones.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Problemas.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Problemas.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/RecuperacionesClave.cs` | `HelpDeskApi/HelpDesk.Domain/Models/RecuperacionesClave.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/ResumenTickets.cs` | `HelpDeskApi/HelpDesk.Domain/Models/ResumenTickets.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Roles.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Roles.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Sedes.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Sedes.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Servicios.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Servicios.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/TareasCambios.cs` | `HelpDeskApi/HelpDesk.Domain/Models/TareasCambios.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Tickets.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Tickets.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/TicketsArticulos.cs` | `HelpDeskApi/HelpDesk.Domain/Models/TicketsArticulos.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/TiposActivos.cs` | `HelpDeskApi/HelpDesk.Domain/Models/TiposActivos.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/Usuarios.cs` | `HelpDeskApi/HelpDesk.Domain/Models/Usuarios.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Models/UsuariosRoles.cs` | `HelpDeskApi/HelpDesk.Domain/Models/UsuariosRoles.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Ports/AccessToken.cs` | `HelpDeskApi/HelpDesk.Domain/Ports/AccessToken.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Ports/ICurrentUser.cs` | `HelpDeskApi/HelpDesk.Domain/Ports/ICurrentUser.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Ports/IGenericRepository.cs` | `HelpDeskApi/HelpDesk.Domain/Ports/IGenericRepository.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Ports/IPasswordService.cs` | `HelpDeskApi/HelpDesk.Domain/Ports/IPasswordService.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Ports/ITokenService.cs` | `HelpDeskApi/HelpDesk.Domain/Ports/ITokenService.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Domain/Ports/IUnitOfWork.cs` | `HelpDeskApi/HelpDesk.Domain/Ports/IUnitOfWork.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Infrastructure/Class1.cs` | `HelpDeskApi/HelpDesk.Infrastructure/Class1.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Infrastructure/Configuration/InfrastructureServicesExtensions.cs` | `HelpDeskApi/HelpDesk.Infrastructure/Configuration/InfrastuctureServicesExtensions.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Infrastructure/Data/HelpDeskDbContext.Custom.cs` | `HelpDeskApi/HelpDesk.Infrastructure/Data/HelpDeskDbContext.Custom.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Infrastructure/Data/HelpDeskDbContext.cs` | `HelpDeskApi/HelpDesk.Infrastructure/Data/HelpDeskDbContext.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Infrastructure/HelpDesk.Infrastructure.csproj` | `HelpDeskApi/HelpDesk.Infrastructure/HelpDesk.Infrastructure.csproj` | Existe: revisar |
+| `HelpDeskBackend/HelpDesk.Infrastructure/Repositories/GenericRepository.cs` | `HelpDeskApi/HelpDesk.Infrastructure/Repositories/GenericRepository.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Infrastructure/Repositories/UnitOfWork.cs` | `HelpDeskApi/HelpDesk.Infrastructure/Repositories/UnitOfWork.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Infrastructure/Services/JwtService.cs` | `HelpDeskApi/HelpDesk.Infrastructure/Services/JwtService.cs` | Coincide |
+| `HelpDeskBackend/HelpDesk.Infrastructure/Services/PasswordService.cs` | `HelpDeskApi/HelpDesk.Infrastructure/Services/PasswordService.cs` | Coincide |
+| `HelpDeskBackend/HelpDeskBackend.sln` | `HelpDeskApi/HelpDeskApi.sln` | Existe: revisar |
+| `HelpDeskBackend/PRIMERA_VERSION_API.md` | `HelpDeskApi/PRIMERA_VERSION_API.md` | Pendiente |
+| `HelpDeskBackend/PRIMER_AVANCE.md` | `HelpDeskApi/PRIMER_AVANCE.md` | Pendiente |
+| `HelpDeskBackend/SCAFFOLDING_HELPDESK.md` | `HelpDeskApi/SCAFFOLDING_HELPDESK.md` | Pendiente |
+| `HelpDeskBackend/scripts/Actualizar-Modelo.ps1` | `HelpDeskApi/scripts/Actualizar-Modelo.ps1` | Pendiente |
+| `HelpDeskBackend/tests/HelpDesk.IntegrationTests/HelpDesk.IntegrationTests.csproj` | `HelpDeskApi/tests/HelpDesk.IntegrationTests/HelpDesk.IntegrationTests.csproj` | Pendiente |
+| `HelpDeskBackend/tests/HelpDesk.IntegrationTests/Program.cs` | `HelpDeskApi/tests/HelpDesk.IntegrationTests/Program.cs` | Pendiente |
+| `HelpDeskBackend/tests/HelpDesk.IntegrationTests/resources.json` | `HelpDeskApi/tests/HelpDesk.IntegrationTests/resources.json` | Pendiente |
+| `LEEME_BASE_DATOS_36_TABLAS.md` | `LEEME_BASE_DATOS_36_TABLAS.md` | Pendiente |
+| `LEEME_BASE_DATOS_ES.md` | `LEEME_BASE_DATOS_ES.md` | Pendiente |
+| `README.md` | `README.md` | Existe: revisar |
 
-**Domain no lleva implementaciones de acceso a PostgreSQL ni generación de JWT.** Brahan mantiene allí entidades, excepciones y contratos; implementa persistencia y servicios en Infrastructure.
+## Criterio de entrega completa
 
-## Dependencias entre grupos
+Cada fila pendiente debe incorporarse y cada diferencia debe revisarse por su responsable. Si se decide retirar un archivo vacío, redundante o histórico, registrar esa decisión en un commit y actualizar el inventario; no dejarlo sin dueño. Los archivos de planificación histórica no habilitan funciones nuevas ni obligan a implementar una segunda versión.
 
-| Grupo | Necesita coordinar con | Información compartida |
-|---|---|---|
-| Todos | Brahan | Interfaces, repositorios, servicios y configuración común. |
-| Todos | Diego | Identidades, roles y permisos. |
-| Usuarios, inventario, servicios y tickets | Stiven | Sedes, áreas, equipos e integrantes. |
-| Tickets | Ederson | Servicio y política activa antes de registrar un caso. |
-| Tickets | Fernando | Comentarios, adjuntos y activos relacionados. |
-| Tickets y cambios | Gianfranco | Aprobaciones, problemas y cambios relacionados. |
-| Tickets | Stiven | Avisos y destinatarios. |
-| Conocimiento y encuestas | Brahan | Estado y acceso al ticket relacionado. |
-| Reportes | Los seis | Datos coherentes para indicadores. |
-
-## Cómo incorporar los archivos al repositorio de trabajo
-
-1. Partir de `main` actualizado de `brahanquispedev/HelpDeskApi`, no de una copia de la solución completa de referencia.
-2. Brahan integra primero la persistencia, servicios técnicos, contratos, contexto y configuración común. La base debe seguir compilando.
-3. Cada integrante crea su rama, adapta los archivos de sus entidades a los nombres del proyecto destino y agrega pruebas.
-4. Subir solo los archivos de su responsabilidad. Los archivos compartidos se coordinan con Brahan; los de seguridad con Diego y Brahan.
-5. Abrir un Pull Request hacia `main`, indicando qué se incorporó, qué se adaptó y cómo se probó. Cada persona usa su cuenta y autoría propia.
-6. Integrar los grupos por dependencias y ejecutar las pruebas compartidas. Que haya más o menos entidades no significa igual carga; revisar avance entre los seis.
-
-No se incorporan automáticamente contribuciones al repositorio de trabajo por actualizar este documento de la plantilla. Este documento define quién debe subirlas.
-
-## Qué NO subir
-
-- Secretos, contraseñas, tokens, cadenas de conexión con credenciales ni archivos de User Secrets.
-- Carpetas `bin/`, `obj/`, `.idea/` o configuración personal.
-- Copias completas de contexto o configuración que reemplacen cambios de otro integrante sin revisión.
-
-## Verificación antes de integrar
-
-Cada integrante compila y prueba sus endpoints. En esta plantilla:
-
-```powershell
-cd HelpDeskBackend
-dotnet build HelpDeskBackend.sln
-dotnet run --project tests/HelpDesk.IntegrationTests
-```
-
-En el repositorio del equipo se utilizan los nombres de su propia solución. La suite completa requiere una base temporal y permisos para crearla/eliminarla; su coordinación corresponde a Brahan.
-
-## Cobertura y versión del reparto
-
-- Seis integrantes activos.
-- 36 tablas y 2 vistas: 38 recursos asignados una sola vez.
-- Autenticación asignada a Diego; servicios técnicos y contratos asignados a Brahan.
-- Reportes, repositorios, Unit of Work e integración asignados a Brahan.
-- Se conserva la guía inicial de instalación y ejecución al principio del documento.
-- El reparto anterior de ocho personas queda reemplazado por esta versión del 2 de noviembre de 2026.
+Para revisar una nueva entrega, comparar el árbol del equipo con el inventario y comprobar las adaptaciones de nombres. Todos los archivos de esta primera versión deben quedar incorporados o con una decisión explícita documentada. La revisión final y el cierre de pendientes corresponden a Brahan.

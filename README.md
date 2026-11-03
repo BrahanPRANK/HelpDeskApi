@@ -6,7 +6,7 @@ Esta plantilla se simplificó siguiendo Lab11. Ver [el inventario del primer ava
 
 ## Empezar
 
-**Leer primero [la guía de instalación y el reparto del equipo](HelpDeskBackend/DISTRIBUCION_EQUIPO.md).** Explica PostgreSQL, creación de la base, User Secrets, scaffolding, administrador inicial, Swagger y responsabilidades de los seis integrantes.
+**Leer primero [la guía de instalación y el reparto del equipo](HelpDeskBackend/DISTRIBUCION_EQUIPO.md).** Explica PostgreSQL, creación de la base, User Secrets, scaffolding, administrador inicial, Swagger y responsabilidades de los seis integrantes. Incluye el inventario completo de archivos, su responsable y el avance ya incorporado por Brahan; las entidades se integran con commits separados.
 
 Requisitos: .NET SDK 10.0, PostgreSQL 16 o superior y una herramienta como pgAdmin. Para regenerar modelos se utiliza `dotnet-ef` 10.0.13.
 
