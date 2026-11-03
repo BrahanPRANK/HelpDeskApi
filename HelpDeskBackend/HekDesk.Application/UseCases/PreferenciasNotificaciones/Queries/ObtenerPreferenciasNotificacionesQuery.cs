@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.PreferenciasNotificaciones.Dtos;
+using HelpDesk.Application.Dtos.PreferenciasNotificaciones;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,10 +17,16 @@ internal sealed class ObtenerPreferenciasNotificacionesQueryHandler(IUnitOfWork 
     {
         try
         {
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PreferenciasNotificaciones>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PreferenciasNotificaciones>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200,new PreferenciasNotificacionesResponseDto { IdUsuario = entity.IdUsuario, TipoEvento = entity.TipoEvento, RecibirEnSistema = entity.RecibirEnSistema, RecibirPorCorreo = entity.RecibirPorCorreo });
+            return new(200, new PreferenciasNotificacionesResponseDto
+            {
+                IdUsuario = entity.IdUsuario,
+                TipoEvento = entity.TipoEvento,
+                RecibirEnSistema = entity.RecibirEnSistema,
+                RecibirPorCorreo = entity.RecibirPorCorreo
+            });
         }
         catch (BusinessException ex)
         {
@@ -27,11 +34,7 @@ internal sealed class ObtenerPreferenciasNotificacionesQueryHandler(IUnitOfWork 
                 _logger.LogError(ex, "Error controlado en ObtenerPreferenciasNotificacionesQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ObtenerPreferenciasNotificacionesQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

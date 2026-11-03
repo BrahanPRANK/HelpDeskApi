@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Roles.Dtos;
+using HelpDesk.Application.Dtos.Roles;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,19 +17,24 @@ internal sealed class ActualizarRolesCommandHandler(IUnitOfWork _unitOfWork, Acc
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            if(new[]{"administrador","empleado","tecnico","coordinador","aprobador"}.Contains(entity.Nombre))
-            Validation.Require(input.Nombre==entity.Nombre,"No se renombra un rol base.",409);
+            if (new[] { "administrador", "empleado", "tecnico", "coordinador", "aprobador" }.Contains(entity.Nombre))
+                Validation.Require(input.Nombre == entity.Nombre, "No se renombra un rol base.", 409);
             entity.Nombre = input.Nombre;
             entity.Descripcion = input.Descripcion;
 
-            await _unitOfWork.Complete(ct);
-            return new(200,new RolesResponseDto { IdRol = entity.IdRol, Nombre = entity.Nombre, Descripcion = entity.Descripcion },"Registro actualizado.");
+            await _unitOfWork.Complete();
+            return new(200, new RolesResponseDto
+            {
+                IdRol = entity.IdRol,
+                Nombre = entity.Nombre,
+                Descripcion = entity.Descripcion
+            }, "Registro actualizado.");
         }
         catch (BusinessException ex)
         {
@@ -36,11 +42,7 @@ internal sealed class ActualizarRolesCommandHandler(IUnitOfWork _unitOfWork, Acc
                 _logger.LogError(ex, "Error controlado en ActualizarRolesCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ActualizarRolesCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

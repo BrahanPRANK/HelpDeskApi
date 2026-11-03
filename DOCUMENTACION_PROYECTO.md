@@ -1,5 +1,8 @@
 # HelpDesk Enterprise
 
+> Este documento es la planificación general. La primera entrega actual tiene un alcance reducido, definido en HelpDeskBackend/PRIMER_AVANCE.md y PRIMERA_VERSION_API.md; no todas las funciones planificadas están implementadas.
+
+
 ## Documento de definición y planificación del proyecto
 
 | Dato | Valor |

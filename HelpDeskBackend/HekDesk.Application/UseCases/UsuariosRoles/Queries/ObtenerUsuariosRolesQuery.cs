@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.UsuariosRoles.Dtos;
+using HelpDesk.Application.Dtos.UsuariosRoles;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,10 +17,15 @@ internal sealed class ObtenerUsuariosRolesQueryHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200,new UsuariosRolesResponseDto { IdUsuario = entity.IdUsuario, IdRol = entity.IdRol, FechaAsignacion = entity.FechaAsignacion });
+            return new(200, new UsuariosRolesResponseDto
+            {
+                IdUsuario = entity.IdUsuario,
+                IdRol = entity.IdRol,
+                FechaAsignacion = entity.FechaAsignacion
+            });
         }
         catch (BusinessException ex)
         {
@@ -27,11 +33,7 @@ internal sealed class ObtenerUsuariosRolesQueryHandler(IUnitOfWork _unitOfWork, 
                 _logger.LogError(ex, "Error controlado en ObtenerUsuariosRolesQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ObtenerUsuariosRolesQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

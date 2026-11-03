@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.RolesPermisos.Dtos;
+using HelpDesk.Application.Dtos.RolesPermisos;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,14 +17,18 @@ internal sealed class CrearRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=new Dictionary<string, object>() { ["IdRol"] = input.IdRol, ["IdPermiso"] = input.IdPermiso };
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = new Dictionary<string, object>() { ["IdRol"] = input.IdRol, ["IdPermiso"] = input.IdPermiso };
 
-            _unitOfWork.Repository<Dictionary<string, object>>("RolesPermisos").Add(entity);
-            await _unitOfWork.Complete(ct);
-            return new(201,new RolesPermisosResponseDto() { IdRol = (Guid)entity["IdRol"], IdPermiso = (Guid)entity["IdPermiso"] },"Registro creado.");
+            await _unitOfWork.Repository<Dictionary<string, object>>("RolesPermisos").AddAsync(entity);
+            await _unitOfWork.Complete();
+            return new(201, new RolesPermisosResponseDto()
+            {
+                IdRol = (Guid)entity["IdRol"],
+                IdPermiso = (Guid)entity["IdPermiso"]
+            }, "Registro creado.");
         }
         catch (BusinessException ex)
         {
@@ -31,11 +36,7 @@ internal sealed class CrearRolesPermisosCommandHandler(IUnitOfWork _unitOfWork, 
                 _logger.LogError(ex, "Error controlado en CrearRolesPermisosCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar CrearRolesPermisosCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

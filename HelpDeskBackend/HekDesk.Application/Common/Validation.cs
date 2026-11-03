@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using HelpDesk.Domain.Exceptions;
 namespace HelpDesk.Application.Common;
+
 public static class Validation
 {
     public static void Check(object input)
@@ -13,5 +14,7 @@ public static class Validation
                 throw new BusinessException(400, $"{property.Name} debe ser un identificador valido.");
     }
     public static void Require(bool condition, string message, int status = 400)
-    { if (!condition) throw new BusinessException(status, message); }
+    {
+        if (!condition) throw new BusinessException(status, message);
+    }
 }

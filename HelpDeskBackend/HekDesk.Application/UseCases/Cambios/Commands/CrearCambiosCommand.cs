@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Cambios.Dtos;
+using HelpDesk.Application.Dtos.Cambios;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,14 +17,44 @@ internal sealed class CrearCambiosCommandHandler(IUnitOfWork _unitOfWork, Access
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=new global::HelpDesk.Domain.Models.Cambios() { IdCambio = Guid.NewGuid(), IdResponsable = input.IdResponsable, Titulo = input.Titulo, Descripcion = input.Descripcion, Riesgo = input.Riesgo, PlanEjecucion = input.PlanEjecucion, PlanReversion = input.PlanReversion, RequiereAprobacion = input.RequiereAprobacion, FechaProgramada = input.FechaProgramada, Resultado = input.Resultado, FechaCreacion = DateTime.UtcNow, Estado = "borrador" };
-            entity.IdSolicitante=actor.Id;
-            _unitOfWork.Repository<global::HelpDesk.Domain.Models.Cambios>(null).Add(entity);
-            await _unitOfWork.Complete(ct);
-            return new(201,new CambiosResponseDto { IdCambio = entity.IdCambio, IdSolicitante = entity.IdSolicitante, IdResponsable = entity.IdResponsable, Titulo = entity.Titulo, Descripcion = entity.Descripcion, Riesgo = entity.Riesgo, PlanEjecucion = entity.PlanEjecucion, PlanReversion = entity.PlanReversion, RequiereAprobacion = entity.RequiereAprobacion, Estado = entity.Estado, FechaProgramada = entity.FechaProgramada, FechaFinalizacion = entity.FechaFinalizacion, Resultado = entity.Resultado, FechaCreacion = entity.FechaCreacion },"Registro creado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = new global::HelpDesk.Domain.Models.Cambios()
+            {
+                IdCambio = Guid.NewGuid(),
+                IdResponsable = input.IdResponsable,
+                Titulo = input.Titulo,
+                Descripcion = input.Descripcion,
+                Riesgo = input.Riesgo,
+                PlanEjecucion = input.PlanEjecucion,
+                PlanReversion = input.PlanReversion,
+                RequiereAprobacion = input.RequiereAprobacion,
+                FechaProgramada = input.FechaProgramada,
+                Resultado = input.Resultado,
+                FechaCreacion = DateTime.UtcNow,
+                Estado = "borrador"
+            };
+            entity.IdSolicitante = actor.Id;
+            await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Cambios>().AddAsync(entity);
+            await _unitOfWork.Complete();
+            return new(201, new CambiosResponseDto
+            {
+                IdCambio = entity.IdCambio,
+                IdSolicitante = entity.IdSolicitante,
+                IdResponsable = entity.IdResponsable,
+                Titulo = entity.Titulo,
+                Descripcion = entity.Descripcion,
+                Riesgo = entity.Riesgo,
+                PlanEjecucion = entity.PlanEjecucion,
+                PlanReversion = entity.PlanReversion,
+                RequiereAprobacion = entity.RequiereAprobacion,
+                Estado = entity.Estado,
+                FechaProgramada = entity.FechaProgramada,
+                FechaFinalizacion = entity.FechaFinalizacion,
+                Resultado = entity.Resultado,
+                FechaCreacion = entity.FechaCreacion
+            }, "Registro creado.");
         }
         catch (BusinessException ex)
         {
@@ -31,11 +62,7 @@ internal sealed class CrearCambiosCommandHandler(IUnitOfWork _unitOfWork, Access
                 _logger.LogError(ex, "Error controlado en CrearCambiosCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar CrearCambiosCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

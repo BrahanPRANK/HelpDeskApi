@@ -1,7 +1,9 @@
+using HelpDesk.Application.Dtos.Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Servicios.Dtos;
+using HelpDesk.Application.Dtos.Servicios;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,15 +18,24 @@ internal sealed class ListarServiciosQueryHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            var options=request.Options;
+            var options = request.Options;
             Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
-            var query=access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Servicios>().Query());
+            var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Servicios>().Query());
             if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.Nombre.Contains(options.Buscar) || x.Descripcion.Contains(options.Buscar));
-            var total=await _unitOfWork.CountAsync(query,ct);
-            var items=await _unitOfWork.ListAsync(query.OrderBy(x => x.IdServicio).Skip((options.Pagina-1)*options.Tamano).Take(options.Tamano)
-            .Select(entity => new ServiciosResponseDto { IdServicio = entity.IdServicio, IdEquipoResponsable = entity.IdEquipoResponsable, Nombre = entity.Nombre, IdCategoriaServicio = entity.IdCategoriaServicio, Descripcion = entity.Descripcion, RequiereAprobacion = entity.RequiereAprobacion, Activo = entity.Activo }),ct);
-            return new(200,new(items,options.Pagina,options.Tamano,total));
+            var total = await (query).CountAsync();
+            var items = await (query.OrderBy(x => x.IdServicio).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            .Select(entity => new ServiciosResponseDto
+            {
+                IdServicio = entity.IdServicio,
+                IdEquipoResponsable = entity.IdEquipoResponsable,
+                Nombre = entity.Nombre,
+                IdCategoriaServicio = entity.IdCategoriaServicio,
+                Descripcion = entity.Descripcion,
+                RequiereAprobacion = entity.RequiereAprobacion,
+                Activo = entity.Activo
+            })).ToListAsync();
+            return new(200, new(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
@@ -32,11 +43,7 @@ internal sealed class ListarServiciosQueryHandler(IUnitOfWork _unitOfWork, Acces
                 _logger.LogError(ex, "Error controlado en ListarServiciosQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ListarServiciosQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

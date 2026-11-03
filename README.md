@@ -2,6 +2,8 @@
 
 Proyecto académico de soporte TI desarrollado con .NET 10, PostgreSQL y Entity Framework Core. Primera versión del backend con CQRS mediante MediatR, DTOs, Repository, Unit of Work, autenticación JWT, hash de contraseñas y autorización por roles y permisos.
 
+Esta plantilla se simplificó siguiendo Lab11. Ver [el inventario del primer avance](HelpDeskBackend/PRIMER_AVANCE.md) antes de copiar casos de uso al repositorio del equipo.
+
 ## Empezar
 
 **Leer primero [la guía de instalación y el reparto del equipo](HelpDeskBackend/DISTRIBUCION_EQUIPO.md).** Explica PostgreSQL, creación de la base, User Secrets, scaffolding, administrador inicial, Swagger y responsabilidades de los seis integrantes.
@@ -30,20 +32,21 @@ Swagger: [http://localhost:5014/](http://localhost:5014/). Iniciar sesión en `P
 ```text
 HelpDeskBackend/
 ├── HelpDesk.Api/             Controladores, middleware, Swagger y arranque
-├── HekDesk.Application/      Comandos, consultas, handlers y DTOs
+├── HekDesk.Application/      Casos de uso y Dtos/{Entidad}, un DTO por archivo
 ├── HelpDesk.Domain/          Modelos e interfaces
 ├── HelpDesk.Infrastructure/  EF Core, repositorios, Unit of Work y seguridad
 ├── scripts/                 Scaffolding y administrador inicial
 └── tests/                   Pruebas de integración
 ```
 
-`HekDesk.Application` conserva el nombre que tiene actualmente el proyecto. Cada handler implementa su caso de uso, maneja errores con `try/catch` y confirma las escrituras mediante `IUnitOfWork.Complete(ct)`.
+`HekDesk.Application` conserva el nombre que tiene actualmente el proyecto. Cada handler implementa su caso de uso, maneja errores con `try/catch` y confirma las escrituras mediante `IUnitOfWork.Complete()`.
 
 Los modelos y el contexto ya se incluyen. **No hace falta ejecutar scaffolding al clonar si la base usa el esquema actual.** Se regenera únicamente tras cambios de esquema coordinados.
 
 ## Documentación
 
 - [Instalación y distribución de responsabilidades](HelpDeskBackend/DISTRIBUCION_EQUIPO.md).
+- [Inventario de código del primer avance](HelpDeskBackend/PRIMER_AVANCE.md).
 - [Endpoints, acciones y límites de la primera versión](HelpDeskBackend/PRIMERA_VERSION_API.md).
 - [Scaffolding y configuración de modelos](HelpDeskBackend/SCAFFOLDING_HELPDESK.md).
 - [Explicación de las 36 tablas](LEEME_BASE_DATOS_36_TABLAS.md).
@@ -58,11 +61,11 @@ dotnet build HelpDeskBackend.sln
 dotnet run --project tests/HelpDesk.IntegrationTests
 ```
 
-Ejecutar desde `HelpDeskBackend`. La suite realiza 122 comprobaciones y requiere permiso para crear y eliminar una base temporal `helpdesk_test_*`. Usa el SQL de la carpeta superior y no escribe en `helpdeskdb`. La API debe estar detenida al compilar para evitar archivos bloqueados.
+Ejecutar desde `HelpDeskBackend`. La suite comprueba el alcance simplificado y requiere permiso para crear y eliminar una base temporal `helpdesk_test_*`. Usa el SQL de la carpeta superior y no escribe en `helpdeskdb`. La API debe estar detenida al compilar para evitar archivos bloqueados.
 
 ## Alcance actual
 
-CRUD y acciones de tickets, aprobaciones, inventario, conocimiento, cambios, notificaciones y consultas de reportes. Auditoría e historial se conservan como registros de trazabilidad.
+CRUD, flujo básico de tickets, aprobaciones, devolución de activos, usuarios y consultas de reportes. La auditoría automática, la publicación de conocimiento, el ciclo avanzado de cambios y la recuperación de contraseña quedan para otra entrega.
 
 Todavía no incluye frontend, envío real de correo ni carga física de archivos. Los adjuntos manejan metadatos y los tiempos de atención se cuentan en minutos corridos. Los detalles y restricciones se describen en la guía de primera versión.
 

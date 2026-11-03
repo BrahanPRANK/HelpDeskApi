@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Areas.Dtos;
+using HelpDesk.Application.Dtos.Areas;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,19 +17,25 @@ internal sealed class ActualizarAreasCommandHandler(IUnitOfWork _unitOfWork, Acc
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Areas>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Areas>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
             entity.IdSede = input.IdSede;
             entity.Nombre = input.Nombre;
             entity.Activo = input.Activo;
 
-            await _unitOfWork.Complete(ct);
-            return new(200,new AreasResponseDto { IdArea = entity.IdArea, IdSede = entity.IdSede, Nombre = entity.Nombre, Activo = entity.Activo },"Registro actualizado.");
+            await _unitOfWork.Complete();
+            return new(200, new AreasResponseDto
+            {
+                IdArea = entity.IdArea,
+                IdSede = entity.IdSede,
+                Nombre = entity.Nombre,
+                Activo = entity.Activo
+            }, "Registro actualizado.");
         }
         catch (BusinessException ex)
         {
@@ -36,11 +43,7 @@ internal sealed class ActualizarAreasCommandHandler(IUnitOfWork _unitOfWork, Acc
                 _logger.LogError(ex, "Error controlado en ActualizarAreasCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ActualizarAreasCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

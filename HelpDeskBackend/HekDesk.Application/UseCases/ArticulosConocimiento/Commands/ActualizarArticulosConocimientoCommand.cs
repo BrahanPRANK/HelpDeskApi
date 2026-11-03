@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.ArticulosConocimiento.Dtos;
+using HelpDesk.Application.Dtos.ArticulosConocimiento;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,20 +17,32 @@ internal sealed class ActualizarArticulosConocimientoCommandHandler(IUnitOfWork 
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.ArticulosConocimiento>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.ArticulosConocimiento>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            Validation.Require(entity.Estado!="publicado","Despublique o archive antes de editar un articulo publicado.",409);
+            Validation.Require(entity.Estado != "publicado", "Despublique o archive antes de editar un articulo publicado.", 409);
             entity.IdCategoriaConocimiento = input.IdCategoriaConocimiento;
             entity.Titulo = input.Titulo;
             entity.Contenido = input.Contenido;
             entity.EsInterno = input.EsInterno;
 
-            await _unitOfWork.Complete(ct);
-            return new(200,new ArticulosConocimientoResponseDto { IdArticulo = entity.IdArticulo, IdAutor = entity.IdAutor, IdRevisor = entity.IdRevisor, IdCategoriaConocimiento = entity.IdCategoriaConocimiento, Titulo = entity.Titulo, Contenido = entity.Contenido, Estado = entity.Estado, EsInterno = entity.EsInterno, FechaCreacion = entity.FechaCreacion, FechaPublicacion = entity.FechaPublicacion },"Registro actualizado.");
+            await _unitOfWork.Complete();
+            return new(200, new ArticulosConocimientoResponseDto
+            {
+                IdArticulo = entity.IdArticulo,
+                IdAutor = entity.IdAutor,
+                IdRevisor = entity.IdRevisor,
+                IdCategoriaConocimiento = entity.IdCategoriaConocimiento,
+                Titulo = entity.Titulo,
+                Contenido = entity.Contenido,
+                Estado = entity.Estado,
+                EsInterno = entity.EsInterno,
+                FechaCreacion = entity.FechaCreacion,
+                FechaPublicacion = entity.FechaPublicacion
+            }, "Registro actualizado.");
         }
         catch (BusinessException ex)
         {
@@ -37,11 +50,7 @@ internal sealed class ActualizarArticulosConocimientoCommandHandler(IUnitOfWork 
                 _logger.LogError(ex, "Error controlado en ActualizarArticulosConocimientoCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ActualizarArticulosConocimientoCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

@@ -1,3 +1,4 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
@@ -17,11 +18,12 @@ internal sealed class MarcarNotificacionLeidaCommandHandler(IUnitOfWork _unitOfW
         try
         {
             Validation.Check(r.Datos);
-            var result="completado";
-            var notification=await Required<global::HelpDesk.Domain.Models.Notificaciones>(r.Id,ct);
-            Validation.Require(notification.IdUsuario==actor.Id,"Solo puede marcar sus propios avisos.",403);
-            notification.FechaLectura ??=DateTime.UtcNow;result="leida";
-            await _unitOfWork.Complete(ct);
+            var result = "completado";
+            var notification = await Required<global::HelpDesk.Domain.Models.Notificaciones>(r.Id);
+            Validation.Require(notification.IdUsuario == actor.Id, "Solo puede marcar sus propios avisos.", 403);
+            notification.FechaLectura ??= DateTime.UtcNow;
+            result = "leida";
+            await _unitOfWork.Complete();
             return new(200, new(r.Id, result));
         }
         catch (BusinessException ex)
@@ -30,17 +32,13 @@ internal sealed class MarcarNotificacionLeidaCommandHandler(IUnitOfWork _unitOfW
                 _logger.LogError(ex, "Error controlado en MarcarNotificacionLeidaCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar MarcarNotificacionLeidaCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");
         }
     }
 
-    private async Task<T> Required<T>(Guid id, CancellationToken ct) where T : class =>
-        await _unitOfWork.Repository<T>().FindAsync([id], ct) ?? throw new BusinessException(404, "Registro relacionado no encontrado.");
+    private async Task<T> Required<T>(Guid id) where T : class =>
+        await _unitOfWork.Repository<T>().GetByIdAsync([id]) ?? throw new BusinessException(404, "Registro relacionado no encontrado.");
 }

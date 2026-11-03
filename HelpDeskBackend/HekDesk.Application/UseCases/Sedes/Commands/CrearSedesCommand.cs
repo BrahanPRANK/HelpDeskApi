@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Sedes.Dtos;
+using HelpDesk.Application.Dtos.Sedes;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,14 +17,26 @@ internal sealed class CrearSedesCommandHandler(IUnitOfWork _unitOfWork, AccessRu
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=new global::HelpDesk.Domain.Models.Sedes() { IdSede = Guid.NewGuid(), Nombre = input.Nombre, Direccion = input.Direccion, Activo = input.Activo };
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = new global::HelpDesk.Domain.Models.Sedes()
+            {
+                IdSede = Guid.NewGuid(),
+                Nombre = input.Nombre,
+                Direccion = input.Direccion,
+                Activo = input.Activo
+            };
 
-            _unitOfWork.Repository<global::HelpDesk.Domain.Models.Sedes>(null).Add(entity);
-            await _unitOfWork.Complete(ct);
-            return new(201,new SedesResponseDto { IdSede = entity.IdSede, Nombre = entity.Nombre, Direccion = entity.Direccion, Activo = entity.Activo },"Registro creado.");
+            await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Sedes>().AddAsync(entity);
+            await _unitOfWork.Complete();
+            return new(201, new SedesResponseDto
+            {
+                IdSede = entity.IdSede,
+                Nombre = entity.Nombre,
+                Direccion = entity.Direccion,
+                Activo = entity.Activo
+            }, "Registro creado.");
         }
         catch (BusinessException ex)
         {
@@ -31,11 +44,7 @@ internal sealed class CrearSedesCommandHandler(IUnitOfWork _unitOfWork, AccessRu
                 _logger.LogError(ex, "Error controlado en CrearSedesCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar CrearSedesCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

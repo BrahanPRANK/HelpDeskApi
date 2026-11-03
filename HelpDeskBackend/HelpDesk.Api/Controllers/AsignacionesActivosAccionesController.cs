@@ -1,3 +1,4 @@
+using HelpDesk.Application.Dtos.Common;
 using HelpDesk.Application.UseCases.AsignacionesActivos.Commands;
 using HelpDesk.Application.Common;
 using MediatR;
@@ -9,9 +10,9 @@ namespace HelpDesk.Api.Controllers;
 public sealed class AsignacionesActivosAccionesController(IMediator mediator) : ControllerBase
 {
     [HttpPost("{id:guid}/devolver")]
-    public async Task<IActionResult> DevolverActivo(Guid id, AccionDto datos, CancellationToken ct)
+    public async Task<IActionResult> DevolverActivo(Guid id, AccionDto datos)
     {
-        var result = await mediator.Send(new DevolverActivoCommand(id, datos), ct);
+        var result = await mediator.Send(new DevolverActivoCommand(id, datos));
         return StatusCode(result.StatusCode, result);
     }
 

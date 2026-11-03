@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.CategoriasServicios.Dtos;
+using HelpDesk.Application.Dtos.CategoriasServicios;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,14 +17,14 @@ internal sealed class EliminarCategoriasServiciosCommandHandler(IUnitOfWork _uni
     {
         try
         {
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.CategoriasServicios>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.CategoriasServicios>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
-            _unitOfWork.Repository<global::HelpDesk.Domain.Models.CategoriasServicios>(null).Remove(entity);
-            await _unitOfWork.Complete(ct);
-            return new(200,new(true),"Registro eliminado.");
+            _unitOfWork.Repository<global::HelpDesk.Domain.Models.CategoriasServicios>(null).Delete(entity);
+            await _unitOfWork.Complete();
+            return new(200, new(true), "Registro eliminado.");
         }
         catch (BusinessException ex)
         {
@@ -31,11 +32,7 @@ internal sealed class EliminarCategoriasServiciosCommandHandler(IUnitOfWork _uni
                 _logger.LogError(ex, "Error controlado en EliminarCategoriasServiciosCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar EliminarCategoriasServiciosCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

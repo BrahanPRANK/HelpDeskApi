@@ -1,7 +1,9 @@
+using HelpDesk.Application.Dtos.Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Usuarios.Dtos;
+using HelpDesk.Application.Dtos.Usuarios;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,13 +18,13 @@ internal sealed class ActualizarUsuariosCommandHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            if(!input.Activo) await EnsureNotLastAdmin(entity.IdUsuario,ct);
+            if (!input.Activo) await EnsureNotLastAdmin(entity.IdUsuario);
             entity.IdArea = input.IdArea;
             entity.Nombres = input.Nombres;
             entity.Apellidos = input.Apellidos;
@@ -30,13 +32,25 @@ internal sealed class ActualizarUsuariosCommandHandler(IUnitOfWork _unitOfWork, 
             entity.Correo = input.Correo;
             entity.Telefono = input.Telefono;
             entity.Activo = input.Activo;
-            var userInput=input;
-            entity.NombreUsuario=entity.NombreUsuario.Trim();entity.Correo=entity.Correo.Trim().ToLowerInvariant();
+            var userInput = input;
+            entity.NombreUsuario = entity.NombreUsuario.Trim();
+            entity.Correo = entity.Correo.Trim().ToLowerInvariant();
 
-            if (!string.IsNullOrWhiteSpace(userInput.Clave)) entity.ClaveHash=passwords.Hash(userInput.Clave);
+            if (!string.IsNullOrWhiteSpace(userInput.Clave)) entity.ClaveHash = passwords.Hash(userInput.Clave);
 
-            await _unitOfWork.Complete(ct);
-            return new(200,new UsuariosResponseDto { IdUsuario = entity.IdUsuario, IdArea = entity.IdArea, Nombres = entity.Nombres, Apellidos = entity.Apellidos, NombreUsuario = entity.NombreUsuario, Correo = entity.Correo, Telefono = entity.Telefono, Activo = entity.Activo, FechaRegistro = entity.FechaRegistro },"Registro actualizado.");
+            await _unitOfWork.Complete();
+            return new(200, new UsuariosResponseDto
+            {
+                IdUsuario = entity.IdUsuario,
+                IdArea = entity.IdArea,
+                Nombres = entity.Nombres,
+                Apellidos = entity.Apellidos,
+                NombreUsuario = entity.NombreUsuario,
+                Correo = entity.Correo,
+                Telefono = entity.Telefono,
+                Activo = entity.Activo,
+                FechaRegistro = entity.FechaRegistro
+            }, "Registro actualizado.");
         }
         catch (BusinessException ex)
         {
@@ -44,23 +58,19 @@ internal sealed class ActualizarUsuariosCommandHandler(IUnitOfWork _unitOfWork, 
                 _logger.LogError(ex, "Error controlado en ActualizarUsuariosCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ActualizarUsuariosCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");
         }
     }
-    private async Task EnsureNotLastAdmin(Guid userId,CancellationToken ct)
+    private async Task EnsureNotLastAdmin(Guid userId)
     {
-        var roleIds=_unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().Query().Where(r=>r.Nombre=="administrador").Select(r=>r.IdRol);
-        if(!_unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().Query().Any(r=>r.IdUsuario==userId && roleIds.Contains(r.IdRol)))return;
-        var others=_unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().Query().Where(r=>roleIds.Contains(r.IdRol) && r.IdUsuario!=userId).Select(r=>r.IdUsuario);
-        Validation.Require(await _unitOfWork.CountAsync(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().Query().Where(u=>u.Activo && others.Contains(u.IdUsuario)),ct)>0,
-            "Debe conservarse al menos un administrador activo.",409);
+        var roleIds = _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().Query().Where(r => r.Nombre == "administrador").Select(r => r.IdRol);
+        if (!_unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().Query().Any(r => r.IdUsuario == userId && roleIds.Contains(r.IdRol))) return;
+        var others = _unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().Query().Where(r => roleIds.Contains(r.IdRol) && r.IdUsuario != userId).Select(r => r.IdUsuario);
+        Validation.Require(await (_unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().Query().Where(u => u.Activo && others.Contains(u.IdUsuario))).CountAsync() > 0,
+            "Debe conservarse al menos un administrador activo.", 409);
     }
 
 }

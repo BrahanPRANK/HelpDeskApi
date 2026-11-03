@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Permisos.Dtos;
+using HelpDesk.Application.Dtos.Permisos;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,10 +17,16 @@ internal sealed class ObtenerPermisosQueryHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Permisos>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Permisos>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200,new PermisosResponseDto { IdPermiso = entity.IdPermiso, Codigo = entity.Codigo, Modulo = entity.Modulo, Descripcion = entity.Descripcion });
+            return new(200, new PermisosResponseDto
+            {
+                IdPermiso = entity.IdPermiso,
+                Codigo = entity.Codigo,
+                Modulo = entity.Modulo,
+                Descripcion = entity.Descripcion
+            });
         }
         catch (BusinessException ex)
         {
@@ -27,11 +34,7 @@ internal sealed class ObtenerPermisosQueryHandler(IUnitOfWork _unitOfWork, Acces
                 _logger.LogError(ex, "Error controlado en ObtenerPermisosQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ObtenerPermisosQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

@@ -87,7 +87,7 @@ Ejecutar el archivo completo conectado a una base vacía en PostgreSQL 16 o supe
 - Las notificaciones tienen seguimiento de correo con reintentos limitados; el worker y la integración con correo se programan en .NET. No se garantiza entrega exactamente una vez.
 - No hay versiones de artículos ni formularios configurables por servicio.
 - La base no autoriza a los usuarios del producto por sí sola: .NET debe comprobar permisos y acceso por propietario/equipo.
-- Historial, auditoría, versión del ticket y coherencia de asignaciones los mantiene .NET mediante transacciones. No hay triggers ocultos.
+- El historial básico de tickets y sus versiones se mantienen desde sus casos de uso. La auditoría automática queda para una segunda entrega; no la genera UnitOfWork ni hay triggers ocultos.
 
 ## Qué incluye el script y qué no
 
@@ -102,7 +102,7 @@ Para generar clases con EF Core se debe seleccionar el esquema `helpdesk`. Las c
 1. Usuarios, roles, permisos y organización.
 2. Catálogo, equipos y políticas de atención.
 3. Un recorrido completo: registrar, asignar, responder, resolver y cerrar.
-4. Historial y auditoría desde ese primer recorrido.
+4. Historial del ticket desde ese primer recorrido; auditoría automática en una entrega posterior.
 5. Notificaciones, conocimiento, activos y aprobaciones.
 6. Problemas, cambios, encuestas y reportes.
 

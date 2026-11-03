@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.PoliticasAtencion.Dtos;
+using HelpDesk.Application.Dtos.PoliticasAtencion;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,11 +17,11 @@ internal sealed class ActualizarPoliticasAtencionCommandHandler(IUnitOfWork _uni
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PoliticasAtencion>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PoliticasAtencion>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
             entity.Prioridad = input.Prioridad;
@@ -28,8 +29,15 @@ internal sealed class ActualizarPoliticasAtencionCommandHandler(IUnitOfWork _uni
             entity.MinutosResolucion = input.MinutosResolucion;
             entity.Activo = input.Activo;
 
-            await _unitOfWork.Complete(ct);
-            return new(200,new PoliticasAtencionResponseDto { IdPolitica = entity.IdPolitica, Prioridad = entity.Prioridad, MinutosPrimeraRespuesta = entity.MinutosPrimeraRespuesta, MinutosResolucion = entity.MinutosResolucion, Activo = entity.Activo },"Registro actualizado.");
+            await _unitOfWork.Complete();
+            return new(200, new PoliticasAtencionResponseDto
+            {
+                IdPolitica = entity.IdPolitica,
+                Prioridad = entity.Prioridad,
+                MinutosPrimeraRespuesta = entity.MinutosPrimeraRespuesta,
+                MinutosResolucion = entity.MinutosResolucion,
+                Activo = entity.Activo
+            }, "Registro actualizado.");
         }
         catch (BusinessException ex)
         {
@@ -37,11 +45,7 @@ internal sealed class ActualizarPoliticasAtencionCommandHandler(IUnitOfWork _uni
                 _logger.LogError(ex, "Error controlado en ActualizarPoliticasAtencionCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ActualizarPoliticasAtencionCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

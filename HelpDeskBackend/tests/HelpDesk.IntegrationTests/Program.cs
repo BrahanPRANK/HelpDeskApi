@@ -136,40 +136,38 @@ try
     await Post("/api/UsuariosRoles",new{idUsuario=userIds[2],idRol=Role("aprobador")},adminToken);
     var change=await Post("/api/Cambios",new{idResponsable=userIds[2],titulo="Cambio prueba",descripcion="Actualizar equipo",riesgo="bajo",planEjecucion="Actualizar",planReversion="Restaurar",requiereAprobacion=true},adminToken);
     var changeId=Id(change,"idCambio");
-    await Request(HttpMethod.Post,$"/api/Cambios/{changeId}/programar",new{fechaProgramada=DateTime.UtcNow.AddHours(1)},409,technician);
     var approval=await Post("/api/Aprobaciones",new{idCambio=changeId,idAprobador=userIds[2],orden=1,motivo="Autorizar"},adminToken);
     await Request(HttpMethod.Post,$"/api/Aprobaciones/{Id(approval,"idAprobacion")}/aprobar",new{motivo="Aprobado"},200,technician);
     await Request(HttpMethod.Post,$"/api/Aprobaciones/{Id(approval,"idAprobacion")}/aprobar",new{motivo="Repetido"},409,technician);
-    await Request(HttpMethod.Post,$"/api/Cambios/{changeId}/programar",new{fechaProgramada=DateTime.UtcNow.AddHours(1)},200,technician);
     var task=await Post("/api/TareasCambios",new{idCambio=changeId,idResponsable=userIds[2],orden=1,titulo="Actualizar",estado="pendiente"},adminToken);
-    await Request(HttpMethod.Post,$"/api/Cambios/{changeId}/ejecutar",new{},200,technician);
-    await Request(HttpMethod.Post,$"/api/Cambios/{changeId}/finalizar",new{motivo="Hecho"},409,technician);
     await Request(HttpMethod.Put,$"/api/TareasCambios/{Id(task,"idTareaCambio")}",new{idCambio=changeId,idResponsable=userIds[2],orden=1,titulo="Actualizar",estado="completada"},200,adminToken);
-    await Request(HttpMethod.Post,$"/api/Cambios/{changeId}/finalizar",new{motivo="Cambio realizado"},200,technician);
-    // Publicacion de conocimiento y relacion con ticket.
+    // El conocimiento se administra como borrador; publicacion queda para v2.
     var knowledgeCategories=Items(await Request(HttpMethod.Get,"/api/CategoriasConocimiento",null,200,adminToken));
     var article=await Post("/api/ArticulosConocimiento",new{idCategoriaConocimiento=knowledgeCategories[0]!["idCategoriaConocimiento"]!.GetValue<string>(),titulo="Reiniciar red",contenido="Instrucciones de prueba",esInterno=false},adminToken);
-    var articleId=Id(article,"idArticulo");
-    await Request(HttpMethod.Get,$"/api/ArticulosConocimiento/{articleId}",null,404,employee);
-    await Request(HttpMethod.Post,$"/api/ArticulosConocimiento/{articleId}/publicar",new{},200,technician);
-    await Request(HttpMethod.Get,$"/api/ArticulosConocimiento/{articleId}",null,200,employee);
-    await Post("/api/TicketsArticulos",new{idTicket=ticketId,idArticulo=articleId,idUsuario=userIds[0]},adminToken);
+    await Request(HttpMethod.Get,$"/api/ArticulosConocimiento/{Id(article,"idArticulo")}",null,404,employee);
     await Request(HttpMethod.Get,"/api/Reportes/indicadores",null,200,employee);
     await Request(HttpMethod.Get,"/api/Sedes?tamano=1000",null,400,adminToken);
     await Request(HttpMethod.Get,"/api/Sedes",null,401,adminToken[..^10]+"invalidjwt");
     await Request(HttpMethod.Post,"/api/Auditoria",new{},405,adminToken);
-    var recovery=(await Request(HttpMethod.Post,$"/api/auth/recuperacion/{userIds[0]}",new{},201,adminToken))["data"]!;
-    var resetToken=recovery["token"]!.GetValue<string>();var nextPassword=userPassword+"New";
-    await Request(HttpMethod.Post,"/api/auth/restablecer-clave",new{token=resetToken,claveNueva=nextPassword},200);
+    var nextPassword=userPassword+"New";
+    await Request(HttpMethod.Post,"/api/auth/cambiar-clave",new{claveActual=userPassword,claveNueva=nextPassword},200,employee);
     await Request(HttpMethod.Get,"/api/Tickets",null,401,employee);
-    await Request(HttpMethod.Post,"/api/auth/restablecer-clave",new{token=resetToken,claveNueva=nextPassword},400);
     await Login("empleado1",nextPassword);
+    // Las acciones aplazadas no aparecen en Swagger.
+    var deferredSwagger=await client.GetStringAsync("/swagger/v1/swagger.json");
+    using(var document=JsonDocument.Parse(deferredSwagger))
+    {
+        var paths=document.RootElement.GetProperty("paths");
+        foreach(var removed in new[]{"/api/Tickets/{id}/reabrir","/api/Tickets/{id}/esperar","/api/Cambios/{id}/programar","/api/auth/restablecer-clave"})
+            if(paths.TryGetProperty(removed,out _))throw new Exception("Deferred endpoint still present: "+removed);
+        checks++;
+    }
     await using(var test=new NpgsqlConnection(testSettings.ConnectionString))
     {
         await test.OpenAsync();await using var cmd=new NpgsqlCommand("SELECT clave_hash FROM helpdesk.usuarios WHERE nombre_usuario='empleado2'",test);
         var hash=(string)(await cmd.ExecuteScalarAsync())!;if(hash==userPassword||!hash.StartsWith("AQAAAA"))throw new Exception("Password hashing not applied.");checks++;
     }
-    Console.WriteLine($"PASS: {checks} HTTP/security/database checks. CRUD, scoped access, ticket workflow, recovery and hashing verified.");
+    Console.WriteLine($"PASS: {checks} HTTP/security/database checks. CRUD, scoped access, basic ticket workflow, password change and hashing verified.");
     var reportPath=Environment.GetEnvironmentVariable("HELPDESK_TEST_RESULT");
     if(!string.IsNullOrWhiteSpace(reportPath))File.WriteAllText(reportPath,JsonSerializer.Serialize(new{Passed=checks,TemporaryDatabase=dbname,ProductionDataChanged=false}));
 }

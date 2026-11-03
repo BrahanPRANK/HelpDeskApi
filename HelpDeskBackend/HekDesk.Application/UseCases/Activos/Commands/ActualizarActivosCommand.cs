@@ -1,7 +1,9 @@
+using HelpDesk.Application.Dtos.Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Activos.Dtos;
+using HelpDesk.Application.Dtos.Activos;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,11 +18,11 @@ internal sealed class ActualizarActivosCommandHandler(IUnitOfWork _unitOfWork, A
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Activos>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Activos>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
 
             entity.IdSede = input.IdSede;
@@ -32,10 +34,23 @@ internal sealed class ActualizarActivosCommandHandler(IUnitOfWork _unitOfWork, A
             entity.Marca = input.Marca;
             entity.Modelo = input.Modelo;
             entity.Estado = input.Estado;
-            var assigned=await _unitOfWork.CountAsync(_unitOfWork.Repository<global::HelpDesk.Domain.Models.AsignacionesActivos>().Query().Where(x=>x.IdActivo==entity.IdActivo && x.FechaDevolucion==null),ct);
-            Validation.Require((assigned>0)==(entity.Estado=="asignado"),"Cambie la asignacion con asignar/devolver; el estado debe coincidir.",409);
-            await _unitOfWork.Complete(ct);
-            return new(200,new ActivosResponseDto { IdActivo = entity.IdActivo, IdSede = entity.IdSede, IdArea = entity.IdArea, CodigoPatrimonial = entity.CodigoPatrimonial, Nombre = entity.Nombre, IdTipoActivo = entity.IdTipoActivo, NumeroSerie = entity.NumeroSerie, Marca = entity.Marca, Modelo = entity.Modelo, Estado = entity.Estado, FechaRegistro = entity.FechaRegistro },"Registro actualizado.");
+            var assigned = await (_unitOfWork.Repository<global::HelpDesk.Domain.Models.AsignacionesActivos>().Query().Where(x => x.IdActivo == entity.IdActivo && x.FechaDevolucion == null)).CountAsync();
+            Validation.Require((assigned > 0) == (entity.Estado == "asignado"), "Cambie la asignacion con asignar/devolver; el estado debe coincidir.", 409);
+            await _unitOfWork.Complete();
+            return new(200, new ActivosResponseDto
+            {
+                IdActivo = entity.IdActivo,
+                IdSede = entity.IdSede,
+                IdArea = entity.IdArea,
+                CodigoPatrimonial = entity.CodigoPatrimonial,
+                Nombre = entity.Nombre,
+                IdTipoActivo = entity.IdTipoActivo,
+                NumeroSerie = entity.NumeroSerie,
+                Marca = entity.Marca,
+                Modelo = entity.Modelo,
+                Estado = entity.Estado,
+                FechaRegistro = entity.FechaRegistro
+            }, "Registro actualizado.");
         }
         catch (BusinessException ex)
         {
@@ -43,11 +58,7 @@ internal sealed class ActualizarActivosCommandHandler(IUnitOfWork _unitOfWork, A
                 _logger.LogError(ex, "Error controlado en ActualizarActivosCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ActualizarActivosCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

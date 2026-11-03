@@ -1,3 +1,4 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
@@ -17,12 +18,13 @@ internal sealed class ActivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, Acce
         try
         {
             Validation.Check(r.Datos);
-            var result="completado";
+            var result = "completado";
             access.Permission("usuarios.administrar");
-            var user=await Required<global::HelpDesk.Domain.Models.Usuarios>(r.Id,ct);
+            var user = await Required<global::HelpDesk.Domain.Models.Usuarios>(r.Id);
 
-            user.Activo=true;result=user.Activo?"activo":"inactivo";
-            await _unitOfWork.Complete(ct);
+            user.Activo = true;
+            result = user.Activo ? "activo" : "inactivo";
+            await _unitOfWork.Complete();
             return new(200, new(r.Id, result));
         }
         catch (BusinessException ex)
@@ -31,17 +33,13 @@ internal sealed class ActivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, Acce
                 _logger.LogError(ex, "Error controlado en ActivarUsuarioCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ActivarUsuarioCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");
         }
     }
 
-    private async Task<T> Required<T>(Guid id, CancellationToken ct) where T : class =>
-        await _unitOfWork.Repository<T>().FindAsync([id], ct) ?? throw new BusinessException(404, "Registro relacionado no encontrado.");
+    private async Task<T> Required<T>(Guid id) where T : class =>
+        await _unitOfWork.Repository<T>().GetByIdAsync([id]) ?? throw new BusinessException(404, "Registro relacionado no encontrado.");
 }

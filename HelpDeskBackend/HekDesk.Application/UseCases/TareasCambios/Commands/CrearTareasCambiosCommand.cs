@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.TareasCambios.Dtos;
+using HelpDesk.Application.Dtos.TareasCambios;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,15 +17,36 @@ internal sealed class CrearTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=new global::HelpDesk.Domain.Models.TareasCambios() { IdTareaCambio = Guid.NewGuid(), IdCambio = input.IdCambio, IdResponsable = input.IdResponsable, Orden = input.Orden, Titulo = input.Titulo, Descripcion = input.Descripcion, Estado = input.Estado, FechaCreacion = DateTime.UtcNow };
-            access.EnsureRead(await Required<global::HelpDesk.Domain.Models.Cambios>(entity.IdCambio,ct));
-            entity.FechaFinalizacion=entity.Estado=="completada"?DateTime.UtcNow:null;
-            _unitOfWork.Repository<global::HelpDesk.Domain.Models.TareasCambios>(null).Add(entity);
-            await _unitOfWork.Complete(ct);
-            return new(201,new TareasCambiosResponseDto { IdTareaCambio = entity.IdTareaCambio, IdCambio = entity.IdCambio, IdResponsable = entity.IdResponsable, Orden = entity.Orden, Titulo = entity.Titulo, Descripcion = entity.Descripcion, Estado = entity.Estado, FechaCreacion = entity.FechaCreacion, FechaFinalizacion = entity.FechaFinalizacion },"Registro creado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = new global::HelpDesk.Domain.Models.TareasCambios()
+            {
+                IdTareaCambio = Guid.NewGuid(),
+                IdCambio = input.IdCambio,
+                IdResponsable = input.IdResponsable,
+                Orden = input.Orden,
+                Titulo = input.Titulo,
+                Descripcion = input.Descripcion,
+                Estado = input.Estado,
+                FechaCreacion = DateTime.UtcNow
+            };
+            access.EnsureRead(await Required<global::HelpDesk.Domain.Models.Cambios>(entity.IdCambio));
+            entity.FechaFinalizacion = entity.Estado == "completada" ? DateTime.UtcNow : null;
+            await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TareasCambios>().AddAsync(entity);
+            await _unitOfWork.Complete();
+            return new(201, new TareasCambiosResponseDto
+            {
+                IdTareaCambio = entity.IdTareaCambio,
+                IdCambio = entity.IdCambio,
+                IdResponsable = entity.IdResponsable,
+                Orden = entity.Orden,
+                Titulo = entity.Titulo,
+                Descripcion = entity.Descripcion,
+                Estado = entity.Estado,
+                FechaCreacion = entity.FechaCreacion,
+                FechaFinalizacion = entity.FechaFinalizacion
+            }, "Registro creado.");
         }
         catch (BusinessException ex)
         {
@@ -32,18 +54,14 @@ internal sealed class CrearTareasCambiosCommandHandler(IUnitOfWork _unitOfWork, 
                 _logger.LogError(ex, "Error controlado en CrearTareasCambiosCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar CrearTareasCambiosCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");
         }
     }
 
-    private async Task<T> Required<T>(Guid id, CancellationToken ct) where T : class =>
-        await _unitOfWork.Repository<T>().FindAsync([id], ct) ?? throw new BusinessException(404, "Registro relacionado no encontrado.");
+    private async Task<T> Required<T>(Guid id) where T : class =>
+        await _unitOfWork.Repository<T>().GetByIdAsync([id]) ?? throw new BusinessException(404, "Registro relacionado no encontrado.");
 
 }

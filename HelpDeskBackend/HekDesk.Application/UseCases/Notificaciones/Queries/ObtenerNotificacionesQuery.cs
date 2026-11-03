@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Notificaciones.Dtos;
+using HelpDesk.Application.Dtos.Notificaciones;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,10 +17,21 @@ internal sealed class ObtenerNotificacionesQueryHandler(IUnitOfWork _unitOfWork,
     {
         try
         {
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Notificaciones>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Notificaciones>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200,new NotificacionesResponseDto { IdNotificacion = entity.IdNotificacion, IdUsuario = entity.IdUsuario, IdTicket = entity.IdTicket, Titulo = entity.Titulo, Mensaje = entity.Mensaje, FechaCreacion = entity.FechaCreacion, FechaLectura = entity.FechaLectura, ClaveEvento = entity.ClaveEvento, TipoEvento = entity.TipoEvento });
+            return new(200, new NotificacionesResponseDto
+            {
+                IdNotificacion = entity.IdNotificacion,
+                IdUsuario = entity.IdUsuario,
+                IdTicket = entity.IdTicket,
+                Titulo = entity.Titulo,
+                Mensaje = entity.Mensaje,
+                FechaCreacion = entity.FechaCreacion,
+                FechaLectura = entity.FechaLectura,
+                ClaveEvento = entity.ClaveEvento,
+                TipoEvento = entity.TipoEvento
+            });
         }
         catch (BusinessException ex)
         {
@@ -27,11 +39,7 @@ internal sealed class ObtenerNotificacionesQueryHandler(IUnitOfWork _unitOfWork,
                 _logger.LogError(ex, "Error controlado en ObtenerNotificacionesQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ObtenerNotificacionesQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

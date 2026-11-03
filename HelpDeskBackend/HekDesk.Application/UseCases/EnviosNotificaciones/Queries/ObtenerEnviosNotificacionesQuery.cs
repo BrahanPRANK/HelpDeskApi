@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.EnviosNotificaciones.Dtos;
+using HelpDesk.Application.Dtos.EnviosNotificaciones;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,10 +17,23 @@ internal sealed class ObtenerEnviosNotificacionesQueryHandler(IUnitOfWork _unitO
     {
         try
         {
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.EnviosNotificaciones>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.EnviosNotificaciones>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200,new EnviosNotificacionesResponseDto { IdEnvio = entity.IdEnvio, IdNotificacion = entity.IdNotificacion, CorreoDestino = entity.CorreoDestino, Estado = entity.Estado, Intentos = entity.Intentos, MaximoIntentos = entity.MaximoIntentos, FechaCreacion = entity.FechaCreacion, FechaProximoIntento = entity.FechaProximoIntento, BloqueoHasta = entity.BloqueoHasta, FechaEnvio = entity.FechaEnvio, IdentificadorProveedor = entity.IdentificadorProveedor });
+            return new(200, new EnviosNotificacionesResponseDto
+            {
+                IdEnvio = entity.IdEnvio,
+                IdNotificacion = entity.IdNotificacion,
+                CorreoDestino = entity.CorreoDestino,
+                Estado = entity.Estado,
+                Intentos = entity.Intentos,
+                MaximoIntentos = entity.MaximoIntentos,
+                FechaCreacion = entity.FechaCreacion,
+                FechaProximoIntento = entity.FechaProximoIntento,
+                BloqueoHasta = entity.BloqueoHasta,
+                FechaEnvio = entity.FechaEnvio,
+                IdentificadorProveedor = entity.IdentificadorProveedor
+            });
         }
         catch (BusinessException ex)
         {
@@ -27,11 +41,7 @@ internal sealed class ObtenerEnviosNotificacionesQueryHandler(IUnitOfWork _unitO
                 _logger.LogError(ex, "Error controlado en ObtenerEnviosNotificacionesQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ObtenerEnviosNotificacionesQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

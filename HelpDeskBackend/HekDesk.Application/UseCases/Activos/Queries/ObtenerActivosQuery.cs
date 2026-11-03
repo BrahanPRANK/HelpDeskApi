@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Activos.Dtos;
+using HelpDesk.Application.Dtos.Activos;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,10 +17,23 @@ internal sealed class ObtenerActivosQueryHandler(IUnitOfWork _unitOfWork, Access
     {
         try
         {
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Activos>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Activos>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200,new ActivosResponseDto { IdActivo = entity.IdActivo, IdSede = entity.IdSede, IdArea = entity.IdArea, CodigoPatrimonial = entity.CodigoPatrimonial, Nombre = entity.Nombre, IdTipoActivo = entity.IdTipoActivo, NumeroSerie = entity.NumeroSerie, Marca = entity.Marca, Modelo = entity.Modelo, Estado = entity.Estado, FechaRegistro = entity.FechaRegistro });
+            return new(200, new ActivosResponseDto
+            {
+                IdActivo = entity.IdActivo,
+                IdSede = entity.IdSede,
+                IdArea = entity.IdArea,
+                CodigoPatrimonial = entity.CodigoPatrimonial,
+                Nombre = entity.Nombre,
+                IdTipoActivo = entity.IdTipoActivo,
+                NumeroSerie = entity.NumeroSerie,
+                Marca = entity.Marca,
+                Modelo = entity.Modelo,
+                Estado = entity.Estado,
+                FechaRegistro = entity.FechaRegistro
+            });
         }
         catch (BusinessException ex)
         {
@@ -27,11 +41,7 @@ internal sealed class ObtenerActivosQueryHandler(IUnitOfWork _unitOfWork, Access
                 _logger.LogError(ex, "Error controlado en ObtenerActivosQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ObtenerActivosQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

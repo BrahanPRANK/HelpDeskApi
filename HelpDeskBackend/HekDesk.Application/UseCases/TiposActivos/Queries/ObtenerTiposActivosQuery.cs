@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.TiposActivos.Dtos;
+using HelpDesk.Application.Dtos.TiposActivos;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,10 +17,16 @@ internal sealed class ObtenerTiposActivosQueryHandler(IUnitOfWork _unitOfWork, A
     {
         try
         {
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TiposActivos>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TiposActivos>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200,new TiposActivosResponseDto { IdTipoActivo = entity.IdTipoActivo, Nombre = entity.Nombre, Descripcion = entity.Descripcion, Activo = entity.Activo });
+            return new(200, new TiposActivosResponseDto
+            {
+                IdTipoActivo = entity.IdTipoActivo,
+                Nombre = entity.Nombre,
+                Descripcion = entity.Descripcion,
+                Activo = entity.Activo
+            });
         }
         catch (BusinessException ex)
         {
@@ -27,11 +34,7 @@ internal sealed class ObtenerTiposActivosQueryHandler(IUnitOfWork _unitOfWork, A
                 _logger.LogError(ex, "Error controlado en ObtenerTiposActivosQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ObtenerTiposActivosQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

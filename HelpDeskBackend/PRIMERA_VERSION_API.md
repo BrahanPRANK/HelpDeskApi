@@ -1,58 +1,41 @@
-# Primera versión de HelpDesk: CQRS, JWT y CRUD
+# Primera versión simplificada de HelpDesk
 
-La solución conserva API, Application, Domain e Infrastructure. `HekDesk.Application` mantiene su nombre de proyecto; su código utiliza el namespace `HelpDesk.Application`.
+Esta entrega sigue el estilo del laboratorio 11 y conserva las cuatro capas. `HekDesk.Application` es el nombre físico del proyecto; el namespace es `HelpDesk.Application`. La base PostgreSQL sigue usando las mismas 36 tablas y 2 vistas; no hace falta recrearla por esta reorganización.
 
-## Cómo iniciar
+## Instalación y administrador inicial
 
-1. Abrir `HelpDeskBackend.sln` en Rider.
-2. La conexión `ConnectionStrings:DefaultConnection` y la clave JWT están configuradas en User Secrets de la API. No se incluyen credenciales en el código.
-3. Crear el primer administrador desde la carpeta de la solución:
+Seguir los pasos de [DISTRIBUCION_EQUIPO.md](DISTRIBUCION_EQUIPO.md): PostgreSQL, SQL inicial, User Secrets y compilación. Con la API detenida y desde `HelpDeskBackend`, crear una sola vez por base el administrador:
 
 ```powershell
 .\scripts\Crear-Administrador.ps1 -NombreUsuario admin -Correo tu-correo@dominio.com
-```
-
-El script pide una clave oculta de al menos 10 caracteres. Solo permite inicializar el administrador cuando todavía no existe uno. No hay contraseña predeterminada ni endpoint público de administrador.
-
-4. Ejecutar la API:
-
-```powershell
 dotnet run --project HelpDesk.Api --launch-profile http
 ```
 
-5. Abrir `http://localhost:5014/` para Swagger. Iniciar sesión con `POST /api/auth/login` y pegar el token en **Authorize**.
+El script pide una contraseña oculta, la guarda como hash y asigna el rol administrador. No es el procedimiento para cada usuario ni debe ejecutarse en cada arranque. Si ya existe un administrador, se utilizan las operaciones administrativas de la API.
 
-## Orden para probar el negocio
+Abrir `http://localhost:5014/`, iniciar sesión en `POST /api/auth/login` y pegar `data.token` en Authorize. El registro público `POST /api/auth/registro` solo crea empleados. El administrador completa su área en Usuarios y asigna otros roles en UsuariosRoles. Las altas administrativas de Usuarios no asignan roles automáticamente.
 
-Crear sede y área; asignar un área al empleado; crear equipo y sus integrantes; configurar las políticas de atención; crear un servicio. Después registrar un ticket.
+## Organización y persistencia
 
-El registro público asigna únicamente el rol empleado y no permite elegir área, roles ni permisos. El administrador completa el área desde Usuarios. Las altas administrativas de usuarios requieren asignar los roles mediante UsuariosRoles.
+- `Application/UseCases/{Entidad}/Commands`: escrituras y sus handlers, con lógica propia.
+- `Application/UseCases/{Entidad}/Queries`: consultas y sus handlers, con filtros LINQ y proyección.
+- `Application/Dtos/{Entidad}`: DTOs de entrada y salida, cada uno en su propio archivo.
+- `Application/Dtos/Common`: ResponseDto, PaginaDto, ListOptions y respuestas compartidas, separados.
+- `Application/Common`: validación básica; `Application/Security`: reglas de acceso y alta inicial.
+- `Domain/Ports`: interfaces de repositorio, UnitOfWork y seguridad.
+- `Infrastructure`: contexto, repositorios, UnitOfWork, JWT y hash de contraseñas.
 
-El administrador configura la plataforma. Para trabajar como técnico, coordinador o aprobador se le asigna también ese rol expresamente. Un técnico puede tener además el rol coordinador.
+El repositorio ofrece GetAllAsync, GetByIdAsync, FirstOrDefaultAsync, AddAsync, Update, Delete y Query. Query permite escribir consultas LINQ en el caso de uso. Application utiliza las extensiones ToListAsync y CountAsync de EF Core para ejecutar esas consultas. Las interfaces y los modelos siguen en Domain.
 
-## Qué significa CQRS aquí
+UnitOfWork solo obtiene repositorios y confirma cambios con `await _unitOfWork.Complete()`. EF ejecuta SaveChangesAsync internamente y guarda las modificaciones de esa llamada en una transacción. No hay un motor de auditoría ni envoltorios de transacciones en UnitOfWork. Las entidades cargadas mediante GetByIdAsync quedan seguidas por EF, por lo que sus modificaciones se guardan con Complete() sin llamar obligatoriamente a Update().
 
-Cada recurso tiene comandos de escritura y consultas de lectura con sus handlers en Application. Los controladores llaman a MediatR y devuelven el resultado. Repository y Unit of Work implementan la persistencia en Infrastructure.
+La excepción al repositorio sin parámetros son RolesPermisos, TicketsActivos, ProblemasTickets y CambiosTickets: el scaffolding las representa como diccionarios compartidos y por eso Repository recibe el nombre del conjunto en esos casos.
 
-Ejemplo: `CrearSedesCommand -> CrearSedesCommandHandler -> IUnitOfWork -> GenericRepository -> PostgreSQL`.
+En los handlers, CancellationToken aparece únicamente como parámetro obligatorio de Handle. No se comprueba ni se pasa a las operaciones. Cada Handle maneja BusinessException y registra errores inesperados; el middleware sirve como respaldo. No hay un servicio CRUD genérico que ejecute los casos de uso.
 
-Cada comando y consulta implementa su caso de uso en su propio handler: validaciones de negocio, filtros LINQ, proyección al DTO y guardado cuando corresponde. No hay CrudService ni clases Definition. La seguridad compartida sigue centralizada para mantener iguales los controles de acceso.
+## CRUD por recurso
 
-## DTOs y respuestas
-
-Los DTOs están en `Application/UseCases/{Recurso}/Dtos`. Los de entrada no incluyen todos los campos de la tabla: autores, hashes, estados controlados y fechas se establecen en el servidor.
-
-Formato de respuesta:
-
-```json
-{"statusCode": 200, "data": {"items": [], "pagina": 1, "tamano": 20, "total": 0}, "mensaje": null}
-```
-
-Los listados aceptan `pagina`, `tamano` (1 a 100), `buscar` y, cuando corresponde, `estado` o `idTicket`. Las rutas por clave compuesta incluyen ambas claves, en el orden de la tabla siguiente.
-
-## Endpoints por recurso
-
-El CRUD se ofrece donde tiene sentido. Las relaciones sin datos editables se agregan y quitan; no tienen un PUT ficticio. Historial y auditoría se conservan; las vistas se consultan.
+Los listados usan pagina, tamano (1–100), buscar y los filtros aplicables. Las relaciones con clave compuesta reciben ambas claves. Las restricciones de PostgreSQL y las reglas de acceso siguen vigentes.
 
 | Recurso | Claves de ruta | Métodos |
 |---|---|---|
@@ -95,81 +78,42 @@ El CRUD se ofrece donde tiene sentido. Las relaciones sin datos editables se agr
 | ProblemasTickets | IdProblema, IdTicket | GET listado, GET por clave, POST, DELETE |
 | CambiosTickets | IdCambio, IdTicket | GET listado, GET por clave, POST, DELETE |
 
-Las rutas tienen el prefijo `/api/`. Los roles y permisos concretos se comprueban en el servidor. Las operaciones administrativas no se habilitan por tener cualquier token.
 
-## Acciones adicionales
+## Operaciones adicionales conservadas
 
-- Tickets: `asignar`, `iniciar`, `esperar`, `reanudar`, `resolver`, `cerrar`, `reabrir`, `cancelar`.
-- Aprobaciones: `aprobar`, `rechazar`, en orden y solo por el aprobador asignado.
-- AsignacionesActivos: `devolver`, conservando las asignaciones anteriores.
-- ArticulosConocimiento: `publicar`, `archivar`.
-- Cambios: `programar`, `ejecutar`, `finalizar`, con aprobación y tareas completas cuando corresponda.
-- Usuarios: `activar`, `desactivar`; se conserva al menos un administrador activo.
-- Notificaciones: `marcar-leida`, solo para el destinatario.
-- EnviosNotificaciones: `reintentar`, dentro del límite de intentos.
-- Reportes: `GET /api/Reportes/indicadores`, además de las dos vistas.
+- Tickets: asignar, iniciar, resolver y cerrar.
+- Usuarios: activar y desactivar, conservando un administrador activo.
+- Aprobaciones: aprobar y rechazar por el aprobador asignado; se conserva el orden de decisión.
+- AsignacionesActivos: devolver un activo antes de volver a asignarlo.
+- Notificaciones: marcar-leida por su destinatario.
+- Autenticación: registro, login y cambiar-clave.
+- Reportes: GET /api/Reportes/indicadores y consultas de las dos vistas.
 
-Ejemplo de acción: `POST /api/Tickets/{id}/resolver`:
+Flujo básico: configurar sede, área, equipo e integrantes, servicio y política de atención; asignar área al empleado; crear ticket → asignar técnico → iniciar → resolver → cerrar. Para atender como técnico o decidir como aprobador se necesita el rol y los permisos correspondientes.
+
+Cada acción de ticket recibe la última version consultada. Ejemplo de resolver:
 
 ```json
 {"version": 3, "motivo": "Se corrigió la configuración de red."}
 ```
 
-La versión debe ser la obtenida en la última consulta. Una modificación concurrente devuelve 409. Para asignar se incluyen también `idEquipo` e `idTecnico`. La asignación, el historial y el ticket se guardan juntos.
+La primera asignación completa el registro inicial del ticket. Esta versión no ofrece reasignación. Las acciones actualizan el historial y la versión del ticket, sin generar avisos automáticamente. El cierre finaliza la asignación vigente. Los tiempos se calculan en minutos corridos.
 
-## Autenticación y middleware
+## Seguridad y límites
 
-- JWT firmado con HS256, duración de 30 minutos y validación de firma, emisor, audiencia y vencimiento.
-- Contraseñas con `PasswordHasher`; no se admiten claves heredadas en texto plano.
-- Cuenta activa, roles y permisos se vuelven a verificar en cada petición autenticada.
-- Cambiar o restablecer la contraseña invalida los tokens anteriores de esa cuenta.
-- Registro, login y restablecimiento tienen un límite de 20 peticiones por minuto por IP en esta instancia.
-- Middleware central de excepciones: errores controlados 400/401/403/404/409 y errores inesperados 500 con referencia de seguimiento, sin detalles internos en la respuesta.
-- Los DTOs generales no exponen hashes, resúmenes de tokens, rutas internas ni errores del proveedor de correo.
+Se conservan JWT HS256 de 30 minutos, contraseñas con PasswordHasher, comprobación de cuenta activa, roles y permisos, aislamiento de tickets por usuario y protección de datos sensibles mediante DTOs. Cambiar la contraseña invalida los tokens anteriores. Registro y login tienen un límite de intentos por IP.
 
-La recuperación se emite mediante `POST /api/auth/recuperacion/{idUsuario}`, solo para administración. Devuelve un token temporal una única vez para entregarlo por un canal verificado. `POST /api/auth/restablecer-clave` recibe `token` y `claveNueva`. No se afirma enviar un correo: todavía no hay proveedor de correo integrado.
+Para una segunda versión quedan: recuperación de contraseña, espera/reanudación/reapertura/cancelación y reasignación de tickets, programación/ejecución/finalización de cambios, publicación/archivo de conocimiento, reintentos de correo y auditoría automática. Las tablas, modelos y consultas correspondientes se conservan para evolucionar después; pueden estar vacíos. Los artículos y cambios nuevos se administran como borradores. Vincular un artículo a un ticket exige que ya esté publicado; ese flujo completo queda para v2.
 
-## Límites de esta primera entrega
+Tampoco se incluye frontend, proveedor de correo, subida física de archivos, calendario laboral ni refresh tokens. Adjuntos administra metadatos. El flujo básico de tickets no se bloquea por el motor avanzado de aprobaciones, que queda para otra entrega; las aprobaciones se administran por separado.
 
-- No hay frontend, subida/descarga física de archivos ni proveedor de correo. Adjuntos maneja metadatos; los correos no se envían automáticamente.
-- Los plazos SLA son minutos corridos. No hay calendarios laborales ni pausas que suspendan el reloj.
-- Se permite reabrir un ticket resuelto antes de confirmar el cierre; no se reabren tickets ya cerrados. Los plazos originales se conservan.
-- La administración de catálogos, relaciones e inventario usa permisos administrativos. El personal tiene las consultas y acciones operativas autorizadas; ampliar la delegación requiere definir permisos adicionales.
-- No se implementó refresh token ni un proveedor OAuth/OIDC externo. Este login local con JWT corresponde al proyecto académico.
-- La auditoría registra operación, entidad, actor y fecha sin copiar valores sensibles. No sustituye un sistema externo inmutable de auditoría.
-- Los dos índices de usuario y correo con `lower(...)` siguen en PostgreSQL aunque EF no los represente.
+## Scaffolding y pruebas
 
-## Regeneración del modelo
-
-El esquema se administra con SQL y el scaffolding se regenera mediante `scripts/Actualizar-Modelo.ps1`. Las correcciones y tokens de concurrencia están en `HelpDeskDbContext.Custom.cs` para que no se pierdan al regenerar.
-
-El scaffolding interpretó los índices únicos parciales de asignaciones como relaciones 1:1; el archivo parcial corrige esas relaciones a 1:N conservando la restricción SQL de una asignación vigente.
-
-## Verificación reproducible
+Los modelos ya están incluidos. Regenerar solo si cambia el SQL, mediante scripts/Actualizar-Modelo.ps1, conservando HelpDeskDbContext.Custom.cs con las correcciones de relaciones y concurrencia.
 
 ```powershell
 dotnet build HelpDeskBackend.sln
 dotnet run --project tests/HelpDesk.IntegrationTests
 ```
 
-Las pruebas requieren permiso para crear una base temporal en el mismo servidor. Crean una base con prefijo `helpdesk_test_`, aplican únicamente el esquema y sus catálogos, levantan una API temporal en un puerto libre y eliminan esa base al terminar. No insertan ni modifican datos en `helpdeskdb`.
-
-Incluyen consulta de los 38 recursos, CRUD, permisos, aislamiento por usuario, JWT inválido, contraseñas, recuperación, flujo de tickets, notas internas, concurrencia, aprobaciones, activos y cambios.
-
-Total de rutas HTTP declaradas en esta versión: **178**.
-
-## Organizacion de procesos actualizada
-
-Se retiro la carpeta Workflows. Cada accion tiene su Command y Handler en UseCases/{Recurso}/Commands; por ejemplo ResolverTicketCommand contiene sus validaciones, actualizacion, historial y notificacion. Las consultas de indicadores estan en UseCases/Reportes/Queries. Las validaciones de negocio del CRUD estan en cada handler; se retiro Common/ReglasRecursos.cs. Los controladores de acciones envian comandos concretos y conservan las mismas rutas HTTP.
-
-## Responsabilidad unica en los casos de uso
-
-Cada handler tiene la responsabilidad de ejecutar un caso de uso concreto. CrearSedes no cambia cuando se modifica la forma de resolver un ticket. El controlador solo traduce la peticion HTTP y envia el comando; Infrastructure se ocupa del acceso a PostgreSQL. No es necesario que una clase tenga una sola linea o un solo metodo para cumplir responsabilidad unica. Se conserva codigo comun para contratos de respuesta, validacion basica y seguridad transversal; no para decidir ni ejecutar el CRUD de distintas entidades.
-
-Los handlers de autenticacion tambien contienen sus propias operaciones. AuthService queda limitado al alta inicial de un administrador por consola. JWT, hashing y persistencia siguen detras de interfaces, sin copiar algoritmos criptograficos a los casos de uso.
-
-## Confirmacion de cambios y errores por handler
-
-Todos los comandos y consultas contienen try/catch en su Handle. BusinessException produce un ResponseDto con el estado esperado; OperationCanceledException se propaga; los errores inesperados se registran con ILogger y devuelven un mensaje generico 500. El middleware queda como respaldo para excepciones fuera de los handlers.
-
-Las entidades se consultan y modifican mediante _unitOfWork.Repository<T>(). El handler confirma las escrituras con await _unitOfWork.Complete(ct); Complete ejecuta SaveChangesAsync internamente en Infrastructure, conserva la auditoria y traduce conflictos de persistencia. Las consultas no invocan Complete. Los procesos que necesitan varios guardados conservan una transaccion que se revierte antes de devolver un error.
+La suite prueba las consultas de recursos, CRUD, permisos, aislamiento, JWT, hash, cambio de contraseña, concurrencia y el flujo básico de tickets. Crea una base temporal helpdesk_test_* y la elimina al terminar; necesita permiso para crearla y no modifica helpdeskdb.

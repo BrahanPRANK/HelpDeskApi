@@ -1,26 +1,27 @@
 using HelpDesk.Application.UseCases.CategoriasServicios;
-using HelpDesk.Application.UseCases.CategoriasServicios.Dtos;
+using HelpDesk.Application.Dtos.CategoriasServicios;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace HelpDesk.Api.Controllers;
+
 [ApiController, Route("api/CategoriasServicios"), Authorize]
 public sealed class CategoriasServiciosController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] int pagina = 1, [FromQuery] int tamano = 20, [FromQuery] string? buscar = null, [FromQuery] string? estado = null, [FromQuery] Guid? idTicket = null, CancellationToken ct = default)
-    { var result = await mediator.Send(new ListarCategoriasServiciosQuery(new(pagina, tamano, buscar, estado, idTicket)), ct); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> List([FromQuery] int pagina = 1, [FromQuery] int tamano = 20, [FromQuery] string? buscar = null, [FromQuery] string? estado = null, [FromQuery] Guid? idTicket = null)
+    { var result = await mediator.Send(new ListarCategoriasServiciosQuery(new(pagina, tamano, buscar, estado, idTicket))); return StatusCode(result.StatusCode, result); }
     [HttpGet("{idCategoriaServicio:guid}")]
-    public async Task<IActionResult> Get(Guid idCategoriaServicio, CancellationToken ct)
-    { var result = await mediator.Send(new ObtenerCategoriasServiciosQuery([idCategoriaServicio]), ct); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Get(Guid idCategoriaServicio)
+    { var result = await mediator.Send(new ObtenerCategoriasServiciosQuery([idCategoriaServicio])); return StatusCode(result.StatusCode, result); }
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] CategoriasServiciosInputDto datos, CancellationToken ct)
-    { var result = await mediator.Send(new CrearCategoriasServiciosCommand(datos), ct); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Crear([FromBody] CategoriasServiciosInputDto datos)
+    { var result = await mediator.Send(new CrearCategoriasServiciosCommand(datos)); return StatusCode(result.StatusCode, result); }
     [HttpPut("{idCategoriaServicio:guid}")]
-    public async Task<IActionResult> Actualizar(Guid idCategoriaServicio, [FromBody] CategoriasServiciosInputDto datos, CancellationToken ct)
-    { var result = await mediator.Send(new ActualizarCategoriasServiciosCommand([idCategoriaServicio], datos), ct); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Actualizar(Guid idCategoriaServicio, [FromBody] CategoriasServiciosInputDto datos)
+    { var result = await mediator.Send(new ActualizarCategoriasServiciosCommand([idCategoriaServicio], datos)); return StatusCode(result.StatusCode, result); }
     [HttpDelete("{idCategoriaServicio:guid}")]
-    public async Task<IActionResult> Eliminar(Guid idCategoriaServicio, CancellationToken ct)
-    { var result = await mediator.Send(new EliminarCategoriasServiciosCommand([idCategoriaServicio]), ct); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> Eliminar(Guid idCategoriaServicio)
+    { var result = await mediator.Send(new EliminarCategoriasServiciosCommand([idCategoriaServicio])); return StatusCode(result.StatusCode, result); }
 
 }

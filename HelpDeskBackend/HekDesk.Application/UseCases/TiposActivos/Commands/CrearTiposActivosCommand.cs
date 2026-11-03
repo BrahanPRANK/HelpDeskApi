@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.TiposActivos.Dtos;
+using HelpDesk.Application.Dtos.TiposActivos;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,14 +17,26 @@ internal sealed class CrearTiposActivosCommandHandler(IUnitOfWork _unitOfWork, A
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=new global::HelpDesk.Domain.Models.TiposActivos() { IdTipoActivo = Guid.NewGuid(), Nombre = input.Nombre, Descripcion = input.Descripcion, Activo = input.Activo };
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = new global::HelpDesk.Domain.Models.TiposActivos()
+            {
+                IdTipoActivo = Guid.NewGuid(),
+                Nombre = input.Nombre,
+                Descripcion = input.Descripcion,
+                Activo = input.Activo
+            };
 
-            _unitOfWork.Repository<global::HelpDesk.Domain.Models.TiposActivos>(null).Add(entity);
-            await _unitOfWork.Complete(ct);
-            return new(201,new TiposActivosResponseDto { IdTipoActivo = entity.IdTipoActivo, Nombre = entity.Nombre, Descripcion = entity.Descripcion, Activo = entity.Activo },"Registro creado.");
+            await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TiposActivos>().AddAsync(entity);
+            await _unitOfWork.Complete();
+            return new(201, new TiposActivosResponseDto
+            {
+                IdTipoActivo = entity.IdTipoActivo,
+                Nombre = entity.Nombre,
+                Descripcion = entity.Descripcion,
+                Activo = entity.Activo
+            }, "Registro creado.");
         }
         catch (BusinessException ex)
         {
@@ -31,11 +44,7 @@ internal sealed class CrearTiposActivosCommandHandler(IUnitOfWork _unitOfWork, A
                 _logger.LogError(ex, "Error controlado en CrearTiposActivosCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar CrearTiposActivosCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

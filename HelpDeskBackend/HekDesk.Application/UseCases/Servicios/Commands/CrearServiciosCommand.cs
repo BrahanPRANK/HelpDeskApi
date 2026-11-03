@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Servicios.Dtos;
+using HelpDesk.Application.Dtos.Servicios;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,14 +17,32 @@ internal sealed class CrearServiciosCommandHandler(IUnitOfWork _unitOfWork, Acce
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=new global::HelpDesk.Domain.Models.Servicios() { IdServicio = Guid.NewGuid(), IdEquipoResponsable = input.IdEquipoResponsable, Nombre = input.Nombre, IdCategoriaServicio = input.IdCategoriaServicio, Descripcion = input.Descripcion, RequiereAprobacion = input.RequiereAprobacion, Activo = input.Activo };
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = new global::HelpDesk.Domain.Models.Servicios()
+            {
+                IdServicio = Guid.NewGuid(),
+                IdEquipoResponsable = input.IdEquipoResponsable,
+                Nombre = input.Nombre,
+                IdCategoriaServicio = input.IdCategoriaServicio,
+                Descripcion = input.Descripcion,
+                RequiereAprobacion = input.RequiereAprobacion,
+                Activo = input.Activo
+            };
 
-            _unitOfWork.Repository<global::HelpDesk.Domain.Models.Servicios>(null).Add(entity);
-            await _unitOfWork.Complete(ct);
-            return new(201,new ServiciosResponseDto { IdServicio = entity.IdServicio, IdEquipoResponsable = entity.IdEquipoResponsable, Nombre = entity.Nombre, IdCategoriaServicio = entity.IdCategoriaServicio, Descripcion = entity.Descripcion, RequiereAprobacion = entity.RequiereAprobacion, Activo = entity.Activo },"Registro creado.");
+            await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Servicios>().AddAsync(entity);
+            await _unitOfWork.Complete();
+            return new(201, new ServiciosResponseDto
+            {
+                IdServicio = entity.IdServicio,
+                IdEquipoResponsable = entity.IdEquipoResponsable,
+                Nombre = entity.Nombre,
+                IdCategoriaServicio = entity.IdCategoriaServicio,
+                Descripcion = entity.Descripcion,
+                RequiereAprobacion = entity.RequiereAprobacion,
+                Activo = entity.Activo
+            }, "Registro creado.");
         }
         catch (BusinessException ex)
         {
@@ -31,11 +50,7 @@ internal sealed class CrearServiciosCommandHandler(IUnitOfWork _unitOfWork, Acce
                 _logger.LogError(ex, "Error controlado en CrearServiciosCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar CrearServiciosCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

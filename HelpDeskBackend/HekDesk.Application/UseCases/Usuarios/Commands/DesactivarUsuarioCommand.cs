@@ -1,3 +1,5 @@
+using HelpDesk.Application.Dtos.Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
@@ -17,12 +19,13 @@ internal sealed class DesactivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, A
         try
         {
             Validation.Check(r.Datos);
-            var result="completado";
+            var result = "completado";
             access.Permission("usuarios.administrar");
-            var user=await Required<global::HelpDesk.Domain.Models.Usuarios>(r.Id,ct);
-            await EnsureNotLastAdmin(user.IdUsuario,ct);
-            user.Activo=false;result=user.Activo?"activo":"inactivo";
-            await _unitOfWork.Complete(ct);
+            var user = await Required<global::HelpDesk.Domain.Models.Usuarios>(r.Id);
+            await EnsureNotLastAdmin(user.IdUsuario);
+            user.Activo = false;
+            result = user.Activo ? "activo" : "inactivo";
+            await _unitOfWork.Complete();
             return new(200, new(r.Id, result));
         }
         catch (BusinessException ex)
@@ -31,25 +34,21 @@ internal sealed class DesactivarUsuarioCommandHandler(IUnitOfWork _unitOfWork, A
                 _logger.LogError(ex, "Error controlado en DesactivarUsuarioCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar DesactivarUsuarioCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");
         }
     }
 
-    private async Task<T> Required<T>(Guid id, CancellationToken ct) where T : class =>
-        await _unitOfWork.Repository<T>().FindAsync([id], ct) ?? throw new BusinessException(404, "Registro relacionado no encontrado.");
-    private async Task EnsureNotLastAdmin(Guid userId,CancellationToken ct)
+    private async Task<T> Required<T>(Guid id) where T : class =>
+        await _unitOfWork.Repository<T>().GetByIdAsync([id]) ?? throw new BusinessException(404, "Registro relacionado no encontrado.");
+    private async Task EnsureNotLastAdmin(Guid userId)
     {
-        var roleIds=_unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().Query().Where(r=>r.Nombre=="administrador").Select(r=>r.IdRol);
-        if(!_unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().Query().Any(r=>r.IdUsuario==userId && roleIds.Contains(r.IdRol)))return;
-        var others=_unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().Query().Where(r=>roleIds.Contains(r.IdRol) && r.IdUsuario!=userId).Select(r=>r.IdUsuario);
-        Validation.Require(await _unitOfWork.CountAsync(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().Query().Where(u=>u.Activo && others.Contains(u.IdUsuario)),ct)>0,
-            "Debe conservarse al menos un administrador activo.",409);
+        var roleIds = _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().Query().Where(r => r.Nombre == "administrador").Select(r => r.IdRol);
+        if (!_unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().Query().Any(r => r.IdUsuario == userId && roleIds.Contains(r.IdRol))) return;
+        var others = _unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().Query().Where(r => roleIds.Contains(r.IdRol) && r.IdUsuario != userId).Select(r => r.IdUsuario);
+        Validation.Require(await (_unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().Query().Where(u => u.Activo && others.Contains(u.IdUsuario))).CountAsync() > 0,
+            "Debe conservarse al menos un administrador activo.", 409);
     }
 }

@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Roles.Dtos;
+using HelpDesk.Application.Dtos.Roles;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,14 +17,14 @@ internal sealed class EliminarRolesCommandHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            Validation.Require(!new[]{"administrador","empleado","tecnico","coordinador","aprobador"}.Contains(entity.Nombre),"Los roles base se conservan.",409);
-            _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>(null).Remove(entity);
-            await _unitOfWork.Complete(ct);
-            return new(200,new(true),"Registro eliminado.");
+            Validation.Require(!new[] { "administrador", "empleado", "tecnico", "coordinador", "aprobador" }.Contains(entity.Nombre), "Los roles base se conservan.", 409);
+            _unitOfWork.Repository<global::HelpDesk.Domain.Models.Roles>(null).Delete(entity);
+            await _unitOfWork.Complete();
+            return new(200, new(true), "Registro eliminado.");
         }
         catch (BusinessException ex)
         {
@@ -31,11 +32,7 @@ internal sealed class EliminarRolesCommandHandler(IUnitOfWork _unitOfWork, Acces
                 _logger.LogError(ex, "Error controlado en EliminarRolesCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar EliminarRolesCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

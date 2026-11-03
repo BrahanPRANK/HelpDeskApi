@@ -1,3 +1,4 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
@@ -17,13 +18,14 @@ internal sealed class DevolverActivoCommandHandler(IUnitOfWork _unitOfWork, Acce
         try
         {
             Validation.Check(r.Datos);
-            var result="completado";
+            var result = "completado";
             access.Permission("activos.administrar");
-            var assignment=await Required<global::HelpDesk.Domain.Models.AsignacionesActivos>(r.Id,ct);
-            Validation.Require(assignment.FechaDevolucion is null,"Ya fue devuelto.",409);
-            assignment.FechaDevolucion=DateTime.UtcNow;
-            (await Required<global::HelpDesk.Domain.Models.Activos>(assignment.IdActivo,ct)).Estado="disponible";result="devuelto";
-            await _unitOfWork.Complete(ct);
+            var assignment = await Required<global::HelpDesk.Domain.Models.AsignacionesActivos>(r.Id);
+            Validation.Require(assignment.FechaDevolucion is null, "Ya fue devuelto.", 409);
+            assignment.FechaDevolucion = DateTime.UtcNow;
+            (await Required<global::HelpDesk.Domain.Models.Activos>(assignment.IdActivo)).Estado = "disponible";
+            result = "devuelto";
+            await _unitOfWork.Complete();
             return new(200, new(r.Id, result));
         }
         catch (BusinessException ex)
@@ -32,17 +34,13 @@ internal sealed class DevolverActivoCommandHandler(IUnitOfWork _unitOfWork, Acce
                 _logger.LogError(ex, "Error controlado en DevolverActivoCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar DevolverActivoCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");
         }
     }
 
-    private async Task<T> Required<T>(Guid id, CancellationToken ct) where T : class =>
-        await _unitOfWork.Repository<T>().FindAsync([id], ct) ?? throw new BusinessException(404, "Registro relacionado no encontrado.");
+    private async Task<T> Required<T>(Guid id) where T : class =>
+        await _unitOfWork.Repository<T>().GetByIdAsync([id]) ?? throw new BusinessException(404, "Registro relacionado no encontrado.");
 }

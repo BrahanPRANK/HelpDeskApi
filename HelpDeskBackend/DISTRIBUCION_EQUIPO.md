@@ -1,12 +1,24 @@
 # Distribución del proyecto HelpDesk entre seis integrantes
 
-**Actualización:** 2 de noviembre de 2026. **Alcance:** 36 tablas, 2 vistas, autenticación y reportes.
+**Actualización:** 3 de noviembre de 2026. **Alcance:** 36 tablas, 2 vistas, autenticación y reportes.
 
 Este es el reparto vigente. Sustituye al de ocho integrantes. El equipo actual es Diego Medina, Gianfranco Paolo, Fernando Aquima, Stiven Yerai, Ederson Vilca y Brahan Quispe. Las responsabilidades que quedaron libres se redistribuyen a continuación.
 
 **Aclaración sobre servicios:** Brahan se encarga de los servicios técnicos de `HelpDesk.Infrastructure/Services` y sus interfaces de Domain. La entidad de negocio `Servicios` (catálogo de atenciones) corresponde a Ederson. Son responsabilidades distintas.
 
-**Repositorio de este documento:** plantilla completa `BrahanPRANK/HelpDeskApi`. El repositorio de trabajo del equipo es `brahanquispedev/HelpDeskApi`; esta actualización documental se publica únicamente en la plantilla.
+**Repositorio de este documento:** plantilla completa `BrahanPRANK/HelpDeskApi`. El repositorio de trabajo del equipo es `brahanquispedev/HelpDeskApi`; esta simplificación se publica únicamente en la plantilla.
+
+## Primera entrega simplificada — 3 de noviembre de 2026
+
+Esta plantilla se adapta al estilo del laboratorio 11. El reparto de entidades entre seis integrantes se mantiene; cada uno incorpora solamente los archivos del alcance actual. Las funciones que se describían antes como publicación de artículos, recuperación de contraseña, programación de cambios y reapertura de tickets quedan para una segunda entrega.
+
+- Los casos de uso están en `HekDesk.Application/UseCases/{Entidad}/Commands` y `Queries`.
+- Todos los DTOs están en `HekDesk.Application/Dtos/{Entidad}/`, uno por archivo. Los compartidos están en `Dtos/Common/` y los de acceso en `Dtos/Autenticacion/`.
+- Los handlers contienen su lógica y `try/catch`. `CancellationToken` solo se declara en `Handle` para cumplir la interfaz de MediatR; no se utiliza ni se pasa al repositorio.
+- `IUnitOfWork` ofrece `Repository<T>()` y `Complete()`. Los repositorios exponen operaciones básicas; cada escritura se confirma desde el handler. No hay auditoría automática dentro de UnitOfWork.
+- Se conserva el flujo de tickets: crear → asignar → iniciar → resolver → cerrar. No se implementa reasignación en esta entrega.
+
+El inventario exacto de archivos que corresponde copiar está en [PRIMER_AVANCE.md](PRIMER_AVANCE.md). La instalación sigue en los pasos siguientes.
 
 ## Guía inicial: instalar y ejecutar el proyecto en otra computadora
 
@@ -38,12 +50,12 @@ Debe aparecer un SDK `10.0.xxx`. Si no aparece, instalar el SDK y volver a abrir
 
 ### 2. Abrir la solución y restaurar las librerías
 
-Obtener el proyecto del repositorio o de la carpeta compartida acordada. No se fija una URL de Git porque el remoto aún debe confirmarse con el equipo.
+La referencia está en `https://github.com/BrahanPRANK/HelpDeskApi`. El trabajo del equipo se sube a `https://github.com/brahanquispedev/HelpDeskApi`; copiar allí solamente los archivos asignados y adaptar los nombres de los proyectos.
 
 Entrar en la carpeta que contiene `HelpDeskBackend.sln`. Cambiar esta ruta si el proyecto se descargó en otro lugar:
 
 ```powershell
-cd C:UsersASUSDocumentsHelpDeskHelpDeskBackend
+cd C:\Users\ASUS\Documents\HelpDesk\HelpDeskBackend
 dotnet restore HelpDeskBackend.sln
 dotnet build HelpDeskBackend.sln
 ```
@@ -170,7 +182,7 @@ Si es una versión superior usada por otros proyectos, coordinar una herramienta
 **Detener la API antes de regenerar.** Desde la carpeta de la solución:
 
 ```powershell
-.scriptsActualizar-Modelo.ps1 -Sobrescribir
+.\scripts\Actualizar-Modelo.ps1 -Sobrescribir
 ```
 
 El script activa Development temporalmente y utiliza la conexión por nombre. Equivale a seleccionar:
@@ -192,18 +204,24 @@ Es normal que el generador avise que no representa los índices de usuario y cor
 El SQL crea los nombres de roles y permisos, **pero no crea cuentas ni contraseñas**. Ejecutar una vez por base, con la API detenida:
 
 ```powershell
-.scriptsCrear-Administrador.ps1 -NombreUsuario admin -Correo tu-correo@dominio.com
+.\scripts\Crear-Administrador.ps1 -NombreUsuario admin -Correo tu-correo@dominio.com
 ```
 
 Usar un correo propio de desarrollo. El script pedirá una contraseña oculta de al menos 10 caracteres y la guardará como hash mediante .NET. Si ya existe un administrador, el script no crea otro: se utilizan las operaciones administrativas de la API.
+
+**¿Por qué se usa un comando?** La base empieza sin usuarios. Hace falta crear al primer administrador para que luego pueda configurar áreas, usuarios y roles. El script es un paso de instalación local: no se ejecuta cada vez que inicia la API ni para registrar a cada usuario. `AuthService.Bootstrap` agrega la cuenta y su relación con el rol administrador mediante el repositorio y un único `Complete()`.
+
+**Después de crearlo:** iniciar sesión en `POST /api/auth/login` con esa cuenta y usar su JWT. El hash guarda una representación segura de la contraseña; el JWT identifica las peticiones posteriores. El script no entrega un JWT ni permite iniciar sesión directamente.
+
+**Para los demás usuarios:** `POST /api/auth/registro` crea empleados. El administrador asigna el área mediante Usuarios y otros roles mediante UsuariosRoles. Las altas en `POST /api/Usuarios` también son administrativas y necesitan asignación de rol; no deben confundirse con el registro público. Nadie puede elegir ser administrador desde el registro público.
 
 La contraseña de esta cuenta **no es la contraseña de PostgreSQL**. Una sirve para entrar a HelpDesk y la otra para que el backend se conecte al servidor.
 
 Si PowerShell bloquea scripts descargados, revisar los archivos y desbloquear solo los scripts del proyecto:
 
 ```powershell
-Unblock-File .scriptsActualizar-Modelo.ps1
-Unblock-File .scriptsCrear-Administrador.ps1
+Unblock-File .\scripts\Actualizar-Modelo.ps1
+Unblock-File .\scripts\Crear-Administrador.ps1
 ```
 
 Si la política de la computadora sigue impidiendo scripts, coordinarlo con el administrador del equipo. No hace falta cambiar permanentemente la política global para compilar el proyecto.
@@ -296,7 +314,7 @@ Cada tabla o vista tiene un solo responsable funcional. `CargaTecnicos` y `Resum
 
 Por cada entidad asignada, el responsable incorpora al repositorio de trabajo:
 
-1. `Application/UseCases/{Entidad}/`: comandos, consultas, handlers y DTOs de su entidad.
+1. `Application/UseCases/{Entidad}/`: comandos, consultas y handlers de su entidad. Además, subir `Application/Dtos/{Entidad}/`, un DTO por archivo.
 2. Los controladores CRUD y de acciones correspondientes en el proyecto API.
 3. Pruebas y ejemplos de peticiones que demuestren su parte.
 4. Ajustes de modelo necesarios, coordinados con Brahan; los modelos generados ya pertenecen a la base común.
@@ -313,7 +331,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 
 **Responsabilidad funcional:**
 
-- Registro e inicio de sesión, cambio y restablecimiento de contraseña.
+- Registro e inicio de sesión y cambio de contraseña. Recuperación queda para una segunda versión.
 - Administración de cuentas, roles y permisos; conservar un administrador activo.
 - Consumir las interfaces de contraseña y JWT; coordinar con Brahan sus implementaciones de Infrastructure.
 
@@ -331,7 +349,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 **Además sube:**
 
 - `HekDesk.Application/UseCases/Autenticacion/Commands/`.
-- `HekDesk.Application/Security/AutenticacionDtos.cs` y `AuthService.cs` (alta inicial por consola).
+- `HekDesk.Application/Dtos/Autenticacion/` y `HekDesk.Application/Security/AuthService.cs` (alta inicial por consola).
 - `HelpDesk.Api/Controllers/AuthController.cs` y `HelpDesk.Api/Security/CurrentUser.cs`.
 - `HekDesk.Application/Security/AccessRules.cs` y `scripts/Crear-Administrador.ps1`, coordinando su integración.
 - Diego define y prueba el flujo de acceso. Brahan sube las implementaciones técnicas `PasswordService`, `JwtService` y sus interfaces; no se duplican esos archivos.
@@ -340,7 +358,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 
 - Registro solo como empleado, login correcto e incorrecto.
 - Denegar cambios de roles por un empleado y comprobar cuenta inactiva.
-- Restablecer contraseña una sola vez e invalidar el token de sesión anterior.
+- Cambiar la contraseña con la clave actual e invalidar el token de sesión anterior.
 
 ### 2. Gianfranco Paolo — Cambios, aprobaciones y problemas recurrentes
 
@@ -348,7 +366,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 
 **Responsabilidad funcional:**
 
-- Planificar, programar, ejecutar y finalizar cambios con sus tareas.
+- Crear, consultar y actualizar cambios en borrador y sus tareas. La programación, ejecución y finalización quedan para v2.
 - Decidir aprobaciones en orden y por el aprobador asignado.
 - Investigar fallas recurrentes, documentar causa raíz y relacionar incidentes con problemas.
 
@@ -356,7 +374,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 
 | Entidad | Casos de uso completos | Controladores | Modelo de referencia |
 |---|---|---|
-| `Cambios` | `HekDesk.Application/UseCases/Cambios/` | `CambiosController.cs`, `CambiosAccionesController.cs` | `Cambios.cs` |
+| `Cambios` | `HekDesk.Application/UseCases/Cambios/` | `CambiosController.cs` | `Cambios.cs` |
 | `CambiosTickets` | `HekDesk.Application/UseCases/CambiosTickets/` | `CambiosTicketsController.cs` | Relación dentro del contexto; sin clase propia |
 | `TareasCambios` | `HekDesk.Application/UseCases/TareasCambios/` | `TareasCambiosController.cs` | `TareasCambios.cs` |
 | `Aprobaciones` | `HekDesk.Application/UseCases/Aprobaciones/` | `AprobacionesController.cs`, `AprobacionesAccionesController.cs` | `Aprobaciones.cs` |
@@ -365,7 +383,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 
 **Debe demostrar:**
 
-- Impedir ejecución sin aprobación o finalización con tareas pendientes.
+- Crear y consultar cambios en borrador y actualizar sus tareas; el ciclo de ejecución se implementará en v2.
 - Rechazar una segunda decisión sobre una aprobación resuelta.
 - Exigir causa y solución al resolver un problema.
 
@@ -404,7 +422,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 
 - Configurar locales, departamentos, grupos de soporte e integrantes.
 - Gestionar avisos destinados a usuarios, lectura y preferencias.
-- Gestionar seguimiento y reintento de correos; el proveedor de envío real sigue fuera de la primera versión.
+- Consultar el seguimiento de envíos; los reintentos y el proveedor de correo real quedan para v2.
 
 **Carpetas y controladores en la plantilla:**
 
@@ -416,13 +434,13 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 | `IntegrantesEquipo` | `HekDesk.Application/UseCases/IntegrantesEquipo/` | `IntegrantesEquipoController.cs` | `IntegrantesEquipo.cs` |
 | `Notificaciones` | `HekDesk.Application/UseCases/Notificaciones/` | `NotificacionesController.cs`, `NotificacionesAccionesController.cs` | `Notificaciones.cs` |
 | `PreferenciasNotificaciones` | `HekDesk.Application/UseCases/PreferenciasNotificaciones/` | `PreferenciasNotificacionesController.cs` | `PreferenciasNotificaciones.cs` |
-| `EnviosNotificaciones` | `HekDesk.Application/UseCases/EnviosNotificaciones/` | `EnviosNotificacionesController.cs`, `EnviosNotificacionesAccionesController.cs` | `EnviosNotificaciones.cs` |
+| `EnviosNotificaciones` | `HekDesk.Application/UseCases/EnviosNotificaciones/` | `EnviosNotificacionesController.cs` | `EnviosNotificaciones.cs` |
 
 **Debe demostrar:**
 
 - Crear sede, área y equipo; revisar pertenencia y disponibilidad de técnicos.
 - Mostrar y marcar como leídos solo los avisos del destinatario.
-- Reintentar únicamente envíos fallidos dentro de su límite.
+- Consultar envíos existentes y verificar las preferencias del destinatario; los reintentos quedan para v2.
 
 ### 5. Ederson Vilca — Servicios, calidad y conocimiento
 
@@ -432,7 +450,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 
 - Administrar el catálogo de servicios y los compromisos de respuesta y resolución.
 - Evaluar la atención con encuestas y controlar quién puede responderlas.
-- Documentar soluciones, clasificarlas, publicarlas y relacionarlas con tickets.
+- Crear y clasificar artículos en borrador. La publicación y las relaciones con artículos publicados quedan para v2.
 
 **Carpetas y controladores en la plantilla:**
 
@@ -442,7 +460,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 | `CategoriasServicios` | `HekDesk.Application/UseCases/CategoriasServicios/` | `CategoriasServiciosController.cs` | `CategoriasServicios.cs` |
 | `PoliticasAtencion` | `HekDesk.Application/UseCases/PoliticasAtencion/` | `PoliticasAtencionController.cs` | `PoliticasAtencion.cs` |
 | `Encuestas` | `HekDesk.Application/UseCases/Encuestas/` | `EncuestasController.cs` | `Encuestas.cs` |
-| `ArticulosConocimiento` | `HekDesk.Application/UseCases/ArticulosConocimiento/` | `ArticulosConocimientoController.cs`, `ArticulosConocimientoAccionesController.cs` | `ArticulosConocimiento.cs` |
+| `ArticulosConocimiento` | `HekDesk.Application/UseCases/ArticulosConocimiento/` | `ArticulosConocimientoController.cs` | `ArticulosConocimiento.cs` |
 | `CategoriasConocimiento` | `HekDesk.Application/UseCases/CategoriasConocimiento/` | `CategoriasConocimientoController.cs` | `CategoriasConocimiento.cs` |
 | `TicketsArticulos` | `HekDesk.Application/UseCases/TicketsArticulos/` | `TicketsArticulosController.cs` | `TicketsArticulos.cs` |
 
@@ -450,7 +468,7 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 
 - Crear un servicio de un equipo válido y una política por prioridad.
 - Aceptar una encuesta propia al cierre y rechazar duplicados.
-- Publicar un artículo y comprobar su visibilidad y asociación a un ticket.
+- Crear y editar un artículo en borrador y comprobar que otro empleado no pueda verlo. La publicación y asociación operativa quedan para v2.
 
 ### 6. Brahan Quispe — Tickets, servicios técnicos, persistencia e integración
 
@@ -477,14 +495,14 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 **Además sube y mantiene la base compartida:**
 
 - `HekDesk.Application/UseCases/Reportes/Queries/` y `HelpDesk.Api/Controllers/ReportesController.cs`.
-- `HelpDesk.Domain/Ports/IGenericRepository.cs`, `IUnitOfWork.cs` e `ISecurityServices.cs`.
+- `HelpDesk.Domain/Ports/IGenericRepository.cs`, `IUnitOfWork.cs`, `ICurrentUser.cs`, `IPasswordService.cs`, `ITokenService.cs` y `AccessToken.cs`.
 - `HelpDesk.Domain/Models/` como scaffolding común; cada dueño de entidad revisa los cambios que le afectan.
 - `HelpDesk.Domain/Exceptions/BusinessException.cs`.
 - `HelpDesk.Infrastructure/Repositories/GenericRepository.cs` y `UnitOfWork.cs`.
 - `HelpDesk.Infrastructure/Services/PasswordService.cs` y `JwtService.cs`.
 - `HelpDesk.Infrastructure/Data/HelpDeskDbContext.cs` y `HelpDeskDbContext.Custom.cs`.
 - `HelpDesk.Infrastructure/Configuration/InfrastructureServicesExtensions.cs`.
-- `HekDesk.Application/Configuration/ApplicationServicesExtensions.cs` y los contratos de `Common/`.
+- `HekDesk.Application/Configuration/ApplicationServicesExtensions.cs` y los contratos de `Dtos/Common/`, además de las validaciones de `Common/`.
 - `HelpDesk.Api/Program.cs`, `HelpDesk.Api/Middleware/`, solución, referencias y dependencias.
 - `scripts/Actualizar-Modelo.ps1`, SQL, documentación y suite de integración compartida.
 - Si se añade un servicio técnico adicional a Infrastructure, Brahan coordina su implementación, interfaz y registro. El responsable funcional correspondiente aporta sus requisitos y pruebas.
@@ -493,14 +511,14 @@ Los modelos, contexto, repositorios y servicios técnicos compartidos los sube y
 
 - Completar registro, asignación, atención, resolución y cierre de un ticket.
 - Rechazar modificaciones con una versión anterior.
-- Comprobar guardado transaccional, auditoría, reportes, JWT y hash junto con Diego.
+- Comprobar guardado mediante Complete(), consultas de reportes, JWT y hash junto con Diego. Auditoría conserva sus consultas; el registro automático queda para v2.
 
 ## Código compartido: responsabilidad y revisión
 
 | Componente | Responsable de subir / mantener | Coordinación |
 |---|---|---|
 | Repositorio genérico e interfaz | Brahan | Todos utilizan `Repository<T>()`. |
-| Unit of Work e interfaz | Brahan | Todos confirman las escrituras con `Complete(ct)`. |
+| Unit of Work e interfaz | Brahan | Todos confirman las escrituras con `Complete()`. |
 | Interfaces de servicios en Domain | Brahan | Diego revisa los contratos de seguridad. |
 | JWT y hash en Infrastructure/Services | Brahan | Diego consume los servicios desde autenticación y prueba el acceso. |
 | Usuario actual y reglas de autorización | Diego | Brahan integra con la configuración de la API. |

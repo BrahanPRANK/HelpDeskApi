@@ -1,7 +1,9 @@
+using HelpDesk.Application.Dtos.Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.IntegrantesEquipo.Dtos;
+using HelpDesk.Application.Dtos.IntegrantesEquipo;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,15 +18,22 @@ internal sealed class ListarIntegrantesEquipoQueryHandler(IUnitOfWork _unitOfWor
     {
         try
         {
-            var options=request.Options;
+            var options = request.Options;
             Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
-            var query=access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.IntegrantesEquipo>().Query());
+            var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.IntegrantesEquipo>().Query());
 
-            var total=await _unitOfWork.CountAsync(query,ct);
-            var items=await _unitOfWork.ListAsync(query.OrderBy(x => x.IdEquipo).ThenBy(x => x.IdUsuario).Skip((options.Pagina-1)*options.Tamano).Take(options.Tamano)
-            .Select(entity => new IntegrantesEquipoResponseDto { IdEquipo = entity.IdEquipo, IdUsuario = entity.IdUsuario, EsCoordinador = entity.EsCoordinador, Disponible = entity.Disponible, Activo = entity.Activo }),ct);
-            return new(200,new(items,options.Pagina,options.Tamano,total));
+            var total = await (query).CountAsync();
+            var items = await (query.OrderBy(x => x.IdEquipo).ThenBy(x => x.IdUsuario).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            .Select(entity => new IntegrantesEquipoResponseDto
+            {
+                IdEquipo = entity.IdEquipo,
+                IdUsuario = entity.IdUsuario,
+                EsCoordinador = entity.EsCoordinador,
+                Disponible = entity.Disponible,
+                Activo = entity.Activo
+            })).ToListAsync();
+            return new(200, new(items, options.Pagina, options.Tamano, total));
         }
         catch (BusinessException ex)
         {
@@ -32,11 +41,7 @@ internal sealed class ListarIntegrantesEquipoQueryHandler(IUnitOfWork _unitOfWor
                 _logger.LogError(ex, "Error controlado en ListarIntegrantesEquipoQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ListarIntegrantesEquipoQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

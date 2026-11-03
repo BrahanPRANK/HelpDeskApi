@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.Encuestas.Dtos;
+using HelpDesk.Application.Dtos.Encuestas;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,10 +17,18 @@ internal sealed class ObtenerEncuestasQueryHandler(IUnitOfWork _unitOfWork, Acce
     {
         try
         {
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Encuestas>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Encuestas>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200,new EncuestasResponseDto { IdEncuesta = entity.IdEncuesta, IdTicket = entity.IdTicket, IdUsuario = entity.IdUsuario, Calificacion = entity.Calificacion, Comentario = entity.Comentario, FechaRespuesta = entity.FechaRespuesta });
+            return new(200, new EncuestasResponseDto
+            {
+                IdEncuesta = entity.IdEncuesta,
+                IdTicket = entity.IdTicket,
+                IdUsuario = entity.IdUsuario,
+                Calificacion = entity.Calificacion,
+                Comentario = entity.Comentario,
+                FechaRespuesta = entity.FechaRespuesta
+            });
         }
         catch (BusinessException ex)
         {
@@ -27,11 +36,7 @@ internal sealed class ObtenerEncuestasQueryHandler(IUnitOfWork _unitOfWork, Acce
                 _logger.LogError(ex, "Error controlado en ObtenerEncuestasQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ObtenerEncuestasQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.TicketsArticulos.Dtos;
+using HelpDesk.Application.Dtos.TicketsArticulos;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,14 +17,26 @@ internal sealed class CrearTicketsArticulosCommandHandler(IUnitOfWork _unitOfWor
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=new global::HelpDesk.Domain.Models.TicketsArticulos() { IdTicket = input.IdTicket, IdArticulo = input.IdArticulo, IdUsuario = input.IdUsuario, FechaVinculacion = DateTime.UtcNow };
-            entity.IdUsuario=actor.Id;
-            _unitOfWork.Repository<global::HelpDesk.Domain.Models.TicketsArticulos>(null).Add(entity);
-            await _unitOfWork.Complete(ct);
-            return new(201,new TicketsArticulosResponseDto { IdTicket = entity.IdTicket, IdArticulo = entity.IdArticulo, IdUsuario = entity.IdUsuario, FechaVinculacion = entity.FechaVinculacion },"Registro creado.");
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = new global::HelpDesk.Domain.Models.TicketsArticulos()
+            {
+                IdTicket = input.IdTicket,
+                IdArticulo = input.IdArticulo,
+                IdUsuario = input.IdUsuario,
+                FechaVinculacion = DateTime.UtcNow
+            };
+            entity.IdUsuario = actor.Id;
+            await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TicketsArticulos>().AddAsync(entity);
+            await _unitOfWork.Complete();
+            return new(201, new TicketsArticulosResponseDto
+            {
+                IdTicket = entity.IdTicket,
+                IdArticulo = entity.IdArticulo,
+                IdUsuario = entity.IdUsuario,
+                FechaVinculacion = entity.FechaVinculacion
+            }, "Registro creado.");
         }
         catch (BusinessException ex)
         {
@@ -31,11 +44,7 @@ internal sealed class CrearTicketsArticulosCommandHandler(IUnitOfWork _unitOfWor
                 _logger.LogError(ex, "Error controlado en CrearTicketsArticulosCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar CrearTicketsArticulosCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");

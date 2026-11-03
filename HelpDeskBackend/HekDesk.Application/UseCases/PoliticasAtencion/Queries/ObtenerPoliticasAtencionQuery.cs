@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.PoliticasAtencion.Dtos;
+using HelpDesk.Application.Dtos.PoliticasAtencion;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,10 +17,17 @@ internal sealed class ObtenerPoliticasAtencionQueryHandler(IUnitOfWork _unitOfWo
     {
         try
         {
-            var entity=await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PoliticasAtencion>().FindAsync(request.Keys, ct)
-            ?? throw new BusinessException(404,"Registro no encontrado.");
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PoliticasAtencion>().GetByIdAsync(request.Keys)
+            ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
-            return new(200,new PoliticasAtencionResponseDto { IdPolitica = entity.IdPolitica, Prioridad = entity.Prioridad, MinutosPrimeraRespuesta = entity.MinutosPrimeraRespuesta, MinutosResolucion = entity.MinutosResolucion, Activo = entity.Activo });
+            return new(200, new PoliticasAtencionResponseDto
+            {
+                IdPolitica = entity.IdPolitica,
+                Prioridad = entity.Prioridad,
+                MinutosPrimeraRespuesta = entity.MinutosPrimeraRespuesta,
+                MinutosResolucion = entity.MinutosResolucion,
+                Activo = entity.Activo
+            });
         }
         catch (BusinessException ex)
         {
@@ -27,11 +35,7 @@ internal sealed class ObtenerPoliticasAtencionQueryHandler(IUnitOfWork _unitOfWo
                 _logger.LogError(ex, "Error controlado en ObtenerPoliticasAtencionQueryHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar ObtenerPoliticasAtencionQueryHandler.");
             return new(500, default, "No se pudo completar la operacion.");

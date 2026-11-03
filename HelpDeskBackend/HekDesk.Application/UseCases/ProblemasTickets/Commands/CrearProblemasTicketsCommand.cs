@@ -1,7 +1,8 @@
+using HelpDesk.Application.Dtos.Common;
 using Microsoft.Extensions.Logging;
 using HelpDesk.Application.Common;
 using HelpDesk.Application.Security;
-using HelpDesk.Application.UseCases.ProblemasTickets.Dtos;
+using HelpDesk.Application.Dtos.ProblemasTickets;
 using HelpDesk.Domain.Exceptions;
 using HelpDesk.Domain.Models;
 using HelpDesk.Domain.Ports;
@@ -16,14 +17,18 @@ internal sealed class CrearProblemasTicketsCommandHandler(IUnitOfWork _unitOfWor
     {
         try
         {
-            var input=request.Datos;
+            var input = request.Datos;
             Validation.Check(input);
-            Validation.Require(access.Admin,"Esta operacion requiere administracion.",403);
-            var entity=new Dictionary<string, object>() { ["IdProblema"] = input.IdProblema, ["IdTicket"] = input.IdTicket };
+            Validation.Require(access.Admin, "Esta operacion requiere administracion.", 403);
+            var entity = new Dictionary<string, object>() { ["IdProblema"] = input.IdProblema, ["IdTicket"] = input.IdTicket };
 
-            _unitOfWork.Repository<Dictionary<string, object>>("ProblemasTickets").Add(entity);
-            await _unitOfWork.Complete(ct);
-            return new(201,new ProblemasTicketsResponseDto() { IdProblema = (Guid)entity["IdProblema"], IdTicket = (Guid)entity["IdTicket"] },"Registro creado.");
+            await _unitOfWork.Repository<Dictionary<string, object>>("ProblemasTickets").AddAsync(entity);
+            await _unitOfWork.Complete();
+            return new(201, new ProblemasTicketsResponseDto()
+            {
+                IdProblema = (Guid)entity["IdProblema"],
+                IdTicket = (Guid)entity["IdTicket"]
+            }, "Registro creado.");
         }
         catch (BusinessException ex)
         {
@@ -31,11 +36,7 @@ internal sealed class CrearProblemasTicketsCommandHandler(IUnitOfWork _unitOfWor
                 _logger.LogError(ex, "Error controlado en CrearProblemasTicketsCommandHandler.");
             return new(ex.Status, default, ex.Message);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error al ejecutar CrearProblemasTicketsCommandHandler.");
             return new(500, default, "No se pudo completar la operacion.");
