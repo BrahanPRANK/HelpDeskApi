@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Sedes;
 
-public record ObtenerSedesQuery(object[] Keys) : IRequest<ResponseDto<SedesResponseDto>>;
+public class ObtenerSedesQuery : IRequest<ResponseDto<SedesResponseDto>>
+{
+    public Guid IdSede { get; set; }
+}
 
 internal sealed class ObtenerSedesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerSedesQuery, ResponseDto<SedesResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerSedesQueryHandler(IUnitOfWork _unitOfWork, AccessRu
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Sedes>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Sedes>().GetByIdAsync(request.IdSede)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<SedesResponseDto>(200, new SedesResponseDto

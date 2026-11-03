@@ -29,6 +29,21 @@ El controlador recibe el Command y lo envía a MediatR. En actualizaciones y acc
 
 RegistroDto se conserva exclusivamente como entrada del alta inicial de administrador por consola. Los Commands de registro y login tienen sus propiedades directamente.
 
+## Entradas de las consultas
+
+Las consultas que buscan un registro son clases con las claves que realmente necesitan. Por ejemplo:
+
+```csharp
+public class ObtenerTicketsQuery : IRequest<ResponseDto<TicketsResponseDto>>
+{
+    public Guid IdTicket { get; set; }
+}
+```
+
+El controlador toma el identificador de la URL y envía `new ObtenerTicketsQuery { IdTicket = idTicket }`. El handler consulta mediante `request.IdTicket` y construye TicketsResponseDto con los datos encontrados. Las claves compuestas tienen una propiedad por cada componente; no se utiliza un arreglo Keys en las Queries.
+
+Los listados declaran Pagina y Tamano y solamente los filtros que aplican a su entidad: Buscar, Estado o IdTicket. El controlador recibe el Query con FromQuery. IndicadoresQuery no necesita datos de entrada y se conserva sin propiedades adicionales. No hay un DTO de entrada ni un objeto Options intermedio para estas consultas.
+
 ## Cómo se escribe un handler
 
 El Command recibe los datos, el handler valida, consulta el repositorio, modifica la entidad, llama a Complete() y devuelve un ResponseDto tipado. El Query solo consulta y devuelve su DTO. Tanto el envoltorio ResponseDto<T> como el DTO de datos se construyen explícitamente dentro del handler. No se utiliza ILogger. Mantener try/catch en cada Handle. CancellationToken solo se declara en la firma que exige MediatR.
@@ -48,7 +63,7 @@ El ejemplo es un fragmento del cuerpo del handler: conservar también validació
 
 ## Inventario vigente
 
-La entrega tiene **91 Commands, 75 Queries y 47 archivos de DTOs**. El total de comandos incluye el CRUD de las 36 tablas donde corresponde, más las acciones básicas; no significa que deban escribirse todos para cada entidad.
+La entrega tiene **91 Commands, 75 Queries y 46 archivos de DTOs**. El total de comandos incluye el CRUD de las 36 tablas donde corresponde, más las acciones básicas; no significa que deban escribirse todos para cada entidad.
 
 | Entidad | Commands incluidos | Queries |
 |---|---|---|

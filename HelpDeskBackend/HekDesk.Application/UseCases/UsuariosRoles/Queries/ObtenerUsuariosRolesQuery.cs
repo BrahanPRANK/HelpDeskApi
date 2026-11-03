@@ -8,7 +8,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.UsuariosRoles;
 
-public record ObtenerUsuariosRolesQuery(object[] Keys) : IRequest<ResponseDto<UsuariosRolesResponseDto>>;
+public class ObtenerUsuariosRolesQuery : IRequest<ResponseDto<UsuariosRolesResponseDto>>
+{
+    public Guid IdUsuario { get; set; }
+    public Guid IdRol { get; set; }
+}
 
 internal sealed class ObtenerUsuariosRolesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerUsuariosRolesQuery, ResponseDto<UsuariosRolesResponseDto>>
 {
@@ -16,7 +20,7 @@ internal sealed class ObtenerUsuariosRolesQueryHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.UsuariosRoles>().GetByIdAsync(request.IdUsuario, request.IdRol)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<UsuariosRolesResponseDto>(200, new UsuariosRolesResponseDto

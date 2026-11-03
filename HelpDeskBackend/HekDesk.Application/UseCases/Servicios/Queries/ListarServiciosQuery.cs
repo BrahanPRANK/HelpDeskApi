@@ -9,7 +9,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Servicios;
 
-public record ListarServiciosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<ServiciosResponseDto>>>;
+public class ListarServiciosQuery : IRequest<ResponseDto<PaginaDto<ServiciosResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Buscar { get; set; }
+}
 
 internal sealed class ListarServiciosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarServiciosQuery, ResponseDto<PaginaDto<ServiciosResponseDto>>>
 {
@@ -17,13 +22,13 @@ internal sealed class ListarServiciosQueryHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Servicios>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.Nombre.Contains(options.Buscar) || x.Descripcion.Contains(options.Buscar));
+            if (!string.IsNullOrWhiteSpace(request.Buscar)) query = query.Where(x => x.Nombre.Contains(request.Buscar) || x.Descripcion.Contains(request.Buscar));
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdServicio).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdServicio).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new ServiciosResponseDto
             {
                 IdServicio = entity.IdServicio,
@@ -34,7 +39,7 @@ internal sealed class ListarServiciosQueryHandler(IUnitOfWork _unitOfWork, Acces
                 RequiereAprobacion = entity.RequiereAprobacion,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<ServiciosResponseDto>>(200, new PaginaDto<ServiciosResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<ServiciosResponseDto>>(200, new PaginaDto<ServiciosResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.AsignacionesActivos;
 
-public record ObtenerAsignacionesActivosQuery(object[] Keys) : IRequest<ResponseDto<AsignacionesActivosResponseDto>>;
+public class ObtenerAsignacionesActivosQuery : IRequest<ResponseDto<AsignacionesActivosResponseDto>>
+{
+    public Guid IdAsignacion { get; set; }
+}
 
 internal sealed class ObtenerAsignacionesActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerAsignacionesActivosQuery, ResponseDto<AsignacionesActivosResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerAsignacionesActivosQueryHandler(IUnitOfWork _unitOf
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.AsignacionesActivos>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.AsignacionesActivos>().GetByIdAsync(request.IdAsignacion)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<AsignacionesActivosResponseDto>(200, new AsignacionesActivosResponseDto

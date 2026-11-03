@@ -9,7 +9,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.RecuperacionesClave;
 
-public record ListarRecuperacionesClaveQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>>;
+public class ListarRecuperacionesClaveQuery : IRequest<ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+}
 
 internal sealed class ListarRecuperacionesClaveQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarRecuperacionesClaveQuery, ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>>
 {
@@ -17,13 +21,13 @@ internal sealed class ListarRecuperacionesClaveQueryHandler(IUnitOfWork _unitOfW
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.RecuperacionesClave>().Query());
 
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdRecuperacion).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdRecuperacion).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new RecuperacionesClaveResponseDto
             {
                 IdRecuperacion = entity.IdRecuperacion,
@@ -32,7 +36,7 @@ internal sealed class ListarRecuperacionesClaveQueryHandler(IUnitOfWork _unitOfW
                 FechaVencimiento = entity.FechaVencimiento,
                 FechaUso = entity.FechaUso
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>(200, new PaginaDto<RecuperacionesClaveResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<RecuperacionesClaveResponseDto>>(200, new PaginaDto<RecuperacionesClaveResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

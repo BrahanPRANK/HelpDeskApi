@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Encuestas;
 
-public record ObtenerEncuestasQuery(object[] Keys) : IRequest<ResponseDto<EncuestasResponseDto>>;
+public class ObtenerEncuestasQuery : IRequest<ResponseDto<EncuestasResponseDto>>
+{
+    public Guid IdEncuesta { get; set; }
+}
 
 internal sealed class ObtenerEncuestasQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerEncuestasQuery, ResponseDto<EncuestasResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerEncuestasQueryHandler(IUnitOfWork _unitOfWork, Acce
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Encuestas>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Encuestas>().GetByIdAsync(request.IdEncuesta)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<EncuestasResponseDto>(200, new EncuestasResponseDto

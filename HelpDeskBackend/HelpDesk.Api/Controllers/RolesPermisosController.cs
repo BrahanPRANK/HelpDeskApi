@@ -9,11 +9,14 @@ namespace HelpDesk.Api.Controllers;
 public sealed class RolesPermisosController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] int pagina = 1, [FromQuery] int tamano = 20, [FromQuery] string? buscar = null, [FromQuery] string? estado = null, [FromQuery] Guid? idTicket = null)
-    { var result = await mediator.Send(new ListarRolesPermisosQuery(new(pagina, tamano, buscar, estado, idTicket))); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> List([FromQuery] ListarRolesPermisosQuery query)
+    {
+        var result = await mediator.Send(query);
+        return StatusCode(result.StatusCode, result);
+    }
     [HttpGet("{idRol:guid}/{idPermiso:guid}")]
     public async Task<IActionResult> Get(Guid idRol, Guid idPermiso)
-    { var result = await mediator.Send(new ObtenerRolesPermisosQuery([idRol, idPermiso])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new ObtenerRolesPermisosQuery { IdRol = idRol, IdPermiso = idPermiso }); return StatusCode(result.StatusCode, result); }
     [HttpPost]
     public async Task<IActionResult> Crear([FromBody] CrearRolesPermisosCommand datos)
     {

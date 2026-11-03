@@ -9,7 +9,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Sedes;
 
-public record ListarSedesQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<SedesResponseDto>>>;
+public class ListarSedesQuery : IRequest<ResponseDto<PaginaDto<SedesResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Buscar { get; set; }
+}
 
 internal sealed class ListarSedesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarSedesQuery, ResponseDto<PaginaDto<SedesResponseDto>>>
 {
@@ -17,13 +22,13 @@ internal sealed class ListarSedesQueryHandler(IUnitOfWork _unitOfWork, AccessRul
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Sedes>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.Nombre.Contains(options.Buscar));
+            if (!string.IsNullOrWhiteSpace(request.Buscar)) query = query.Where(x => x.Nombre.Contains(request.Buscar));
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdSede).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdSede).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new SedesResponseDto
             {
                 IdSede = entity.IdSede,
@@ -31,7 +36,7 @@ internal sealed class ListarSedesQueryHandler(IUnitOfWork _unitOfWork, AccessRul
                 Direccion = entity.Direccion,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<SedesResponseDto>>(200, new PaginaDto<SedesResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<SedesResponseDto>>(200, new PaginaDto<SedesResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

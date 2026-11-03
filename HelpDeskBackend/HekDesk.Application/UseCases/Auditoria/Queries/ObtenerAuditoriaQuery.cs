@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Auditoria;
 
-public record ObtenerAuditoriaQuery(object[] Keys) : IRequest<ResponseDto<AuditoriaResponseDto>>;
+public class ObtenerAuditoriaQuery : IRequest<ResponseDto<AuditoriaResponseDto>>
+{
+    public Guid IdAuditoria { get; set; }
+}
 
 internal sealed class ObtenerAuditoriaQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerAuditoriaQuery, ResponseDto<AuditoriaResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerAuditoriaQueryHandler(IUnitOfWork _unitOfWork, Acce
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Auditoria>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Auditoria>().GetByIdAsync(request.IdAuditoria)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<AuditoriaResponseDto>(200, new AuditoriaResponseDto

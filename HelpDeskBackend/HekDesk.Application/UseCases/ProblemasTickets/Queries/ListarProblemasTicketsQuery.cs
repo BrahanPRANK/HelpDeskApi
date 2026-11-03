@@ -9,7 +9,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.ProblemasTickets;
 
-public record ListarProblemasTicketsQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<ProblemasTicketsResponseDto>>>;
+public class ListarProblemasTicketsQuery : IRequest<ResponseDto<PaginaDto<ProblemasTicketsResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+}
 
 internal sealed class ListarProblemasTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarProblemasTicketsQuery, ResponseDto<PaginaDto<ProblemasTicketsResponseDto>>>
 {
@@ -17,19 +21,19 @@ internal sealed class ListarProblemasTicketsQueryHandler(IUnitOfWork _unitOfWork
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<Dictionary<string, object>>("ProblemasTickets").Query());
 
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x["IdProblema"]).ThenBy(x => x["IdTicket"]).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x["IdProblema"]).ThenBy(x => x["IdTicket"]).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new ProblemasTicketsResponseDto()
             {
                 IdProblema = (Guid)entity["IdProblema"],
                 IdTicket = (Guid)entity["IdTicket"]
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<ProblemasTicketsResponseDto>>(200, new PaginaDto<ProblemasTicketsResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<ProblemasTicketsResponseDto>>(200, new PaginaDto<ProblemasTicketsResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

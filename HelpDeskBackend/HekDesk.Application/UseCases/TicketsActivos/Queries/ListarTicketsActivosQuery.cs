@@ -9,7 +9,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.TicketsActivos;
 
-public record ListarTicketsActivosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<TicketsActivosResponseDto>>>;
+public class ListarTicketsActivosQuery : IRequest<ResponseDto<PaginaDto<TicketsActivosResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+}
 
 internal sealed class ListarTicketsActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarTicketsActivosQuery, ResponseDto<PaginaDto<TicketsActivosResponseDto>>>
 {
@@ -17,19 +21,19 @@ internal sealed class ListarTicketsActivosQueryHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<Dictionary<string, object>>("TicketsActivos").Query());
 
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x["IdTicket"]).ThenBy(x => x["IdActivo"]).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x["IdTicket"]).ThenBy(x => x["IdActivo"]).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new TicketsActivosResponseDto()
             {
                 IdTicket = (Guid)entity["IdTicket"],
                 IdActivo = (Guid)entity["IdActivo"]
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<TicketsActivosResponseDto>>(200, new PaginaDto<TicketsActivosResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<TicketsActivosResponseDto>>(200, new PaginaDto<TicketsActivosResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

@@ -8,7 +8,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.PreferenciasNotificaciones;
 
-public record ObtenerPreferenciasNotificacionesQuery(object[] Keys) : IRequest<ResponseDto<PreferenciasNotificacionesResponseDto>>;
+public class ObtenerPreferenciasNotificacionesQuery : IRequest<ResponseDto<PreferenciasNotificacionesResponseDto>>
+{
+    public Guid IdUsuario { get; set; }
+    public string TipoEvento { get; set; } = string.Empty;
+}
 
 internal sealed class ObtenerPreferenciasNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerPreferenciasNotificacionesQuery, ResponseDto<PreferenciasNotificacionesResponseDto>>
 {
@@ -16,7 +20,7 @@ internal sealed class ObtenerPreferenciasNotificacionesQueryHandler(IUnitOfWork 
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PreferenciasNotificaciones>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PreferenciasNotificaciones>().GetByIdAsync(request.IdUsuario, request.TipoEvento)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<PreferenciasNotificacionesResponseDto>(200, new PreferenciasNotificacionesResponseDto

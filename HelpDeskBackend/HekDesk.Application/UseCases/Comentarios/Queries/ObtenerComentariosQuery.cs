@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Comentarios;
 
-public record ObtenerComentariosQuery(object[] Keys) : IRequest<ResponseDto<ComentariosResponseDto>>;
+public class ObtenerComentariosQuery : IRequest<ResponseDto<ComentariosResponseDto>>
+{
+    public Guid IdComentario { get; set; }
+}
 
 internal sealed class ObtenerComentariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerComentariosQuery, ResponseDto<ComentariosResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerComentariosQueryHandler(IUnitOfWork _unitOfWork, Ac
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Comentarios>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Comentarios>().GetByIdAsync(request.IdComentario)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<ComentariosResponseDto>(200, new ComentariosResponseDto

@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.EnviosNotificaciones;
 
-public record ObtenerEnviosNotificacionesQuery(object[] Keys) : IRequest<ResponseDto<EnviosNotificacionesResponseDto>>;
+public class ObtenerEnviosNotificacionesQuery : IRequest<ResponseDto<EnviosNotificacionesResponseDto>>
+{
+    public Guid IdEnvio { get; set; }
+}
 
 internal sealed class ObtenerEnviosNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerEnviosNotificacionesQuery, ResponseDto<EnviosNotificacionesResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerEnviosNotificacionesQueryHandler(IUnitOfWork _unitO
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.EnviosNotificaciones>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.EnviosNotificaciones>().GetByIdAsync(request.IdEnvio)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<EnviosNotificacionesResponseDto>(200, new EnviosNotificacionesResponseDto

@@ -9,7 +9,13 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Adjuntos;
 
-public record ListarAdjuntosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<AdjuntosResponseDto>>>;
+public class ListarAdjuntosQuery : IRequest<ResponseDto<PaginaDto<AdjuntosResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Buscar { get; set; }
+    public Guid? IdTicket { get; set; }
+}
 
 internal sealed class ListarAdjuntosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarAdjuntosQuery, ResponseDto<PaginaDto<AdjuntosResponseDto>>>
 {
@@ -17,14 +23,14 @@ internal sealed class ListarAdjuntosQueryHandler(IUnitOfWork _unitOfWork, Access
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Adjuntos>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.NombreArchivo.Contains(options.Buscar) || x.TipoArchivo.Contains(options.Buscar));
-            if (options.IdTicket.HasValue) query = query.Where(x => x.IdTicket == options.IdTicket.Value);
+            if (!string.IsNullOrWhiteSpace(request.Buscar)) query = query.Where(x => x.NombreArchivo.Contains(request.Buscar) || x.TipoArchivo.Contains(request.Buscar));
+            if (request.IdTicket.HasValue) query = query.Where(x => x.IdTicket == request.IdTicket.Value);
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdAdjunto).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdAdjunto).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new AdjuntosResponseDto
             {
                 IdAdjunto = entity.IdAdjunto,
@@ -37,7 +43,7 @@ internal sealed class ListarAdjuntosQueryHandler(IUnitOfWork _unitOfWork, Access
                 EsInterno = entity.EsInterno,
                 Fecha = entity.Fecha
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<AdjuntosResponseDto>>(200, new PaginaDto<AdjuntosResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<AdjuntosResponseDto>>(200, new PaginaDto<AdjuntosResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

@@ -9,7 +9,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Auditoria;
 
-public record ListarAuditoriaQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<AuditoriaResponseDto>>>;
+public class ListarAuditoriaQuery : IRequest<ResponseDto<PaginaDto<AuditoriaResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Buscar { get; set; }
+}
 
 internal sealed class ListarAuditoriaQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarAuditoriaQuery, ResponseDto<PaginaDto<AuditoriaResponseDto>>>
 {
@@ -17,13 +22,13 @@ internal sealed class ListarAuditoriaQueryHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Auditoria>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.Accion.Contains(options.Buscar) || x.TablaAfectada.Contains(options.Buscar) || x.Descripcion.Contains(options.Buscar));
+            if (!string.IsNullOrWhiteSpace(request.Buscar)) query = query.Where(x => x.Accion.Contains(request.Buscar) || x.TablaAfectada.Contains(request.Buscar) || x.Descripcion.Contains(request.Buscar));
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdAuditoria).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdAuditoria).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new AuditoriaResponseDto
             {
                 IdAuditoria = entity.IdAuditoria,
@@ -34,7 +39,7 @@ internal sealed class ListarAuditoriaQueryHandler(IUnitOfWork _unitOfWork, Acces
                 Descripcion = entity.Descripcion,
                 Fecha = entity.Fecha
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<AuditoriaResponseDto>>(200, new PaginaDto<AuditoriaResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<AuditoriaResponseDto>>(200, new PaginaDto<AuditoriaResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

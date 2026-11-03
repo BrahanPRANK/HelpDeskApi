@@ -9,7 +9,13 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Comentarios;
 
-public record ListarComentariosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<ComentariosResponseDto>>>;
+public class ListarComentariosQuery : IRequest<ResponseDto<PaginaDto<ComentariosResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Buscar { get; set; }
+    public Guid? IdTicket { get; set; }
+}
 
 internal sealed class ListarComentariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarComentariosQuery, ResponseDto<PaginaDto<ComentariosResponseDto>>>
 {
@@ -17,14 +23,14 @@ internal sealed class ListarComentariosQueryHandler(IUnitOfWork _unitOfWork, Acc
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Comentarios>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.Mensaje.Contains(options.Buscar));
-            if (options.IdTicket.HasValue) query = query.Where(x => x.IdTicket == options.IdTicket.Value);
+            if (!string.IsNullOrWhiteSpace(request.Buscar)) query = query.Where(x => x.Mensaje.Contains(request.Buscar));
+            if (request.IdTicket.HasValue) query = query.Where(x => x.IdTicket == request.IdTicket.Value);
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdComentario).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdComentario).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new ComentariosResponseDto
             {
                 IdComentario = entity.IdComentario,
@@ -34,7 +40,7 @@ internal sealed class ListarComentariosQueryHandler(IUnitOfWork _unitOfWork, Acc
                 EsInterno = entity.EsInterno,
                 Fecha = entity.Fecha
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<ComentariosResponseDto>>(200, new PaginaDto<ComentariosResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<ComentariosResponseDto>>(200, new PaginaDto<ComentariosResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

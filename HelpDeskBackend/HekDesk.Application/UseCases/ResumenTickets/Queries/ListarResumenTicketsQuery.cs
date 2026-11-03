@@ -9,7 +9,13 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.ResumenTickets;
 
-public record ListarResumenTicketsQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<ResumenTicketsResponseDto>>>;
+public class ListarResumenTicketsQuery : IRequest<ResponseDto<PaginaDto<ResumenTicketsResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Estado { get; set; }
+    public Guid? IdTicket { get; set; }
+}
 
 internal sealed class ListarResumenTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarResumenTicketsQuery, ResponseDto<PaginaDto<ResumenTicketsResponseDto>>>
 {
@@ -17,14 +23,14 @@ internal sealed class ListarResumenTicketsQueryHandler(IUnitOfWork _unitOfWork, 
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.ResumenTickets>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Estado)) query = query.Where(x => x.Estado == options.Estado);
-            if (options.IdTicket.HasValue) query = query.Where(x => x.IdTicket == options.IdTicket.Value);
+            if (!string.IsNullOrWhiteSpace(request.Estado)) query = query.Where(x => x.Estado == request.Estado);
+            if (request.IdTicket.HasValue) query = query.Where(x => x.IdTicket == request.IdTicket.Value);
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.Numero).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.Numero).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new ResumenTicketsResponseDto
             {
                 IdTicket = entity.IdTicket,
@@ -48,7 +54,7 @@ internal sealed class ListarResumenTicketsQueryHandler(IUnitOfWork _unitOfWork, 
                 ResolucionEnPlazo = entity.ResolucionEnPlazo,
                 Calificacion = entity.Calificacion
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<ResumenTicketsResponseDto>>(200, new PaginaDto<ResumenTicketsResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<ResumenTicketsResponseDto>>(200, new PaginaDto<ResumenTicketsResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

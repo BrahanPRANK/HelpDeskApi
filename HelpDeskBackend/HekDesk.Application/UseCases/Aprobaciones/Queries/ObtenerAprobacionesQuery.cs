@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Aprobaciones;
 
-public record ObtenerAprobacionesQuery(object[] Keys) : IRequest<ResponseDto<AprobacionesResponseDto>>;
+public class ObtenerAprobacionesQuery : IRequest<ResponseDto<AprobacionesResponseDto>>
+{
+    public Guid IdAprobacion { get; set; }
+}
 
 internal sealed class ObtenerAprobacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerAprobacionesQuery, ResponseDto<AprobacionesResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerAprobacionesQueryHandler(IUnitOfWork _unitOfWork, A
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Aprobaciones>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Aprobaciones>().GetByIdAsync(request.IdAprobacion)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<AprobacionesResponseDto>(200, new AprobacionesResponseDto

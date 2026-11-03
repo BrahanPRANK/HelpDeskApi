@@ -9,11 +9,14 @@ namespace HelpDesk.Api.Controllers;
 public sealed class CategoriasConocimientoController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] int pagina = 1, [FromQuery] int tamano = 20, [FromQuery] string? buscar = null, [FromQuery] string? estado = null, [FromQuery] Guid? idTicket = null)
-    { var result = await mediator.Send(new ListarCategoriasConocimientoQuery(new(pagina, tamano, buscar, estado, idTicket))); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> List([FromQuery] ListarCategoriasConocimientoQuery query)
+    {
+        var result = await mediator.Send(query);
+        return StatusCode(result.StatusCode, result);
+    }
     [HttpGet("{idCategoriaConocimiento:guid}")]
     public async Task<IActionResult> Get(Guid idCategoriaConocimiento)
-    { var result = await mediator.Send(new ObtenerCategoriasConocimientoQuery([idCategoriaConocimiento])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new ObtenerCategoriasConocimientoQuery { IdCategoriaConocimiento = idCategoriaConocimiento }); return StatusCode(result.StatusCode, result); }
     [HttpPost]
     public async Task<IActionResult> Crear([FromBody] CrearCategoriasConocimientoCommand datos)
     {

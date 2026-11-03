@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.RecuperacionesClave;
 
-public record ObtenerRecuperacionesClaveQuery(object[] Keys) : IRequest<ResponseDto<RecuperacionesClaveResponseDto>>;
+public class ObtenerRecuperacionesClaveQuery : IRequest<ResponseDto<RecuperacionesClaveResponseDto>>
+{
+    public Guid IdRecuperacion { get; set; }
+}
 
 internal sealed class ObtenerRecuperacionesClaveQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerRecuperacionesClaveQuery, ResponseDto<RecuperacionesClaveResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerRecuperacionesClaveQueryHandler(IUnitOfWork _unitOf
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.RecuperacionesClave>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.RecuperacionesClave>().GetByIdAsync(request.IdRecuperacion)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<RecuperacionesClaveResponseDto>(200, new RecuperacionesClaveResponseDto

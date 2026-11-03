@@ -9,11 +9,14 @@ namespace HelpDesk.Api.Controllers;
 public sealed class ComentariosController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] int pagina = 1, [FromQuery] int tamano = 20, [FromQuery] string? buscar = null, [FromQuery] string? estado = null, [FromQuery] Guid? idTicket = null)
-    { var result = await mediator.Send(new ListarComentariosQuery(new(pagina, tamano, buscar, estado, idTicket))); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> List([FromQuery] ListarComentariosQuery query)
+    {
+        var result = await mediator.Send(query);
+        return StatusCode(result.StatusCode, result);
+    }
     [HttpGet("{idComentario:guid}")]
     public async Task<IActionResult> Get(Guid idComentario)
-    { var result = await mediator.Send(new ObtenerComentariosQuery([idComentario])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new ObtenerComentariosQuery { IdComentario = idComentario }); return StatusCode(result.StatusCode, result); }
     [HttpPost]
     public async Task<IActionResult> Crear([FromBody] CrearComentariosCommand datos)
     {

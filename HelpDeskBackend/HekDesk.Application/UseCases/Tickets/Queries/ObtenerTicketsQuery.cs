@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Tickets;
 
-public record ObtenerTicketsQuery(object[] Keys) : IRequest<ResponseDto<TicketsResponseDto>>;
+public class ObtenerTicketsQuery : IRequest<ResponseDto<TicketsResponseDto>>
+{
+    public Guid IdTicket { get; set; }
+}
 
 internal sealed class ObtenerTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerTicketsQuery, ResponseDto<TicketsResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerTicketsQueryHandler(IUnitOfWork _unitOfWork, Access
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Tickets>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Tickets>().GetByIdAsync(request.IdTicket)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<TicketsResponseDto>(200, new TicketsResponseDto

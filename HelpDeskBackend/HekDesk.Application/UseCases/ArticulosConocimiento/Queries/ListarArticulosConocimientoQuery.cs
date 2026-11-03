@@ -9,7 +9,13 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.ArticulosConocimiento;
 
-public record ListarArticulosConocimientoQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<ArticulosConocimientoResponseDto>>>;
+public class ListarArticulosConocimientoQuery : IRequest<ResponseDto<PaginaDto<ArticulosConocimientoResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Buscar { get; set; }
+    public string? Estado { get; set; }
+}
 
 internal sealed class ListarArticulosConocimientoQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarArticulosConocimientoQuery, ResponseDto<PaginaDto<ArticulosConocimientoResponseDto>>>
 {
@@ -17,14 +23,14 @@ internal sealed class ListarArticulosConocimientoQueryHandler(IUnitOfWork _unitO
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.ArticulosConocimiento>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.Titulo.Contains(options.Buscar) || x.Contenido.Contains(options.Buscar));
-            if (!string.IsNullOrWhiteSpace(options.Estado)) query = query.Where(x => x.Estado == options.Estado);
+            if (!string.IsNullOrWhiteSpace(request.Buscar)) query = query.Where(x => x.Titulo.Contains(request.Buscar) || x.Contenido.Contains(request.Buscar));
+            if (!string.IsNullOrWhiteSpace(request.Estado)) query = query.Where(x => x.Estado == request.Estado);
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdArticulo).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdArticulo).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new ArticulosConocimientoResponseDto
             {
                 IdArticulo = entity.IdArticulo,
@@ -38,7 +44,7 @@ internal sealed class ListarArticulosConocimientoQueryHandler(IUnitOfWork _unitO
                 FechaCreacion = entity.FechaCreacion,
                 FechaPublicacion = entity.FechaPublicacion
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<ArticulosConocimientoResponseDto>>(200, new PaginaDto<ArticulosConocimientoResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<ArticulosConocimientoResponseDto>>(200, new PaginaDto<ArticulosConocimientoResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

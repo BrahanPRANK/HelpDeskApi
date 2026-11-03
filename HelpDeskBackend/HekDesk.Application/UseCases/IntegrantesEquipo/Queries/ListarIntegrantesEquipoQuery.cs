@@ -9,7 +9,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.IntegrantesEquipo;
 
-public record ListarIntegrantesEquipoQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>>;
+public class ListarIntegrantesEquipoQuery : IRequest<ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+}
 
 internal sealed class ListarIntegrantesEquipoQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarIntegrantesEquipoQuery, ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>>
 {
@@ -17,13 +21,13 @@ internal sealed class ListarIntegrantesEquipoQueryHandler(IUnitOfWork _unitOfWor
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.IntegrantesEquipo>().Query());
 
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdEquipo).ThenBy(x => x.IdUsuario).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdEquipo).ThenBy(x => x.IdUsuario).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new IntegrantesEquipoResponseDto
             {
                 IdEquipo = entity.IdEquipo,
@@ -32,7 +36,7 @@ internal sealed class ListarIntegrantesEquipoQueryHandler(IUnitOfWork _unitOfWor
                 Disponible = entity.Disponible,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>(200, new PaginaDto<IntegrantesEquipoResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<IntegrantesEquipoResponseDto>>(200, new PaginaDto<IntegrantesEquipoResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

@@ -9,7 +9,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Encuestas;
 
-public record ListarEncuestasQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<EncuestasResponseDto>>>;
+public class ListarEncuestasQuery : IRequest<ResponseDto<PaginaDto<EncuestasResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public Guid? IdTicket { get; set; }
+}
 
 internal sealed class ListarEncuestasQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarEncuestasQuery, ResponseDto<PaginaDto<EncuestasResponseDto>>>
 {
@@ -17,13 +22,13 @@ internal sealed class ListarEncuestasQueryHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Encuestas>().Query());
-            if (options.IdTicket.HasValue) query = query.Where(x => x.IdTicket == options.IdTicket.Value);
+            if (request.IdTicket.HasValue) query = query.Where(x => x.IdTicket == request.IdTicket.Value);
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdEncuesta).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdEncuesta).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new EncuestasResponseDto
             {
                 IdEncuesta = entity.IdEncuesta,
@@ -33,7 +38,7 @@ internal sealed class ListarEncuestasQueryHandler(IUnitOfWork _unitOfWork, Acces
                 Comentario = entity.Comentario,
                 FechaRespuesta = entity.FechaRespuesta
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<EncuestasResponseDto>>(200, new PaginaDto<EncuestasResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<EncuestasResponseDto>>(200, new PaginaDto<EncuestasResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

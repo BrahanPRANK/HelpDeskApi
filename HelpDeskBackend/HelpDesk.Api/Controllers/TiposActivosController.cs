@@ -9,11 +9,14 @@ namespace HelpDesk.Api.Controllers;
 public sealed class TiposActivosController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] int pagina = 1, [FromQuery] int tamano = 20, [FromQuery] string? buscar = null, [FromQuery] string? estado = null, [FromQuery] Guid? idTicket = null)
-    { var result = await mediator.Send(new ListarTiposActivosQuery(new(pagina, tamano, buscar, estado, idTicket))); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> List([FromQuery] ListarTiposActivosQuery query)
+    {
+        var result = await mediator.Send(query);
+        return StatusCode(result.StatusCode, result);
+    }
     [HttpGet("{idTipoActivo:guid}")]
     public async Task<IActionResult> Get(Guid idTipoActivo)
-    { var result = await mediator.Send(new ObtenerTiposActivosQuery([idTipoActivo])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new ObtenerTiposActivosQuery { IdTipoActivo = idTipoActivo }); return StatusCode(result.StatusCode, result); }
     [HttpPost]
     public async Task<IActionResult> Crear([FromBody] CrearTiposActivosCommand datos)
     {

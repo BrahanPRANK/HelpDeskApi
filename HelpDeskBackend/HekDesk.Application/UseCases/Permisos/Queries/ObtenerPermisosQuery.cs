@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Permisos;
 
-public record ObtenerPermisosQuery(object[] Keys) : IRequest<ResponseDto<PermisosResponseDto>>;
+public class ObtenerPermisosQuery : IRequest<ResponseDto<PermisosResponseDto>>
+{
+    public Guid IdPermiso { get; set; }
+}
 
 internal sealed class ObtenerPermisosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerPermisosQuery, ResponseDto<PermisosResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerPermisosQueryHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Permisos>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Permisos>().GetByIdAsync(request.IdPermiso)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<PermisosResponseDto>(200, new PermisosResponseDto

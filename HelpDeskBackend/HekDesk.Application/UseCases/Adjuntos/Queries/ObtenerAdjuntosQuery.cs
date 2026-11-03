@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Adjuntos;
 
-public record ObtenerAdjuntosQuery(object[] Keys) : IRequest<ResponseDto<AdjuntosResponseDto>>;
+public class ObtenerAdjuntosQuery : IRequest<ResponseDto<AdjuntosResponseDto>>
+{
+    public Guid IdAdjunto { get; set; }
+}
 
 internal sealed class ObtenerAdjuntosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerAdjuntosQuery, ResponseDto<AdjuntosResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerAdjuntosQueryHandler(IUnitOfWork _unitOfWork, Acces
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Adjuntos>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.Adjuntos>().GetByIdAsync(request.IdAdjunto)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<AdjuntosResponseDto>(200, new AdjuntosResponseDto

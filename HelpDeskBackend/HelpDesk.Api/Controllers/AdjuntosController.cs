@@ -9,11 +9,14 @@ namespace HelpDesk.Api.Controllers;
 public sealed class AdjuntosController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] int pagina = 1, [FromQuery] int tamano = 20, [FromQuery] string? buscar = null, [FromQuery] string? estado = null, [FromQuery] Guid? idTicket = null)
-    { var result = await mediator.Send(new ListarAdjuntosQuery(new(pagina, tamano, buscar, estado, idTicket))); return StatusCode(result.StatusCode, result); }
+    public async Task<IActionResult> List([FromQuery] ListarAdjuntosQuery query)
+    {
+        var result = await mediator.Send(query);
+        return StatusCode(result.StatusCode, result);
+    }
     [HttpGet("{idAdjunto:guid}")]
     public async Task<IActionResult> Get(Guid idAdjunto)
-    { var result = await mediator.Send(new ObtenerAdjuntosQuery([idAdjunto])); return StatusCode(result.StatusCode, result); }
+    { var result = await mediator.Send(new ObtenerAdjuntosQuery { IdAdjunto = idAdjunto }); return StatusCode(result.StatusCode, result); }
     [HttpPost]
     public async Task<IActionResult> Crear([FromBody] CrearAdjuntosCommand datos)
     {

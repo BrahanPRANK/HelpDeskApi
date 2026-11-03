@@ -9,7 +9,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.TicketsArticulos;
 
-public record ListarTicketsArticulosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<TicketsArticulosResponseDto>>>;
+public class ListarTicketsArticulosQuery : IRequest<ResponseDto<PaginaDto<TicketsArticulosResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public Guid? IdTicket { get; set; }
+}
 
 internal sealed class ListarTicketsArticulosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarTicketsArticulosQuery, ResponseDto<PaginaDto<TicketsArticulosResponseDto>>>
 {
@@ -17,13 +22,13 @@ internal sealed class ListarTicketsArticulosQueryHandler(IUnitOfWork _unitOfWork
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.TicketsArticulos>().Query());
-            if (options.IdTicket.HasValue) query = query.Where(x => x.IdTicket == options.IdTicket.Value);
+            if (request.IdTicket.HasValue) query = query.Where(x => x.IdTicket == request.IdTicket.Value);
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdTicket).ThenBy(x => x.IdArticulo).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdTicket).ThenBy(x => x.IdArticulo).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new TicketsArticulosResponseDto
             {
                 IdTicket = entity.IdTicket,
@@ -31,7 +36,7 @@ internal sealed class ListarTicketsArticulosQueryHandler(IUnitOfWork _unitOfWork
                 IdUsuario = entity.IdUsuario,
                 FechaVinculacion = entity.FechaVinculacion
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<TicketsArticulosResponseDto>>(200, new PaginaDto<TicketsArticulosResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<TicketsArticulosResponseDto>>(200, new PaginaDto<TicketsArticulosResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

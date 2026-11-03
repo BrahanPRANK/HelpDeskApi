@@ -9,7 +9,13 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Cambios;
 
-public record ListarCambiosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<CambiosResponseDto>>>;
+public class ListarCambiosQuery : IRequest<ResponseDto<PaginaDto<CambiosResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Buscar { get; set; }
+    public string? Estado { get; set; }
+}
 
 internal sealed class ListarCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarCambiosQuery, ResponseDto<PaginaDto<CambiosResponseDto>>>
 {
@@ -17,14 +23,14 @@ internal sealed class ListarCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessR
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Cambios>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.Titulo.Contains(options.Buscar) || x.Descripcion.Contains(options.Buscar) || x.Riesgo.Contains(options.Buscar));
-            if (!string.IsNullOrWhiteSpace(options.Estado)) query = query.Where(x => x.Estado == options.Estado);
+            if (!string.IsNullOrWhiteSpace(request.Buscar)) query = query.Where(x => x.Titulo.Contains(request.Buscar) || x.Descripcion.Contains(request.Buscar) || x.Riesgo.Contains(request.Buscar));
+            if (!string.IsNullOrWhiteSpace(request.Estado)) query = query.Where(x => x.Estado == request.Estado);
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdCambio).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdCambio).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new CambiosResponseDto
             {
                 IdCambio = entity.IdCambio,
@@ -42,7 +48,7 @@ internal sealed class ListarCambiosQueryHandler(IUnitOfWork _unitOfWork, AccessR
                 Resultado = entity.Resultado,
                 FechaCreacion = entity.FechaCreacion
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<CambiosResponseDto>>(200, new PaginaDto<CambiosResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<CambiosResponseDto>>(200, new PaginaDto<CambiosResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

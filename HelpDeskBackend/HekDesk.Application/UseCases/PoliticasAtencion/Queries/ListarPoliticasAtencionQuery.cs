@@ -9,7 +9,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.PoliticasAtencion;
 
-public record ListarPoliticasAtencionQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>>;
+public class ListarPoliticasAtencionQuery : IRequest<ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+}
 
 internal sealed class ListarPoliticasAtencionQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarPoliticasAtencionQuery, ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>>
 {
@@ -17,13 +21,13 @@ internal sealed class ListarPoliticasAtencionQueryHandler(IUnitOfWork _unitOfWor
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.PoliticasAtencion>().Query());
 
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdPolitica).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdPolitica).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new PoliticasAtencionResponseDto
             {
                 IdPolitica = entity.IdPolitica,
@@ -32,7 +36,7 @@ internal sealed class ListarPoliticasAtencionQueryHandler(IUnitOfWork _unitOfWor
                 MinutosResolucion = entity.MinutosResolucion,
                 Activo = entity.Activo
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>(200, new PaginaDto<PoliticasAtencionResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<PoliticasAtencionResponseDto>>(200, new PaginaDto<PoliticasAtencionResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

@@ -9,7 +9,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.EnviosNotificaciones;
 
-public record ListarEnviosNotificacionesQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>>;
+public class ListarEnviosNotificacionesQuery : IRequest<ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Estado { get; set; }
+}
 
 internal sealed class ListarEnviosNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarEnviosNotificacionesQuery, ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>>
 {
@@ -17,13 +22,13 @@ internal sealed class ListarEnviosNotificacionesQueryHandler(IUnitOfWork _unitOf
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.EnviosNotificaciones>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Estado)) query = query.Where(x => x.Estado == options.Estado);
+            if (!string.IsNullOrWhiteSpace(request.Estado)) query = query.Where(x => x.Estado == request.Estado);
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdEnvio).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdEnvio).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new EnviosNotificacionesResponseDto
             {
                 IdEnvio = entity.IdEnvio,
@@ -38,7 +43,7 @@ internal sealed class ListarEnviosNotificacionesQueryHandler(IUnitOfWork _unitOf
                 FechaEnvio = entity.FechaEnvio,
                 IdentificadorProveedor = entity.IdentificadorProveedor
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>(200, new PaginaDto<EnviosNotificacionesResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<EnviosNotificacionesResponseDto>>(200, new PaginaDto<EnviosNotificacionesResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

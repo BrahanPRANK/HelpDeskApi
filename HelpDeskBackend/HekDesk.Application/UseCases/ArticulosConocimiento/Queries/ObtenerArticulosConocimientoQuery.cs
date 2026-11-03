@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.ArticulosConocimiento;
 
-public record ObtenerArticulosConocimientoQuery(object[] Keys) : IRequest<ResponseDto<ArticulosConocimientoResponseDto>>;
+public class ObtenerArticulosConocimientoQuery : IRequest<ResponseDto<ArticulosConocimientoResponseDto>>
+{
+    public Guid IdArticulo { get; set; }
+}
 
 internal sealed class ObtenerArticulosConocimientoQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerArticulosConocimientoQuery, ResponseDto<ArticulosConocimientoResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerArticulosConocimientoQueryHandler(IUnitOfWork _unit
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.ArticulosConocimiento>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.ArticulosConocimiento>().GetByIdAsync(request.IdArticulo)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<ArticulosConocimientoResponseDto>(200, new ArticulosConocimientoResponseDto

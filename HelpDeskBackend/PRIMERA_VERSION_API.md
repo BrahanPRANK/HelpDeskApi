@@ -20,7 +20,7 @@ Abrir `http://localhost:5014/`, iniciar sesión en `POST /api/auth/login` y pega
 - `Application/UseCases/{Entidad}/Commands`: escrituras y sus handlers, con lógica propia.
 - `Application/UseCases/{Entidad}/Queries`: consultas y sus handlers, con filtros LINQ y proyección.
 - `Domain/Dtos/{Entidad}`: DTOs de salida, cada uno en su propio archivo. Los campos de entrada están directamente en los Commands, con sus atributos de validación, como en Lab11.
-- `Domain/Dtos/Common`: ResponseDto, PaginaDto, ListOptions y respuestas compartidas, separados.
+- `Domain/Dtos/Common`: ResponseDto, PaginaDto y respuestas compartidas, separados.
 - `Application/Common`: validación básica; `Application/Security`: reglas de acceso y alta inicial.
 - `Domain/Ports`: interfaces de repositorio, UnitOfWork y seguridad.
 - `Infrastructure`: contexto, repositorios, UnitOfWork, JWT y hash de contraseñas.

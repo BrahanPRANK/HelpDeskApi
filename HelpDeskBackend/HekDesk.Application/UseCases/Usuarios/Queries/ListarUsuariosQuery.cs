@@ -9,7 +9,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.Usuarios;
 
-public record ListarUsuariosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<UsuariosResponseDto>>>;
+public class ListarUsuariosQuery : IRequest<ResponseDto<PaginaDto<UsuariosResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Buscar { get; set; }
+}
 
 internal sealed class ListarUsuariosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarUsuariosQuery, ResponseDto<PaginaDto<UsuariosResponseDto>>>
 {
@@ -17,13 +22,13 @@ internal sealed class ListarUsuariosQueryHandler(IUnitOfWork _unitOfWork, Access
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.Usuarios>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.Nombres.Contains(options.Buscar) || x.Apellidos.Contains(options.Buscar) || x.NombreUsuario.Contains(options.Buscar));
+            if (!string.IsNullOrWhiteSpace(request.Buscar)) query = query.Where(x => x.Nombres.Contains(request.Buscar) || x.Apellidos.Contains(request.Buscar) || x.NombreUsuario.Contains(request.Buscar));
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdUsuario).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdUsuario).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new UsuariosResponseDto
             {
                 IdUsuario = entity.IdUsuario,
@@ -36,7 +41,7 @@ internal sealed class ListarUsuariosQueryHandler(IUnitOfWork _unitOfWork, Access
                 Activo = entity.Activo,
                 FechaRegistro = entity.FechaRegistro
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<UsuariosResponseDto>>(200, new PaginaDto<UsuariosResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<UsuariosResponseDto>>(200, new PaginaDto<UsuariosResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

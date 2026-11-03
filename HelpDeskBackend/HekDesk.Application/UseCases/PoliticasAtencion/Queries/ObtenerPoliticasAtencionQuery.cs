@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.PoliticasAtencion;
 
-public record ObtenerPoliticasAtencionQuery(object[] Keys) : IRequest<ResponseDto<PoliticasAtencionResponseDto>>;
+public class ObtenerPoliticasAtencionQuery : IRequest<ResponseDto<PoliticasAtencionResponseDto>>
+{
+    public Guid IdPolitica { get; set; }
+}
 
 internal sealed class ObtenerPoliticasAtencionQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerPoliticasAtencionQuery, ResponseDto<PoliticasAtencionResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerPoliticasAtencionQueryHandler(IUnitOfWork _unitOfWo
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PoliticasAtencion>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.PoliticasAtencion>().GetByIdAsync(request.IdPolitica)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<PoliticasAtencionResponseDto>(200, new PoliticasAtencionResponseDto

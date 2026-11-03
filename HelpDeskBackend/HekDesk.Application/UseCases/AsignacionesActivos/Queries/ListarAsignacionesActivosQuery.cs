@@ -9,7 +9,11 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.AsignacionesActivos;
 
-public record ListarAsignacionesActivosQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>>;
+public class ListarAsignacionesActivosQuery : IRequest<ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+}
 
 internal sealed class ListarAsignacionesActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarAsignacionesActivosQuery, ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>>
 {
@@ -17,13 +21,13 @@ internal sealed class ListarAsignacionesActivosQueryHandler(IUnitOfWork _unitOfW
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.AsignacionesActivos>().Query());
 
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdAsignacion).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdAsignacion).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new AsignacionesActivosResponseDto
             {
                 IdAsignacion = entity.IdAsignacion,
@@ -34,7 +38,7 @@ internal sealed class ListarAsignacionesActivosQueryHandler(IUnitOfWork _unitOfW
                 FechaDevolucion = entity.FechaDevolucion,
                 Observaciones = entity.Observaciones
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>(200, new PaginaDto<AsignacionesActivosResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<AsignacionesActivosResponseDto>>(200, new PaginaDto<AsignacionesActivosResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

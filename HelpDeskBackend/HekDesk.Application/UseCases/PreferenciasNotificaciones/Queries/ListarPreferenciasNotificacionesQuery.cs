@@ -9,7 +9,12 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.PreferenciasNotificaciones;
 
-public record ListarPreferenciasNotificacionesQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>>;
+public class ListarPreferenciasNotificacionesQuery : IRequest<ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Buscar { get; set; }
+}
 
 internal sealed class ListarPreferenciasNotificacionesQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarPreferenciasNotificacionesQuery, ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>>
 {
@@ -17,13 +22,13 @@ internal sealed class ListarPreferenciasNotificacionesQueryHandler(IUnitOfWork _
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.PreferenciasNotificaciones>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.TipoEvento.Contains(options.Buscar));
+            if (!string.IsNullOrWhiteSpace(request.Buscar)) query = query.Where(x => x.TipoEvento.Contains(request.Buscar));
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdUsuario).ThenBy(x => x.TipoEvento).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdUsuario).ThenBy(x => x.TipoEvento).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new PreferenciasNotificacionesResponseDto
             {
                 IdUsuario = entity.IdUsuario,
@@ -31,7 +36,7 @@ internal sealed class ListarPreferenciasNotificacionesQueryHandler(IUnitOfWork _
                 RecibirEnSistema = entity.RecibirEnSistema,
                 RecibirPorCorreo = entity.RecibirPorCorreo
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>(200, new PaginaDto<PreferenciasNotificacionesResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<PreferenciasNotificacionesResponseDto>>(200, new PaginaDto<PreferenciasNotificacionesResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {

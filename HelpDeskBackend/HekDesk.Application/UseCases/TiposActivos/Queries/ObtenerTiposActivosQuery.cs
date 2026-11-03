@@ -8,7 +8,10 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.TiposActivos;
 
-public record ObtenerTiposActivosQuery(object[] Keys) : IRequest<ResponseDto<TiposActivosResponseDto>>;
+public class ObtenerTiposActivosQuery : IRequest<ResponseDto<TiposActivosResponseDto>>
+{
+    public Guid IdTipoActivo { get; set; }
+}
 
 internal sealed class ObtenerTiposActivosQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ObtenerTiposActivosQuery, ResponseDto<TiposActivosResponseDto>>
 {
@@ -16,7 +19,7 @@ internal sealed class ObtenerTiposActivosQueryHandler(IUnitOfWork _unitOfWork, A
     {
         try
         {
-            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TiposActivos>().GetByIdAsync(request.Keys)
+            var entity = await _unitOfWork.Repository<global::HelpDesk.Domain.Models.TiposActivos>().GetByIdAsync(request.IdTipoActivo)
             ?? throw new BusinessException(404, "Registro no encontrado.");
             access.EnsureRead(entity);
             return new ResponseDto<TiposActivosResponseDto>(200, new TiposActivosResponseDto

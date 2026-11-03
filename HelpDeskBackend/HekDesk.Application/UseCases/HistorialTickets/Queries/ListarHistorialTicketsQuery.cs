@@ -9,7 +9,13 @@ using HelpDesk.Domain.Ports;
 using MediatR;
 namespace HelpDesk.Application.UseCases.HistorialTickets;
 
-public record ListarHistorialTicketsQuery(ListOptions Options) : IRequest<ResponseDto<PaginaDto<HistorialTicketsResponseDto>>>;
+public class ListarHistorialTicketsQuery : IRequest<ResponseDto<PaginaDto<HistorialTicketsResponseDto>>>
+{
+    public int Pagina { get; set; } = 1;
+    public int Tamano { get; set; } = 20;
+    public string? Buscar { get; set; }
+    public Guid? IdTicket { get; set; }
+}
 
 internal sealed class ListarHistorialTicketsQueryHandler(IUnitOfWork _unitOfWork, AccessRules access) : IRequestHandler<ListarHistorialTicketsQuery, ResponseDto<PaginaDto<HistorialTicketsResponseDto>>>
 {
@@ -17,14 +23,14 @@ internal sealed class ListarHistorialTicketsQueryHandler(IUnitOfWork _unitOfWork
     {
         try
         {
-            var options = request.Options;
-            Validation.Require(options.Pagina >= 1 && options.Pagina <= 1000000 && options.Tamano is >= 1 and <= 100,
+
+            Validation.Require(request.Pagina >= 1 && request.Pagina <= 1000000 && request.Tamano is >= 1 and <= 100,
             "Pagina debe ser positiva y tamano debe estar entre 1 y 100.");
             var query = access.Scope(_unitOfWork.Repository<global::HelpDesk.Domain.Models.HistorialTickets>().Query());
-            if (!string.IsNullOrWhiteSpace(options.Buscar)) query = query.Where(x => x.Accion.Contains(options.Buscar));
-            if (options.IdTicket.HasValue) query = query.Where(x => x.IdTicket == options.IdTicket.Value);
+            if (!string.IsNullOrWhiteSpace(request.Buscar)) query = query.Where(x => x.Accion.Contains(request.Buscar));
+            if (request.IdTicket.HasValue) query = query.Where(x => x.IdTicket == request.IdTicket.Value);
             var total = await (query).CountAsync();
-            var items = await (query.OrderBy(x => x.IdHistorial).Skip((options.Pagina - 1) * options.Tamano).Take(options.Tamano)
+            var items = await (query.OrderBy(x => x.IdHistorial).Skip((request.Pagina - 1) * request.Tamano).Take(request.Tamano)
             .Select(entity => new HistorialTicketsResponseDto
             {
                 IdHistorial = entity.IdHistorial,
@@ -37,7 +43,7 @@ internal sealed class ListarHistorialTicketsQueryHandler(IUnitOfWork _unitOfWork
                 Motivo = entity.Motivo,
                 Fecha = entity.Fecha
             })).ToListAsync();
-            return new ResponseDto<PaginaDto<HistorialTicketsResponseDto>>(200, new PaginaDto<HistorialTicketsResponseDto>(items, options.Pagina, options.Tamano, total));
+            return new ResponseDto<PaginaDto<HistorialTicketsResponseDto>>(200, new PaginaDto<HistorialTicketsResponseDto>(items, request.Pagina, request.Tamano, total));
         }
         catch (BusinessException ex)
         {
