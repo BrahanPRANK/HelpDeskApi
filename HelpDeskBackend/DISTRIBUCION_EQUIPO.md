@@ -13,7 +13,7 @@ La revisión corresponde a la copia local del repositorio del equipo, rama `feat
 - Los DTOs `TicketsResponseDto` y `AsignacionesTicketsResponseDto` **ya están subidos** en Domain. No es necesario esperar al final para agregarlos: un handler que los utiliza los necesita para compilar. Al trabajar una entidad, incorporar primero su DTO o incluir DTO y casos de uso en el mismo commit.
 - Aún faltan los módulos de los compañeros, sus controladores y la integración de la API. Program.cs del equipo conserva WeatherForecast y requiere la integración final que hace Brahan.
 
-La meta es incorporar **todos los archivos versionados de esta primera versión**, incluidos proyectos, configuraciones de ejemplo, scripts, pruebas y documentación. Bin, obj, configuración personal del IDE, contraseñas y User Secrets no forman parte de esa entrega. La base sigue siendo de **36 tablas y 2 vistas**; repartir más archivos no agrega tablas.
+La meta es incorporar **todos los archivos versionados de esta primera versión**, incluidos proyectos, configuraciones de ejemplo, scripts y documentación. Bin, obj, configuración personal del IDE, contraseñas y User Secrets no forman parte de esa entrega. La base sigue siendo de **36 tablas y 2 vistas**; repartir más archivos no agrega tablas.
 
 ## Guía inicial: instalar y ejecutar el proyecto en otra computadora
 
@@ -261,13 +261,7 @@ Para una revisión normal:
 dotnet build HelpDeskBackend.sln
 ```
 
-Para la suite completa, con la API detenida antes de compilar:
-
-```powershell
-dotnet run --project tests/HelpDesk.IntegrationTests
-```
-
-La suite necesita permisos de PostgreSQL para crear y eliminar una base temporal. Usa `helpdesk_test_*`, levanta una API temporal y elimina esa base al terminar; no inserta datos en `helpdeskdb`. También necesita `001_helpdesk_36_tablas_es.sql` en la carpeta superior a `HelpDeskBackend`, como en el paso 3. Si la cuenta no puede crear bases, Brahan ejecuta la suite y cada integrante hace sus pruebas de endpoints sobre su base local.
+Iniciar la API y comprobar cada módulo manualmente desde Swagger. Las pruebas automáticas no forman parte de esta primera entrega.
 
 ### 10. Errores frecuentes
 
@@ -303,7 +297,7 @@ Referencias oficiales para ampliar: [herramientas y scaffolding de EF Core](http
 | Fernando Aquima | `Activos`, `TiposActivos`, `AsignacionesActivos`, `TicketsActivos`, `Comentarios`, `Adjuntos` | Devolución de activos y visibilidad de comentarios/adjuntos. |
 | Stiven Yerai | `Sedes`, `Areas`, `EquiposSoporte`, `IntegrantesEquipo`, `Notificaciones`, `PreferenciasNotificaciones`, `EnviosNotificaciones` | Avisos propios, lectura y preferencias. Los envíos se consultan; no se añade un proveedor de correo. |
 | Ederson Vilca | `Servicios`, `CategoriasServicios`, `PoliticasAtencion`, `Encuestas`, `ArticulosConocimiento`, `CategoriasConocimiento`, `TicketsArticulos` | Catálogo de servicios, políticas, encuestas y conocimiento en borrador. |
-| Brahan Quispe | `Tickets`, `AsignacionesTickets`, `HistorialTickets`, `CargaTecnicos`, `ResumenTickets`, `Auditoria` | Reportes, DTOs compartidos, Domain común, Infrastructure, configuración, Program, middleware, scaffolding, pruebas y documentación. |
+| Brahan Quispe | `Tickets`, `AsignacionesTickets`, `HistorialTickets`, `CargaTecnicos`, `ResumenTickets`, `Auditoria` | Reportes, DTOs compartidos, Domain común, Infrastructure, configuración, Program, middleware, scaffolding, comprobaciones manuales y documentación. |
 
 Cada dueño de entidad incorpora sus Commands, Queries, DTOs de respuesta y todos sus controladores, incluido el controlador de acciones si existe. Los modelos generados, puertos, repositorios y servicios técnicos tienen un único responsable de subida: Brahan. El dueño funcional revisa su entidad, pero no vuelve a subir esos archivos comunes como aporte propio.
 
@@ -338,7 +332,6 @@ La definición de los DTOs está en Domain y su construcción en el handler. Los
 | API/Program.cs y Middleware/ExceptionMiddleware.cs | Brahan | Pendientes: DI, conexión, JWT, autorizaciones, middleware, Swagger y controladores. |
 | .csproj, solución, appsettings de ejemplo, launchSettings y archivo HTTP | Brahan | Existen bases; adaptar las referencias y configuración de la plantilla a los nombres del equipo. |
 | SQL y scripts/Actualizar-Modelo.ps1 | Brahan | Completar los archivos compartidos para instalación y regeneración. No cambiar las 36 tablas por copiar archivos. |
-| tests/HelpDesk.IntegrationTests y resources.json | Brahan | Incorporar la suite y coordinar la prueba integrada; cada compañero demuestra su módulo. |
 | .gitignore, .gitattributes, README y todos los MD | Brahan | Revisar o incorporar los que falten; también están asignados en el inventario. |
 
 Los archivos Class1.cs que aún existan son restos de estructura, no módulos adicionales. Brahan los revisa al integrar; no requieren crear una funcionalidad ni un commit ficticio.
@@ -349,10 +342,10 @@ Los archivos Class1.cs que aún existan son restos de estructura, no módulos ad
 2. Stiven incorpora primero Sedes, Areas, EquiposSoporte e IntegrantesEquipo; Diego incorpora usuarios, roles, permisos y autenticación. Ederson incorpora categorías, políticas y servicios. Coordinar pruebas cuando estas dependencias estén disponibles.
 3. Cada integrante incorpora sus entidades restantes, con DTOs, casos de uso y controladores en commits identificables. Brahan completa sus DTOs/controladores y los recursos que le faltan: HistorialTickets, CargaTecnicos, ResumenTickets, Auditoria y Reportes.
 4. Brahan integra Program, registro de servicios, configuración de ejemplo y middleware. Diego aporta CurrentUser y AuthService. No se sustituye Program en cada rama de entidad.
-5. Incorporar SQL, scripts, pruebas y documentos pendientes según el inventario. Revisar las diferencias en archivos que ya existen, en vez de sobrescribirlos automáticamente.
+5. Incorporar SQL, scripts y documentos pendientes según el inventario. Revisar las diferencias en archivos que ya existen, en vez de sobrescribirlos automáticamente.
 6. Revisar los PR por entidad e integrarlos; compilar la solución final y probar login → crear ticket → asignar → iniciar → resolver → cerrar, además de los módulos de cada integrante.
 
-**La API final no se considera completa solo porque se copiaron los casos de uso.** Deben estar presentes y conectados DTOs, controladores, registros DI, configuración y los archivos auxiliares de instalación/pruebas.
+**La API final no se considera completa solo porque se copiaron los casos de uso.** Deben estar presentes y conectados DTOs, controladores, registros DI, configuración y los archivos auxiliares de instalación.
 
 ## Nombres de los proyectos al copiar
 
@@ -378,7 +371,7 @@ Estados comparados contra la copia local del equipo:
 
 La columna Destino usa los nombres del proyecto del equipo. Los modelos/proyectos ya creados deben revisarse, no recrearse. El estado de configuración no confirma conectividad con PostgreSQL ni que el módulo funcione por HTTP.
 
-**Cobertura: 340 archivos de plantilla, todos asignados una sola vez.** Comparación local: 76 coinciden, 7 existen con diferencias y 257 están pendientes.
+**Cobertura: 337 archivos de plantilla, todos asignados una sola vez.** Comparación local: 76 coinciden, 7 existen con diferencias y 254 están pendientes.
 
 | Responsable | Archivos asignados |
 |---|---|
@@ -387,7 +380,7 @@ La columna Destino usa los nombres del proyecto del equipo. Los modelos/proyecto
 | Fernando Aquima | 40 |
 | Stiven Yerai | 47 |
 | Ederson Vilca | 47 |
-| Brahan Quispe | 119 |
+| Brahan Quispe | 116 |
 
 ### Inventario de Diego Medina
 
@@ -752,9 +745,6 @@ La columna Destino usa los nombres del proyecto del equipo. Los modelos/proyecto
 | `HelpDeskBackend/PRIMER_AVANCE.md` | `HelpDeskApi/PRIMER_AVANCE.md` | Pendiente |
 | `HelpDeskBackend/SCAFFOLDING_HELPDESK.md` | `HelpDeskApi/SCAFFOLDING_HELPDESK.md` | Pendiente |
 | `HelpDeskBackend/scripts/Actualizar-Modelo.ps1` | `HelpDeskApi/scripts/Actualizar-Modelo.ps1` | Pendiente |
-| `HelpDeskBackend/tests/HelpDesk.IntegrationTests/HelpDesk.IntegrationTests.csproj` | `HelpDeskApi/tests/HelpDesk.IntegrationTests/HelpDesk.IntegrationTests.csproj` | Pendiente |
-| `HelpDeskBackend/tests/HelpDesk.IntegrationTests/Program.cs` | `HelpDeskApi/tests/HelpDesk.IntegrationTests/Program.cs` | Pendiente |
-| `HelpDeskBackend/tests/HelpDesk.IntegrationTests/resources.json` | `HelpDeskApi/tests/HelpDesk.IntegrationTests/resources.json` | Pendiente |
 | `LEEME_BASE_DATOS_36_TABLAS.md` | `LEEME_BASE_DATOS_36_TABLAS.md` | Pendiente |
 | `LEEME_BASE_DATOS_ES.md` | `LEEME_BASE_DATOS_ES.md` | Pendiente |
 | `README.md` | `README.md` | Existe: revisar |

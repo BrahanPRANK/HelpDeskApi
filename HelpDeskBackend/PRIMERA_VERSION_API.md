@@ -107,13 +107,12 @@ Para una segunda versión quedan: recuperación de contraseña, espera/reanudaci
 
 Tampoco se incluye frontend, proveedor de correo, subida física de archivos, calendario laboral ni refresh tokens. Adjuntos administra metadatos. El flujo básico de tickets no se bloquea por el motor avanzado de aprobaciones, que queda para otra entrega; las aprobaciones se administran por separado.
 
-## Scaffolding y pruebas
+## Scaffolding y comprobación manual
 
 Los modelos ya están incluidos. Regenerar solo si cambia el SQL, mediante scripts/Actualizar-Modelo.ps1, conservando HelpDeskDbContext.Custom.cs con las correcciones de relaciones y concurrencia.
 
 ```powershell
 dotnet build HelpDeskBackend.sln
-dotnet run --project tests/HelpDesk.IntegrationTests
 ```
 
-La suite prueba las consultas de recursos, CRUD, permisos, aislamiento, JWT, hash, cambio de contraseña, concurrencia y el flujo básico de tickets. Crea una base temporal helpdesk_test_* y la elimina al terminar; necesita permiso para crearla y no modifica helpdeskdb.
+Esta entrega no incluye un proyecto de pruebas automáticas. Después de compilar y ejecutar la API, comprobar manualmente el login, los permisos y el flujo de tickets mediante Swagger.

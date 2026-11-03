@@ -372,7 +372,6 @@ HelpDesk/
 |       |-- Repositories/
 |       |-- Services/
 |       `-- Configuration/
-|-- tests/
 `-- deployment/
 ```
 

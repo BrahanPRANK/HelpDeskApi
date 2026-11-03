@@ -35,11 +35,12 @@ HelpDeskBackend/
 ├── HekDesk.Application/      Comandos, consultas y handlers
 ├── HelpDesk.Domain/          Modelos, interfaces y Dtos/{Entidad}
 ├── HelpDesk.Infrastructure/  EF Core, repositorios, Unit of Work y seguridad
-├── scripts/                 Scaffolding y administrador inicial
-└── tests/                   Pruebas de integración
+└── scripts/                 Scaffolding y administrador inicial
 ```
 
 `HekDesk.Application` conserva el nombre que tiene actualmente el proyecto. Cada handler implementa su caso de uso, maneja errores con `try/catch` y confirma las escrituras mediante `IUnitOfWork.Complete()`.
+
+Los scripts incluidos tienen funciones distintas: `Crear-Administrador.ps1` crea la primera cuenta administrativa y `Actualizar-Modelo.ps1` regenera modelos y DbContext desde PostgreSQL. No se ejecutan en cada arranque.
 
 Los modelos y el contexto ya se incluyen. **No hace falta ejecutar scaffolding al clonar si la base usa el esquema actual.** Se regenera únicamente tras cambios de esquema coordinados.
 
@@ -58,10 +59,9 @@ Los modelos y el contexto ya se incluyen. **No hace falta ejecutar scaffolding a
 
 ```powershell
 dotnet build HelpDeskBackend.sln
-dotnet run --project tests/HelpDesk.IntegrationTests
 ```
 
-Ejecutar desde `HelpDeskBackend`. La suite comprueba el alcance simplificado y requiere permiso para crear y eliminar una base temporal `helpdesk_test_*`. Usa el SQL de la carpeta superior y no escribe en `helpdeskdb`. La API debe estar detenida al compilar para evitar archivos bloqueados.
+Ejecutar desde `HelpDeskBackend`. Con la API iniciada, comprobar manualmente los endpoints mediante Swagger. Detener la API antes de compilar si sus archivos están bloqueados. Las pruebas automáticas quedan fuera de esta primera entrega.
 
 ## Alcance actual
 
