@@ -330,7 +330,7 @@ La definición de los DTOs está en Domain y su construcción en el handler. Los
 | scripts/Crear-Administrador.ps1 | Diego | Pendiente; coordinar su llamada desde Program con Brahan. |
 | Application/Configuration/ApplicationServicesExtensions.cs | Brahan | Pendiente; integrar MediatR y los servicios de Application cuando existan sus clases. |
 | API/Program.cs y Middleware/ExceptionMiddleware.cs | Brahan | Pendientes: DI, conexión, JWT, autorizaciones, middleware, Swagger y controladores. |
-| .csproj, solución, appsettings de ejemplo, launchSettings y archivo HTTP | Brahan | Existen bases; adaptar las referencias y configuración de la plantilla a los nombres del equipo. |
+| .csproj, solución, appsettings de ejemplo, launchSettings | Brahan | Existen bases; adaptar las referencias y configuración de la plantilla a los nombres del equipo. |
 | SQL y scripts/Actualizar-Modelo.ps1 | Brahan | Completar los archivos compartidos para instalación y regeneración. No cambiar las 36 tablas por copiar archivos. |
 | .gitignore, .gitattributes, README y todos los MD | Brahan | Revisar o incorporar los que falten; también están asignados en el inventario. |
 
@@ -371,7 +371,7 @@ Estados comparados contra la copia local del equipo:
 
 La columna Destino usa los nombres del proyecto del equipo. Los modelos/proyectos ya creados deben revisarse, no recrearse. El estado de configuración no confirma conectividad con PostgreSQL ni que el módulo funcione por HTTP.
 
-**Cobertura: 337 archivos de plantilla, todos asignados una sola vez.** Comparación local: 76 coinciden, 7 existen con diferencias y 254 están pendientes.
+**Cobertura: 336 archivos de plantilla, todos asignados una sola vez.** Comparación local: 76 coinciden, 7 existen con diferencias y 253 están pendientes.
 
 | Responsable | Archivos asignados |
 |---|---|
@@ -380,7 +380,7 @@ La columna Destino usa los nombres del proyecto del equipo. Los modelos/proyecto
 | Fernando Aquima | 40 |
 | Stiven Yerai | 47 |
 | Ederson Vilca | 47 |
-| Brahan Quispe | 116 |
+| Brahan Quispe | 115 |
 
 ### Inventario de Diego Medina
 
@@ -668,7 +668,6 @@ La columna Destino usa los nombres del proyecto del equipo. Los modelos/proyecto
 | `HelpDeskBackend/HelpDesk.Api/Controllers/TicketsAccionesController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/TicketsAccionesController.cs` | Pendiente |
 | `HelpDeskBackend/HelpDesk.Api/Controllers/TicketsController.cs` | `HelpDeskApi/HelpDeskApi/Controllers/TicketsController.cs` | Pendiente |
 | `HelpDeskBackend/HelpDesk.Api/HelpDesk.Api.csproj` | `HelpDeskApi/HelpDeskApi/HelpDeskApi.csproj` | Existe: revisar |
-| `HelpDeskBackend/HelpDesk.Api/HelpDeskBackend.http` | `HelpDeskApi/HelpDeskApi/HelpDeskBackend.http` | Pendiente |
 | `HelpDeskBackend/HelpDesk.Api/Middleware/ExceptionMiddleware.cs` | `HelpDeskApi/HelpDeskApi/Middleware/ExceptionMiddleware.cs` | Pendiente |
 | `HelpDeskBackend/HelpDesk.Api/Program.cs` | `HelpDeskApi/HelpDeskApi/Program.cs` | Existe: revisar |
 | `HelpDeskBackend/HelpDesk.Api/Properties/launchSettings.json` | `HelpDeskApi/HelpDeskApi/Properties/launchSettings.json` | Existe: revisar |

@@ -1,6 +1,0 @@
-@HelpDeskBackend_HostAddress = http://localhost:5014
-
-GET {{HelpDeskBackend_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
